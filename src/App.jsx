@@ -1,122 +1,417 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react"
+import { motion } from "framer-motion"
 
-function App() {
-  const [count, setCount] = useState(0)
+const categories = [
+  { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
+  { name: "Universitarios", count: 18, color: "#60a5fa", glow: "#2563eb", bg: "rgba(37,99,235,0.18)", border: "rgba(37,99,235,0.45)" },
+  { name: "Cultura", count: 12, color: "#34d399", glow: "#059669", bg: "rgba(5,150,105,0.18)", border: "rgba(5,150,105,0.45)" },
+  { name: "Autos", count: 8, color: "#fbbf24", glow: "#d97706", bg: "rgba(217,119,6,0.18)", border: "rgba(217,119,6,0.45)" },
+  { name: "Belleza", count: 15, color: "#f472b6", glow: "#db2777", bg: "rgba(219,39,119,0.18)", border: "rgba(219,39,119,0.45)" },
+  { name: "Tecnología", count: 10, color: "#22d3ee", glow: "#0891b2", bg: "rgba(8,145,178,0.18)", border: "rgba(8,145,178,0.45)" },
+  { name: "Gastronomía", count: 14, color: "#f87171", glow: "#dc2626", bg: "rgba(220,38,38,0.18)", border: "rgba(220,38,38,0.45)" },
+  { name: "Gaming", count: 9, color: "#c084fc", glow: "#9333ea", bg: "rgba(147,51,234,0.18)", border: "rgba(147,51,234,0.45)" },
+]
 
+const categoryIcons = {
+  "Fiestas": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
+  "Universitarios": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  "Cultura": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  "Autos": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h11l4 4h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 9l2-4h8l2 4"/></svg>,
+  "Belleza": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 2L9.5 9H2l5.9 4.3-2.2 6.8L12 16l6.3 4.1-2.2-6.8L22 9h-7.5z"/></svg>,
+  "Tecnología": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
+  "Gastronomía": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
+  "Gaming": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+}
+
+const events = [
+  { title: "Noche de Electrónica", host: "@colectivouteq", category: "Música", date: "Vie 15 Jun · 22:00", location: "Club Aurora, Juriquilla", attendees: 187, capacity: 200, price: 250, type: "Instantáneo", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80" },
+  { title: "Festival de Ingenierías", host: "@fes.ingenieria", category: "Universitario", date: "Mié 20 Jun · 18:00", location: "Centro Universitario UAQ", attendees: 142, capacity: 300, price: 180, type: "Instantáneo", img: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" },
+  { title: "Indie Night Rooftop", host: "@tec.cultural", category: "Música", date: "Vie 22 Jun · 21:00", location: "Terraza Tec QRO", attendees: 95, capacity: 150, price: 320, type: "Solicitud", img: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80" },
+  { title: "Expo Auto Clásicos", host: "@qro.cars", category: "Autos", date: "Sáb 23 Jun · 10:00", location: "Centro de Convenciones", attendees: 234, capacity: 500, price: 150, type: "Instantáneo", img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?w=600&q=80" },
+  { title: "Círculo de Lectura Sci-Fi", host: "@booklovers.qro", category: "Cultura", date: "Dom 24 Jun · 17:00", location: "Biblioteca UP", attendees: 28, capacity: 40, price: 80, type: "Solicitud", img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80" },
+  { title: "Torneo FIFA 26", host: "@esports.unaq", category: "Gaming", date: "Sáb 29 Jun · 14:00", location: "Campus UNAQ", attendees: 58, capacity: 64, price: 120, type: "Instantáneo", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80" },
+]
+
+const BadgeIcon = ({ type }) => {
+  if (type === "verificado") return <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  if (type === "reembolso") return <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  if (type === "boleto") return <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  return null
+}
+
+function CategoryCard({ cat }) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <motion.div
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      whileHover={{ y: -6, scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 280, damping: 20 }}
+      style={{
+        borderRadius: "18px",
+        padding: "36px 28px",
+        cursor: "pointer",
+        background: hovered
+          ? `linear-gradient(135deg, ${cat.bg}, rgba(0,0,0,0.4))`
+          : "rgba(255,255,255,0.03)",
+        border: `1px solid ${hovered ? cat.border : "rgba(255,255,255,0.07)"}`,
+        boxShadow: hovered
+          ? `0 0 0 1px ${cat.glow}40, 0 0 40px ${cat.glow}50, 0 0 80px ${cat.glow}25, inset 0 0 40px ${cat.glow}10`
+          : "none",
+        transition: "background 0.3s, border 0.3s, box-shadow 0.3s",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {hovered && (
+        <div style={{
+          position: "absolute", inset: 0, borderRadius: "18px",
+          background: `radial-gradient(circle at 30% 30%, ${cat.glow}20 0%, transparent 60%)`,
+          pointerEvents: "none"
+        }} />
+      )}
+      <div style={{
+        color: cat.color,
+        marginBottom: "20px",
+        filter: hovered ? `drop-shadow(0 0 8px ${cat.glow}90)` : "none",
+        transition: "filter 0.3s",
+        position: "relative"
+      }}>
+        {categoryIcons[cat.name]}
+      </div>
+      <div style={{
+        fontWeight: 600, fontSize: "17px", marginBottom: "6px",
+        color: hovered ? cat.color : "white",
+        textShadow: hovered ? `0 0 20px ${cat.glow}80` : "none",
+        transition: "color 0.3s, text-shadow 0.3s",
+        position: "relative"
+      }}>{cat.name}</div>
+      <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontWeight: 400, position: "relative" }}>{cat.count} eventos</div>
+    </motion.div>
   )
 }
 
-export default App
+function EventCard({ ev }) {
+  const [hovered, setHovered] = useState(false)
+  const pct = Math.round((ev.attendees / ev.capacity) * 100)
+  const almostFull = pct >= 85
+  return (
+    <motion.div
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      style={{
+        borderRadius: "20px", overflow: "hidden", cursor: "pointer",
+        background: "#0f0f11",
+        border: `1px solid ${hovered ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)"}`,
+        boxShadow: hovered ? "0 24px 48px rgba(0,0,0,0.6)" : "none",
+        transition: "border 0.2s, box-shadow 0.2s",
+      }}
+    >
+      <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
+        <motion.img src={ev.img} alt={ev.title}
+          animate={{ scale: hovered ? 1.07 : 1 }}
+          transition={{ duration: 0.4 }}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 100%)" }} />
+        <span style={{ position: "absolute", top: "14px", left: "14px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "5px 14px", fontSize: "12.5px", fontWeight: 600 }}>{ev.category}</span>
+        <span style={{
+          position: "absolute", top: "14px", right: "14px",
+          background: ev.type === "Instantáneo" ? "rgba(124,58,237,0.7)" : "rgba(37,99,235,0.7)",
+          backdropFilter: "blur(12px)",
+          border: `1px solid ${ev.type === "Instantáneo" ? "rgba(167,139,250,0.35)" : "rgba(96,165,250,0.35)"}`,
+          borderRadius: "999px", padding: "5px 14px", fontSize: "12.5px", fontWeight: 600
+        }}>{ev.type === "Instantáneo" ? "⚡ " : "📋 "}{ev.type}</span>
+      </div>
+      <div style={{ padding: "22px 24px" }}>
+        <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "4px", letterSpacing: "-0.3px" }}>{ev.title}</div>
+        <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", marginBottom: "16px", fontWeight: 400 }}>{ev.host}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "9px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "rgba(255,255,255,0.5)", fontSize: "13.5px" }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {ev.date}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "rgba(255,255,255,0.5)", fontSize: "13.5px" }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {ev.location}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "9px", color: "rgba(255,255,255,0.5)", fontSize: "13.5px" }}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              {ev.attendees}/{ev.capacity} asistentes
+            </div>
+            {almostFull && <span style={{ fontSize: "12.5px", color: "#a78bfa", fontWeight: 600 }}>Solo {ev.capacity - ev.attendees} lugares</span>}
+          </div>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "999px", height: "3px", marginBottom: "18px", overflow: "hidden" }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "3px", borderRadius: "999px" }}
+          />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <span style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>${ev.price}</span>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>
+          </div>
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+            style={{
+              background: hovered ? "rgba(124,58,237,0.22)" : "rgba(255,255,255,0.05)",
+              border: `1px solid ${hovered ? "rgba(167,139,250,0.45)" : "rgba(255,255,255,0.1)"}`,
+              borderRadius: "10px", color: hovered ? "#c4b5fd" : "rgba(255,255,255,0.7)",
+              padding: "10px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer",
+              transition: "all 0.2s", fontFamily: "inherit"
+            }}
+          >Ver detalles</motion.button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function HowItWorksCard({ step }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)}
+      whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 280, damping: 20 }}
+      style={{ textAlign: "center", cursor: "default" }}
+    >
+      <motion.div animate={{
+        background: hovered ? step.bgHover : step.bg,
+        borderColor: hovered ? step.borderHover : step.border,
+        boxShadow: hovered ? `0 0 28px ${step.glow}50, 0 0 60px ${step.glow}20` : "none",
+      }} transition={{ duration: 0.25 }}
+        style={{ width: "76px", height: "76px", borderRadius: "22px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: step.color, border: `1px solid ${step.border}` }}
+      >
+        <div style={{ filter: hovered ? `drop-shadow(0 0 8px ${step.glow}90)` : "none", transition: "filter 0.3s" }}>{step.svg}</div>
+      </motion.div>
+      <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "12px", letterSpacing: "-0.2px" }}>{step.title}</div>
+      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14.5px", lineHeight: 1.7, fontWeight: 400 }}>{step.desc}</div>
+    </motion.div>
+  )
+}
+
+function FeatureBadge({ label, color, border, icon }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)}
+      whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.97 }}
+      style={{
+        display: "flex", alignItems: "center", gap: "8px",
+        border: `1px solid ${hovered ? border : border + "70"}`,
+        borderRadius: "999px", padding: "9px 20px",
+        fontSize: "13.5px", fontWeight: 500,
+        color: hovered ? "white" : color,
+        background: hovered ? `${border}28` : `${border}10`,
+        cursor: "default",
+        transition: "all 0.2s",
+        boxShadow: hovered ? `0 0 16px ${border}35` : "none",
+      }}
+    >
+      <span style={{ color: hovered ? "white" : color, display: "flex" }}>{icon}</span>
+      {label}
+    </motion.div>
+  )
+}
+
+export default function App() {
+  const [activeFilter, setActiveFilter] = useState("Todos")
+
+  const heroBadges = [
+    { label: "Eventos verificados", color: "#34d399", border: "#059669", iconType: "verificado" },
+    { label: "Reembolso garantizado", color: "#60a5fa", border: "#2563eb", iconType: "reembolso" },
+    { label: "Boletos instantáneos", color: "#a78bfa", border: "#7c3aed", iconType: "boleto" },
+  ]
+
+  const howItWorks = [
+    { color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.1)", bgHover: "rgba(124,58,237,0.22)", border: "rgba(124,58,237,0.2)", borderHover: "rgba(124,58,237,0.55)", title: "Encuentra tu evento", desc: "Explora eventos verificados. Filtra por categoría, fecha o ubicación.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
+    { color: "#60a5fa", glow: "#2563eb", bg: "rgba(37,99,235,0.1)", bgHover: "rgba(37,99,235,0.22)", border: "rgba(37,99,235,0.2)", borderHover: "rgba(37,99,235,0.55)", title: "Compra tu boleto", desc: "Compra segura con reembolso garantizado. Boletos instantáneos o por solicitud.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+    { color: "#34d399", glow: "#059669", bg: "rgba(5,150,105,0.1)", bgHover: "rgba(5,150,105,0.22)", border: "rgba(5,150,105,0.2)", borderHover: "rgba(5,150,105,0.55)", title: "Vive la experiencia", desc: "Presenta tu boleto digital y disfruta. Simple, rápido y seguro.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+  ]
+
+  const ctaBadges = [
+    { label: "Gestión en tiempo real", color: "#a78bfa", border: "#7c3aed", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+    { label: "Contratos protegidos", color: "#60a5fa", border: "#2563eb", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { label: "Verificación de anfitriones", color: "#34d399", border: "#059669", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+  ]
+
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: "hidden" }}>
+
+      {/* NAVBAR */}
+      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
+            <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
+        </div>
+        <div style={{ display: "flex", gap: "36px", alignItems: "center" }}>
+          {["Explorar", "Crear Evento", "Mis Boletos"].map(item => (
+            <motion.a key={item} href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>{item}</motion.a>
+          ))}
+          <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)", backgroundColor: "rgba(255,255,255,0.07)" }} whileTap={{ scale: 0.97 }}
+            style={{ backgroundColor: "transparent", color: "white", border: "1.5px solid rgba(255,255,255,0.22)", padding: "9px 22px", borderRadius: "10px", fontWeight: 600, fontSize: "15px", cursor: "pointer", fontFamily: "inherit" }}
+          >Iniciar sesión</motion.button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section style={{ padding: "110px 64px 90px", textAlign: "center", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
+        <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+          style={{ fontSize: "clamp(3rem, 6vw, 5.2rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-2px", margin: "0 0 20px", position: "relative" }}
+        >
+          Descubre eventos<br />
+          <span style={{ background: "linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>cerca de ti</span>
+        </motion.h1>
+        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
+          style={{ color: "rgba(255,255,255,0.45)", fontSize: "1.1rem", margin: "0 0 36px", lineHeight: 1.7, fontWeight: 400 }}
+        >Conecta con experiencias únicas. Encuentra fiestas, conciertos, talleres y más.</motion.p>
+
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
+          style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "52px", flexWrap: "wrap" }}
+        >
+          {heroBadges.map(b => (
+            <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={<BadgeIcon type={b.iconType} />} />
+          ))}
+        </motion.div>
+
+        {/* SEARCH BAR */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+          style={{ display: "flex", maxWidth: "860px", margin: "0 auto", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 0 48px rgba(124,58,237,0.07)" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", flex: 1, padding: "0 20px", gap: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(24px)" }}>
+            <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit", fontWeight: 400 }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(24px)", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "175px", justifyContent: "center" }}>
+            <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Querétaro Centro</span>
+            <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(24px)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "165px", justifyContent: "center" }}>
+            <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Cualquier fecha</span>
+            <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <motion.button whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", boxShadow: "inset 0 0 20px rgba(255,255,255,0.08)", minWidth: "110px" }}
+          >Buscar</motion.button>
+        </motion.div>
+      </section>
+
+      {/* CATEGORIES */}
+      <section style={{ padding: "56px 64px 64px", maxWidth: "1360px", margin: "0 auto" }}>
+        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+          style={{ fontSize: "1.7rem", fontWeight: 700, marginBottom: "28px", letterSpacing: "-0.3px" }}
+        >Explorar categorías</motion.h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
+          {categories.map((cat, i) => (
+            <motion.div key={cat.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+              <CategoryCard cat={cat} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* EVENTS */}
+      <section style={{ padding: "0 64px 80px", maxWidth: "1360px", margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+            style={{ fontSize: "1.7rem", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}
+          >Eventos destacados</motion.h2>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {["Todos", "Estudiantes", "Verificados"].map(f => (
+              <motion.button key={f} onClick={() => setActiveFilter(f)} whileTap={{ scale: 0.95 }}
+                style={{ padding: "9px 20px", borderRadius: "10px", cursor: "pointer", border: `1px solid ${activeFilter === f ? "rgba(124,58,237,0.65)" : "rgba(255,255,255,0.1)"}`, background: activeFilter === f ? "rgba(124,58,237,0.22)" : "transparent", color: activeFilter === f ? "white" : "rgba(255,255,255,0.45)", fontSize: "14px", fontWeight: activeFilter === f ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s" }}
+              >{f}</motion.button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
+          {events.map((ev, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+              <EventCard ev={ev} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ padding: "80px 64px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          style={{ textAlign: "center", fontSize: "2.1rem", fontWeight: 700, marginBottom: "68px", letterSpacing: "-0.5px" }}
+        >
+          Cómo funciona{" "}
+          <span style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>VELA</span>
+        </motion.h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "48px", maxWidth: "960px", margin: "0 auto" }}>
+          {howItWorks.map((step, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}>
+              <HowItWorksCard step={step} />
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOST CTA */}
+      <section style={{ padding: "56px 64px 80px" }}>
+        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          style={{ maxWidth: "1230px", margin: "0 auto", background: "linear-gradient(135deg, #0d0b2e 0%, #120f3a 50%, #0d0b2e 100%)", border: "1px solid rgba(124,58,237,0.18)", borderRadius: "28px", padding: "72px 64px", textAlign: "center", position: "relative", overflow: "hidden" }}
+        >
+          <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "600px", height: "320px", background: "radial-gradient(ellipse, rgba(124,58,237,0.14) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <h2 style={{ fontSize: "2.1rem", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.5px", position: "relative" }}>¿Quieres organizar un evento?</h2>
+          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "36px", maxWidth: "560px", margin: "0 auto 36px", fontSize: "16px", fontWeight: 400 }}>
+            Crea eventos públicos o privados. Gestiona boletos, cupos y pagos desde una sola plataforma.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "40px", flexWrap: "wrap", position: "relative" }}>
+            {ctaBadges.map(b => (
+              <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} />
+            ))}
+          </div>
+          <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }}
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}
+          >Conviértete en anfitrión</motion.button>
+        </motion.div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.05)", padding: "56px 64px 48px" }}>
+        <div style={{ maxWidth: "1230px", margin: "0 auto", display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: "48px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px rgba(124,58,237,0.4)" }}>
+                <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
+            </div>
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "14px", lineHeight: 1.7, maxWidth: "210px", fontWeight: 400 }}>Conectando a la comunidad a través de experiencias únicas.</p>
+          </div>
+          {[
+            { title: "Para asistentes", links: ["Explorar eventos", "Descuentos estudiantes", "Mis boletos", "Reembolsos"] },
+            { title: "Para anfitriones", links: ["Crear evento", "Verificación", "Planes y precios", "Políticas de seguridad"] },
+            { title: "Empresa", links: ["Acerca de VELA", "Términos de uso", "Privacidad", "Contacto"] },
+          ].map(col => (
+            <div key={col.title}>
+              <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "16px", color: "rgba(255,255,255,0.8)" }}>{col.title}</div>
+              {col.links.map(link => (
+                <motion.a key={link} href="#" whileHover={{ color: "rgba(255,255,255,0.75)" }}
+                  style={{ display: "block", marginBottom: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "14px", fontWeight: 400 }}
+                >{link}</motion.a>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div style={{ maxWidth: "1230px", margin: "40px auto 0", borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: "28px", color: "rgba(255,255,255,0.2)", fontSize: "13.5px", fontWeight: 400 }}>
+          © 2025 VELA · Todos los derechos reservados
+        </div>
+      </footer>
+    </div>
+  )
+}
