@@ -1,5 +1,9 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { Routes, Route, useNavigate, Link } from "react-router-dom"
 import { motion } from "framer-motion"
+import { supabase } from "./supabase"
+import Login from "./pages/Login"
+import Registro from "./pages/Registro"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -48,44 +52,17 @@ function CategoryCard({ cat }) {
       whileHover={{ y: -6, scale: 1.03 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
       style={{
-        borderRadius: "18px",
-        padding: "36px 28px",
-        cursor: "pointer",
-        background: hovered
-          ? `linear-gradient(135deg, ${cat.bg}, rgba(0,0,0,0.4))`
-          : "rgba(255,255,255,0.03)",
+        borderRadius: "18px", padding: "36px 28px", cursor: "pointer",
+        background: hovered ? `linear-gradient(135deg, ${cat.bg}, rgba(0,0,0,0.4))` : "rgba(255,255,255,0.03)",
         border: `1px solid ${hovered ? cat.border : "rgba(255,255,255,0.07)"}`,
-        boxShadow: hovered
-          ? `0 0 0 1px ${cat.glow}40, 0 0 40px ${cat.glow}50, 0 0 80px ${cat.glow}25, inset 0 0 40px ${cat.glow}10`
-          : "none",
+        boxShadow: hovered ? `0 0 0 1px ${cat.glow}40, 0 0 40px ${cat.glow}50, 0 0 80px ${cat.glow}25, inset 0 0 40px ${cat.glow}10` : "none",
         transition: "background 0.3s, border 0.3s, box-shadow 0.3s",
-        position: "relative",
-        overflow: "hidden",
+        position: "relative", overflow: "hidden",
       }}
     >
-      {hovered && (
-        <div style={{
-          position: "absolute", inset: 0, borderRadius: "18px",
-          background: `radial-gradient(circle at 30% 30%, ${cat.glow}20 0%, transparent 60%)`,
-          pointerEvents: "none"
-        }} />
-      )}
-      <div style={{
-        color: cat.color,
-        marginBottom: "20px",
-        filter: hovered ? `drop-shadow(0 0 8px ${cat.glow}90)` : "none",
-        transition: "filter 0.3s",
-        position: "relative"
-      }}>
-        {categoryIcons[cat.name]}
-      </div>
-      <div style={{
-        fontWeight: 600, fontSize: "17px", marginBottom: "6px",
-        color: hovered ? cat.color : "white",
-        textShadow: hovered ? `0 0 20px ${cat.glow}80` : "none",
-        transition: "color 0.3s, text-shadow 0.3s",
-        position: "relative"
-      }}>{cat.name}</div>
+      {hovered && <div style={{ position: "absolute", inset: 0, borderRadius: "18px", background: `radial-gradient(circle at 30% 30%, ${cat.glow}20 0%, transparent 60%)`, pointerEvents: "none" }} />}
+      <div style={{ color: cat.color, marginBottom: "20px", filter: hovered ? `drop-shadow(0 0 8px ${cat.glow}90)` : "none", transition: "filter 0.3s", position: "relative" }}>{categoryIcons[cat.name]}</div>
+      <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "6px", color: hovered ? cat.color : "white", textShadow: hovered ? `0 0 20px ${cat.glow}80` : "none", transition: "color 0.3s, text-shadow 0.3s", position: "relative" }}>{cat.name}</div>
       <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontWeight: 400, position: "relative" }}>{cat.count} eventos</div>
     </motion.div>
   )
@@ -101,29 +78,13 @@ function EventCard({ ev }) {
       onHoverEnd={() => setHovered(false)}
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      style={{
-        borderRadius: "20px", overflow: "hidden", cursor: "pointer",
-        background: "#0f0f11",
-        border: `1px solid ${hovered ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)"}`,
-        boxShadow: hovered ? "0 24px 48px rgba(0,0,0,0.6)" : "none",
-        transition: "border 0.2s, box-shadow 0.2s",
-      }}
+      style={{ borderRadius: "20px", overflow: "hidden", cursor: "pointer", background: "#0f0f11", border: `1px solid ${hovered ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)"}`, boxShadow: hovered ? "0 24px 48px rgba(0,0,0,0.6)" : "none", transition: "border 0.2s, box-shadow 0.2s" }}
     >
       <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
-        <motion.img src={ev.img} alt={ev.title}
-          animate={{ scale: hovered ? 1.07 : 1 }}
-          transition={{ duration: 0.4 }}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+        <motion.img src={ev.img} alt={ev.title} animate={{ scale: hovered ? 1.07 : 1 }} transition={{ duration: 0.4 }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 100%)" }} />
         <span style={{ position: "absolute", top: "14px", left: "14px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "5px 14px", fontSize: "12.5px", fontWeight: 600 }}>{ev.category}</span>
-        <span style={{
-          position: "absolute", top: "14px", right: "14px",
-          background: ev.type === "Instantáneo" ? "rgba(124,58,237,0.7)" : "rgba(37,99,235,0.7)",
-          backdropFilter: "blur(12px)",
-          border: `1px solid ${ev.type === "Instantáneo" ? "rgba(167,139,250,0.35)" : "rgba(96,165,250,0.35)"}`,
-          borderRadius: "999px", padding: "5px 14px", fontSize: "12.5px", fontWeight: 600
-        }}>{ev.type === "Instantáneo" ? "⚡ " : "📋 "}{ev.type}</span>
+        <span style={{ position: "absolute", top: "14px", right: "14px", background: ev.type === "Instantáneo" ? "rgba(124,58,237,0.7)" : "rgba(37,99,235,0.7)", backdropFilter: "blur(12px)", border: `1px solid ${ev.type === "Instantáneo" ? "rgba(167,139,250,0.35)" : "rgba(96,165,250,0.35)"}`, borderRadius: "999px", padding: "5px 14px", fontSize: "12.5px", fontWeight: 600 }}>{ev.type === "Instantáneo" ? "⚡ " : "📋 "}{ev.type}</span>
       </div>
       <div style={{ padding: "22px 24px" }}>
         <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "4px", letterSpacing: "-0.3px" }}>{ev.title}</div>
@@ -146,12 +107,7 @@ function EventCard({ ev }) {
           </div>
         </div>
         <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "999px", height: "3px", marginBottom: "18px", overflow: "hidden" }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "3px", borderRadius: "999px" }}
-          />
+          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.2 }} style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "3px", borderRadius: "999px" }} />
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
@@ -159,13 +115,7 @@ function EventCard({ ev }) {
             <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            style={{
-              background: hovered ? "rgba(124,58,237,0.22)" : "rgba(255,255,255,0.05)",
-              border: `1px solid ${hovered ? "rgba(167,139,250,0.45)" : "rgba(255,255,255,0.1)"}`,
-              borderRadius: "10px", color: hovered ? "#c4b5fd" : "rgba(255,255,255,0.7)",
-              padding: "10px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer",
-              transition: "all 0.2s", fontFamily: "inherit"
-            }}
+            style={{ background: hovered ? "rgba(124,58,237,0.22)" : "rgba(255,255,255,0.05)", border: `1px solid ${hovered ? "rgba(167,139,250,0.45)" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", color: hovered ? "#c4b5fd" : "rgba(255,255,255,0.7)", padding: "10px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" }}
           >Ver detalles</motion.button>
         </div>
       </div>
@@ -176,15 +126,8 @@ function EventCard({ ev }) {
 function HowItWorksCard({ step }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)}
-      whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 280, damping: 20 }}
-      style={{ textAlign: "center", cursor: "default" }}
-    >
-      <motion.div animate={{
-        background: hovered ? step.bgHover : step.bg,
-        borderColor: hovered ? step.borderHover : step.border,
-        boxShadow: hovered ? `0 0 28px ${step.glow}50, 0 0 60px ${step.glow}20` : "none",
-      }} transition={{ duration: 0.25 }}
+    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)} whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 280, damping: 20 }} style={{ textAlign: "center", cursor: "default" }}>
+      <motion.div animate={{ background: hovered ? step.bgHover : step.bg, borderColor: hovered ? step.borderHover : step.border, boxShadow: hovered ? `0 0 28px ${step.glow}50, 0 0 60px ${step.glow}20` : "none" }} transition={{ duration: 0.25 }}
         style={{ width: "76px", height: "76px", borderRadius: "22px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: step.color, border: `1px solid ${step.border}` }}
       >
         <div style={{ filter: hovered ? `drop-shadow(0 0 8px ${step.glow}90)` : "none", transition: "filter 0.3s" }}>{step.svg}</div>
@@ -198,19 +141,8 @@ function HowItWorksCard({ step }) {
 function FeatureBadge({ label, color, border, icon }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)}
-      whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.97 }}
-      style={{
-        display: "flex", alignItems: "center", gap: "8px",
-        border: `1px solid ${hovered ? border : border + "70"}`,
-        borderRadius: "999px", padding: "9px 20px",
-        fontSize: "13.5px", fontWeight: 500,
-        color: hovered ? "white" : color,
-        background: hovered ? `${border}28` : `${border}10`,
-        cursor: "default",
-        transition: "all 0.2s",
-        boxShadow: hovered ? `0 0 16px ${border}35` : "none",
-      }}
+    <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)} whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.97 }}
+      style={{ display: "flex", alignItems: "center", gap: "8px", border: `1px solid ${hovered ? border : border + "70"}`, borderRadius: "999px", padding: "9px 20px", fontSize: "13.5px", fontWeight: 500, color: hovered ? "white" : color, background: hovered ? `${border}28` : `${border}10`, cursor: "default", transition: "all 0.2s", boxShadow: hovered ? `0 0 16px ${border}35` : "none" }}
     >
       <span style={{ color: hovered ? "white" : color, display: "flex" }}>{icon}</span>
       {label}
@@ -218,8 +150,9 @@ function FeatureBadge({ label, color, border, icon }) {
   )
 }
 
-export default function App() {
+function HomePage({ user, onLogout }) {
   const [activeFilter, setActiveFilter] = useState("Todos")
+  const navigate = useNavigate()
 
   const heroBadges = [
     { label: "Eventos verificados", color: "#34d399", border: "#059669", iconType: "verificado" },
@@ -254,17 +187,25 @@ export default function App() {
           {["Explorar", "Crear Evento", "Mis Boletos"].map(item => (
             <motion.a key={item} href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>{item}</motion.a>
           ))}
-          <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)", backgroundColor: "rgba(255,255,255,0.07)" }} whileTap={{ scale: 0.97 }}
-            style={{ backgroundColor: "transparent", color: "white", border: "1.5px solid rgba(255,255,255,0.22)", padding: "9px 22px", borderRadius: "10px", fontWeight: 600, fontSize: "15px", cursor: "pointer", fontFamily: "inherit" }}
-          >Iniciar sesión</motion.button>
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}</span>
+              <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)" }} whileTap={{ scale: 0.97 }} onClick={onLogout}
+                style={{ backgroundColor: "transparent", color: "rgba(255,255,255,0.6)", border: "1.5px solid rgba(255,255,255,0.15)", padding: "8px 18px", borderRadius: "10px", fontWeight: 500, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
+              >Salir</motion.button>
+            </div>
+          ) : (
+            <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)", backgroundColor: "rgba(255,255,255,0.07)" }} whileTap={{ scale: 0.97 }} onClick={() => navigate("/login")}
+              style={{ backgroundColor: "transparent", color: "white", border: "1.5px solid rgba(255,255,255,0.22)", padding: "9px 22px", borderRadius: "10px", fontWeight: 600, fontSize: "15px", cursor: "pointer", fontFamily: "inherit" }}
+            >Iniciar sesión</motion.button>
+          )}
         </div>
       </nav>
 
       {/* HERO */}
       <section style={{ padding: "110px 64px 90px", textAlign: "center", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
         <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+        <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           style={{ fontSize: "clamp(3rem, 6vw, 5.2rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-2px", margin: "0 0 20px", position: "relative" }}
         >
           Descubre eventos<br />
@@ -273,44 +214,37 @@ export default function App() {
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
           style={{ color: "rgba(255,255,255,0.45)", fontSize: "1.1rem", margin: "0 0 36px", lineHeight: 1.7, fontWeight: 400 }}
         >Conecta con experiencias únicas. Encuentra fiestas, conciertos, talleres y más.</motion.p>
-
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
           style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "52px", flexWrap: "wrap" }}
         >
-          {heroBadges.map(b => (
-            <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={<BadgeIcon type={b.iconType} />} />
-          ))}
+          {heroBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={<BadgeIcon type={b.iconType} />} />)}
         </motion.div>
-
-        {/* SEARCH BAR */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
-          style={{ display: "flex", maxWidth: "860px", margin: "0 auto", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 0 48px rgba(124,58,237,0.07)" }}
+          style={{ display: "flex", maxWidth: "860px", margin: "0 auto", borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}
         >
           <div style={{ display: "flex", alignItems: "center", flex: 1, padding: "0 20px", gap: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(24px)" }}>
             <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit", fontWeight: 400 }} />
+            <input placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit" }} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(24px)", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "175px", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "175px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Querétaro Centro</span>
             <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(24px)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "165px", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "165px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Cualquier fecha</span>
             <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <motion.button whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
-            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", boxShadow: "inset 0 0 20px rgba(255,255,255,0.08)", minWidth: "110px" }}
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", minWidth: "110px" }}
           >Buscar</motion.button>
         </motion.div>
       </section>
 
       {/* CATEGORIES */}
       <section style={{ padding: "56px 64px 64px", maxWidth: "1360px", margin: "0 auto" }}>
-        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-          style={{ fontSize: "1.7rem", fontWeight: 700, marginBottom: "28px", letterSpacing: "-0.3px" }}
-        >Explorar categorías</motion.h2>
+        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, marginBottom: "28px", letterSpacing: "-0.3px" }}>Explorar categorías</motion.h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
           {categories.map((cat, i) => (
             <motion.div key={cat.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
@@ -323,9 +257,7 @@ export default function App() {
       {/* EVENTS */}
       <section style={{ padding: "0 64px 80px", maxWidth: "1360px", margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-            style={{ fontSize: "1.7rem", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}
-          >Eventos destacados</motion.h2>
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>Eventos destacados</motion.h2>
           <div style={{ display: "flex", gap: "8px" }}>
             {["Todos", "Estudiantes", "Verificados"].map(f => (
               <motion.button key={f} onClick={() => setActiveFilter(f)} whileTap={{ scale: 0.95 }}
@@ -345,11 +277,8 @@ export default function App() {
 
       {/* HOW IT WORKS */}
       <section style={{ padding: "80px 64px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-          style={{ textAlign: "center", fontSize: "2.1rem", fontWeight: 700, marginBottom: "68px", letterSpacing: "-0.5px" }}
-        >
-          Cómo funciona{" "}
-          <span style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>VELA</span>
+        <motion.h2 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", fontSize: "2.1rem", fontWeight: 700, marginBottom: "68px", letterSpacing: "-0.5px" }}>
+          Cómo funciona{" "}<span style={{ background: "linear-gradient(135deg, #a78bfa, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>VELA</span>
         </motion.h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "48px", maxWidth: "960px", margin: "0 auto" }}>
           {howItWorks.map((step, i) => (
@@ -367,13 +296,9 @@ export default function App() {
         >
           <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "600px", height: "320px", background: "radial-gradient(ellipse, rgba(124,58,237,0.14) 0%, transparent 70%)", pointerEvents: "none" }} />
           <h2 style={{ fontSize: "2.1rem", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.5px", position: "relative" }}>¿Quieres organizar un evento?</h2>
-          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "36px", maxWidth: "560px", margin: "0 auto 36px", fontSize: "16px", fontWeight: 400 }}>
-            Crea eventos públicos o privados. Gestiona boletos, cupos y pagos desde una sola plataforma.
-          </p>
+          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "36px", maxWidth: "560px", margin: "0 auto 36px", fontSize: "16px", fontWeight: 400 }}>Crea eventos públicos o privados. Gestiona boletos, cupos y pagos desde una sola plataforma.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "40px", flexWrap: "wrap", position: "relative" }}>
-            {ctaBadges.map(b => (
-              <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} />
-            ))}
+            {ctaBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} />)}
           </div>
           <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }}
             style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}
@@ -401,9 +326,7 @@ export default function App() {
             <div key={col.title}>
               <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "16px", color: "rgba(255,255,255,0.8)" }}>{col.title}</div>
               {col.links.map(link => (
-                <motion.a key={link} href="#" whileHover={{ color: "rgba(255,255,255,0.75)" }}
-                  style={{ display: "block", marginBottom: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "14px", fontWeight: 400 }}
-                >{link}</motion.a>
+                <motion.a key={link} href="#" whileHover={{ color: "rgba(255,255,255,0.75)" }} style={{ display: "block", marginBottom: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "14px", fontWeight: 400 }}>{link}</motion.a>
               ))}
             </div>
           ))}
@@ -413,5 +336,31 @@ export default function App() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function App() {
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/registro" element={<Registro />} />
+    </Routes>
   )
 }
