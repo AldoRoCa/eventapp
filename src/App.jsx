@@ -9,6 +9,7 @@ import CrearEvento from "./pages/CrearEvento"
 import MisBoletos from "./pages/MisBoletos"
 import Explorar from "./pages/Explorar"
 import SerAnfitrion from "./pages/SerAnfitrion"
+import PanelAnfitrion from "./pages/PanelAnfitrion"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -170,7 +171,8 @@ function HomePage({ user, onLogout }) {
       let query = supabase
         .from("eventos")
         .select("*, profiles(nombre)")
-        .order("fecha", { ascending: true })
+        .gte("fecha", new Date().toISOString())
+.order("fecha", { ascending: true })
       if (categoriaActiva) query = query.eq("categoria", categoriaActiva)
       const { data, error } = await query
       if (!error && data) setEventos(data)
@@ -214,7 +216,9 @@ function HomePage({ user, onLogout }) {
           <motion.span onClick={() => navigate("/mis-boletos")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Mis Boletos</motion.span>
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}</span>
+              <motion.span onClick={() => navigate("/panel")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", cursor: "pointer" }}>
+  Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}
+</motion.span>
               <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)" }} whileTap={{ scale: 0.97 }} onClick={onLogout}
                 style={{ backgroundColor: "transparent", color: "rgba(255,255,255,0.6)", border: "1.5px solid rgba(255,255,255,0.15)", padding: "8px 18px", borderRadius: "10px", fontWeight: 500, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
               >Salir</motion.button>
@@ -306,7 +310,7 @@ function HomePage({ user, onLogout }) {
             price: ev.precio,
             type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
             img: ev.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80"
-          })) : (categoriaActiva ? [] : events)).map((ev, i) => (
+          })) : []).map((ev, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
               <EventCard ev={ev} />
             </motion.div>
@@ -403,6 +407,7 @@ export default function App() {
       <Route path="/mis-boletos" element={<MisBoletos />} />
       <Route path="/explorar" element={<Explorar />} />
       <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
+      <Route path="/panel" element={<PanelAnfitrion />} />
     </Routes>
   )
 }

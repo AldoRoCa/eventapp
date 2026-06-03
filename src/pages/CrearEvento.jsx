@@ -44,7 +44,7 @@ export default function CrearEvento() {
       return
     }
 
-    const fechaCompleta = `${form.fecha}T${form.hora}:00`
+    const fechaCompleta = new Date(`${form.fecha}T${form.hora}:00`).toISOString()
 
     const { error } = await supabase.from("eventos").insert({
       titulo: form.titulo,
