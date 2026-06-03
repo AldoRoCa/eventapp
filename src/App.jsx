@@ -46,12 +46,13 @@ const BadgeIcon = ({ type }) => {
   return null
 }
 
-function CategoryCard({ cat }) {
+function CategoryCard({ cat, activa, onClick }) {
   const [hovered, setHovered] = useState(false)
   return (
     <motion.div
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
+      onClick={onClick}
       whileHover={{ y: -6, scale: 1.03 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
       style={{
@@ -158,19 +159,23 @@ function HomePage({ user, onLogout }) {
   const [activeFilter, setActiveFilter] = useState("Todos")
   const [eventos, setEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(true)
+  const [categoriaActiva, setCategoriaActiva] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     const cargarEventos = async () => {
-      const { data, error } = await supabase
+      setLoadingEventos(true)
+      let query = supabase
         .from("eventos")
         .select("*, profiles(nombre)")
         .order("fecha", { ascending: true })
+      if (categoriaActiva) query = query.eq("categoria", categoriaActiva)
+      const { data, error } = await query
       if (!error && data) setEventos(data)
       setLoadingEventos(false)
     }
     cargarEventos()
-  }, [])
+  }, [categoriaActiva])
 
   const heroBadges = [
     { label: "Eventos verificados", color: "#34d399", border: "#059669", iconType: "verificado" },
@@ -262,11 +267,11 @@ function HomePage({ user, onLogout }) {
 
       {/* CATEGORIES */}
       <section style={{ padding: "56px 64px 64px", maxWidth: "1360px", margin: "0 auto" }}>
-        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, marginBottom: "28px", letterSpacing: "-0.3px" }}>Explorar categorías</motion.h2>
+        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, marginBottom: "28px", letterSpacing: "-0.3px" }}>Explorar categorías {categoriaActiva && <span style={{ fontSize: "1rem", fontWeight: 500, color: "#a78bfa" }}>· {categoriaActiva}</span>}</motion.h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
           {categories.map((cat, i) => (
             <motion.div key={cat.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
-              <CategoryCard cat={cat} />
+              <CategoryCard cat={cat} activa={categoriaActiva === cat.name} onClick={() => setCategoriaActiva(categoriaActiva === cat.name ? null : cat.name)} />
             </motion.div>
           ))}
         </div>
@@ -275,7 +280,7 @@ function HomePage({ user, onLogout }) {
       {/* EVENTS */}
       <section style={{ padding: "0 64px 80px", maxWidth: "1360px", margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px" }}>
-          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>Eventos destacados</motion.h2>
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} style={{ fontSize: "1.7rem", fontWeight: 700, margin: 0, letterSpacing: "-0.3px" }}>{categoriaActiva ? `Eventos · ${categoriaActiva}` : "Eventos destacados"}</motion.h2>
           <div style={{ display: "flex", gap: "8px" }}>
             {["Todos", "Estudiantes", "Verificados"].map(f => (
               <motion.button key={f} onClick={() => setActiveFilter(f)} whileTap={{ scale: 0.95 }}
@@ -299,7 +304,7 @@ function HomePage({ user, onLogout }) {
             price: ev.precio,
             type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
             img: ev.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80"
-          })) : events).map((ev, i) => (
+          })) : (categoriaActiva ? [] : events)).map((ev, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
               <EventCard ev={ev} />
             </motion.div>
