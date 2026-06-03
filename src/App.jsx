@@ -7,6 +7,7 @@ import Registro from "./pages/Registro"
 import Evento from "./pages/Evento"
 import CrearEvento from "./pages/CrearEvento"
 import MisBoletos from "./pages/MisBoletos"
+import Explorar from "./pages/Explorar"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -207,7 +208,7 @@ function HomePage({ user, onLogout }) {
           <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
         </div>
         <div style={{ display: "flex", gap: "36px", alignItems: "center" }}>
-          <motion.a href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>Explorar</motion.a>
+          <motion.span onClick={() => navigate("/explorar")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Explorar</motion.span>
           <motion.span onClick={() => navigate("/crear-evento")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Crear Evento</motion.span>
           <motion.span onClick={() => navigate("/mis-boletos")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Mis Boletos</motion.span>
           {user ? (
@@ -401,6 +402,7 @@ export default function App() {
       <Route path="/crear-evento" element={<CrearEvento />} />
       <Route path="/evento/:id" element={<Evento />} />
       <Route path="/mis-boletos" element={<MisBoletos />} />
+      <Route path="/explorar" element={<Explorar />} />
     </Routes>
   )
 }
