@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { supabase } from "./supabase"
 import Login from "./pages/Login"
 import Registro from "./pages/Registro"
+import CrearEvento from "./pages/CrearEvento"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -152,6 +153,20 @@ function FeatureBadge({ label, color, border, icon }) {
 
 function HomePage({ user, onLogout }) {
   const [activeFilter, setActiveFilter] = useState("Todos")
+  const [eventos, setEventos] = useState([])
+  const [loadingEventos, setLoadingEventos] = useState(true)
+
+  useEffect(() => {
+    const cargarEventos = async () => {
+      const { data, error } = await supabase
+        .from("eventos")
+        .select("*, profiles(nombre)")
+        .order("fecha", { ascending: true })
+      if (!error) setEventos(data)
+      setLoadingEventos(false)
+    }
+    cargarEventos()
+  }, [])
   const navigate = useNavigate()
 
   const heroBadges = [
@@ -184,9 +199,9 @@ function HomePage({ user, onLogout }) {
           <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
         </div>
         <div style={{ display: "flex", gap: "36px", alignItems: "center" }}>
-          {["Explorar", "Crear Evento", "Mis Boletos"].map(item => (
-            <motion.a key={item} href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>{item}</motion.a>
-          ))}
+          <motion.a href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>Explorar</motion.a>
+<motion.span onClick={() => navigate("/crear-evento")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Crear Evento</motion.span>
+<motion.a href="#" whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", fontSize: "15px", fontWeight: 500 }}>Mis Boletos</motion.a>
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}</span>
@@ -267,7 +282,18 @@ function HomePage({ user, onLogout }) {
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "18px" }}>
-          {events.map((ev, i) => (
+          {(eventos.length > 0 ? eventos.map(ev => ({
+  title: ev.titulo,
+  host: "@" + (ev.profiles?.nombre?.split(" ")[0]?.toLowerCase() || "anfitrion"),
+  category: ev.categoria,
+  date: new Date(ev.fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+  location: ev.ubicacion,
+  attendees: 0,
+  capacity: ev.capacidad,
+  price: ev.precio,
+  type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
+  img: ev.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80"
+})) : events).map((ev, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
               <EventCard ev={ev} />
             </motion.div>
@@ -361,6 +387,7 @@ export default function App() {
       <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
+      <Route path="/crear-evento" element={<CrearEvento />} />
     </Routes>
   )
 }
