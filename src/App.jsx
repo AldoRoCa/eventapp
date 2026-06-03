@@ -8,6 +8,7 @@ import Evento from "./pages/Evento"
 import CrearEvento from "./pages/CrearEvento"
 import MisBoletos from "./pages/MisBoletos"
 import Explorar from "./pages/Explorar"
+import SerAnfitrion from "./pages/SerAnfitrion"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -338,9 +339,7 @@ function HomePage({ user, onLogout }) {
           <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "40px", flexWrap: "wrap", position: "relative" }}>
             {ctaBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} />)}
           </div>
-          <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }}
-            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}
-          >Conviértete en anfitrión</motion.button>
+          <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }} onClick={() => navigate("/ser-anfitrion")} style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}>Conviértete en anfitrión</motion.button>
         </motion.div>
       </section>
 
@@ -403,6 +402,7 @@ export default function App() {
       <Route path="/evento/:id" element={<Evento />} />
       <Route path="/mis-boletos" element={<MisBoletos />} />
       <Route path="/explorar" element={<Explorar />} />
+      <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
     </Routes>
   )
 }
