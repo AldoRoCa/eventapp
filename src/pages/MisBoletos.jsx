@@ -19,11 +19,16 @@ export default function MisBoletos() {
         .from("boletos")
         .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre))")
         .eq("usuario_id", user.id)
-        .eq("estado", "activo")
+        .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
 
-      setBoletos(data || [])
+      const boletosData = data || []
+      setBoletos(boletosData)
       setLoading(false)
+      const tienePendientes = boletosData.some(b => b.estado === "pendiente")
+      if (tienePendientes) {
+        setTimeout(() => window.location.reload(), 10000)
+      }
     }
     cargar()
   }, [])
@@ -116,9 +121,9 @@ export default function MisBoletos() {
                         {ev?.precio > 0 && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>MXN</div>}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "999px", padding: "5px 12px" }}>
-                          <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
-                          <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Activo</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", background: boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : "rgba(16,185,129,0.1)", border: `1px solid ${boleto.estado === "pendiente" ? "rgba(245,158,11,0.25)" : "rgba(16,185,129,0.25)"}`, borderRadius: "999px", padding: "5px 12px" }}>
+                          <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: boleto.estado === "pendiente" ? "#f59e0b" : "#34d399" }} />
+                          <span style={{ fontSize: "12px", color: boleto.estado === "pendiente" ? "#f59e0b" : "#34d399", fontWeight: 600 }}>{boleto.estado === "pendiente" ? "Pendiente" : "Activo"}</span>
                         </div>
                         <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 500 }}>Ver evento →</Link>
                       </div>

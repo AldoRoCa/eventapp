@@ -12,6 +12,7 @@ export default function Evento() {
   const [comprando, setComprando] = useState(false)
   const [tieneBoleto, setTieneBoleto] = useState(false)
   const [exito, setExito] = useState(false)
+  const [estadoBoleto, setEstadoBoleto] = useState("activo")
   const [asistentes, setAsistentes] = useState(0)
 
   useEffect(() => {
@@ -51,15 +52,17 @@ export default function Evento() {
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     setComprando(true)
+    const estadoBoleto = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
     const { error } = await supabase.from("boletos").insert({
       evento_id: id,
       usuario_id: user.id,
-      estado: "activo"
+      estado: estadoBoleto
     })
     if (!error) {
       setTieneBoleto(true)
-      setAsistentes(a => a + 1)
+      if (estadoBoleto === "activo") setAsistentes(a => a + 1)
       setExito(true)
+      setEstadoBoleto(estadoBoleto)
     }
     setComprando(false)
   }
@@ -183,15 +186,15 @@ export default function Evento() {
 
             {exito && (
               <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#34d399", fontSize: "13.5px", textAlign: "center" }}>
-                ✓ ¡Boleto obtenido exitosamente!
+                {estadoBoleto === "activo" ? "✓ ¡Boleto obtenido exitosamente!" : "⏳ Solicitud enviada, espera la aprobación del anfitrión"}
               </div>
             )}
 
             {tieneBoleto ? (
               <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                <div style={{ fontSize: "20px", marginBottom: "6px" }}>🎟️</div>
-                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>Ya tienes tu boleto</div>
-                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Revísalo en Mis Boletos</div>
+                <div style={{ fontSize: "20px", marginBottom: "6px" }}>{estadoBoleto === "pendiente" ? "⏳" : "🎟️"}</div>
+                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>{estadoBoleto === "pendiente" ? "Solicitud enviada" : "Ya tienes tu boleto"}</div>
+                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>{estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalo en Mis Boletos"}</div>
               </div>
             ) : (
               <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}

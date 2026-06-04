@@ -26,7 +26,8 @@ export default function CrearEvento() {
   
   const [error, setError] = useState("")
   const [exito, setExito] = useState(false)
-
+const [imagenFile, setImagenFile] = useState(null)
+  const [imagenPreview, setImagenPreview] = useState(null)
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
@@ -42,6 +43,16 @@ export default function CrearEvento() {
 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }))
+  }
+  const handleImagen = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) {
+      setError("La imagen no puede pesar más de 8MB")
+      return
+    }
+    setImagenFile(file)
+    setImagenPreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async () => {
@@ -62,6 +73,17 @@ export default function CrearEvento() {
 
     const fechaCompleta = new Date(`${form.fecha}T${form.hora}:00`).toISOString()
 
+    let imagenUrl = form.imagen_url || null
+    if (imagenFile) {
+      const ext = imagenFile.name.split(".").pop()
+      const nombreArchivo = `${user.id}-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from("event-images").upload(nombreArchivo, imagenFile)
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from("event-images").getPublicUrl(nombreArchivo)
+        imagenUrl = publicUrl
+      }
+    }
+
     const { error } = await supabase.from("eventos").insert({
       titulo: form.titulo,
       descripcion: form.descripcion,
@@ -71,7 +93,7 @@ export default function CrearEvento() {
       capacidad: parseInt(form.capacidad),
       precio: parseInt(form.precio) || 0,
       tipo_boleto: form.tipo_boleto,
-      imagen_url: form.imagen_url || null,
+      imagen_url: imagenUrl,
       anfitrion_id: user.id,
     })
 
@@ -221,9 +243,31 @@ export default function CrearEvento() {
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "28px", marginBottom: "32px" }}>
             <h2 style={{ fontSize: "15px", fontWeight: 600, marginBottom: "24px", color: "rgba(255,255,255,0.8)" }}>Imagen del evento</h2>
             <div>
-              <label style={labelStyle}>URL de imagen (opcional)</label>
-              <input value={form.imagen_url} onChange={e => handleChange("imagen_url", e.target.value)} placeholder="https://..." style={inputStyle} />
-              <p style={{ marginTop: "8px", fontSize: "12.5px", color: "rgba(255,255,255,0.3)", fontWeight: 400 }}>Pega el link de una imagen de internet. Próximamente podrás subir imágenes directamente.</p>
+              <label style={labelStyle}>Imagen del evento (opcional)</label>
+              <label style={{ display: "block", cursor: "pointer", marginBottom: "12px" }}>
+                <input type="file" accept="image/*" onChange={handleImagen} style={{ display: "none" }} />
+                {imagenPreview ? (
+                  <div style={{ position: "relative", borderRadius: "12px", overflow: "hidden", border: "1px solid rgba(124,58,237,0.4)" }}>
+                    <img src={imagenPreview} alt="preview" style={{ width: "100%", maxHeight: "200px", objectFit: "cover" }} />
+                    <div style={{ position: "absolute", bottom: "12px", right: "12px", background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", borderRadius: "8px", padding: "6px 12px", fontSize: "12px", color: "white" }}>Cambiar imagen</div>
+                  </div>
+                ) : (
+                  <div style={{ border: "2px dashed rgba(255,255,255,0.1)", borderRadius: "12px", padding: "32px 24px", textAlign: "center" }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(124,58,237,0.5)"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"}
+                  >
+                    <div style={{ fontSize: "28px", marginBottom: "10px" }}>🖼️</div>
+                    <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "4px" }}>Subir imagen</div>
+                    <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>JPG, PNG o WEBP · Máximo 8MB</div>
+                  </div>
+                )}
+              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.08)" }} />
+                <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "12px" }}>o pega un link</span>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.08)" }} />
+              </div>
+              <input value={form.imagen_url} onChange={e => handleChange("imagen_url", e.target.value)} placeholder="https://..." style={{ ...inputStyle, marginTop: "12px" }} />
             </div>
           </div>
 

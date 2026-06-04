@@ -11,6 +11,9 @@ export default function PanelAnfitrion() {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("eventos")
+  const [solicitudes, setSolicitudes] = useState([])
+  const [loadingSolicitudes, setLoadingSolicitudes] = useState(false)
+  const [procesando, setProcesando] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [asistentes, setAsistentes] = useState([])
   const [loadingAsistentes, setLoadingAsistentes] = useState(false)
@@ -64,6 +67,33 @@ export default function PanelAnfitrion() {
       .eq("estado", "activo")
     setAsistentes(data || [])
     setLoadingAsistentes(false)
+  }
+  const verSolicitudes = async () => {
+    setLoadingSolicitudes(true)
+    setTab("solicitudes")
+    const eventosIds = eventos.map(e => e.id)
+    if (eventosIds.length === 0) { setSolicitudes([]); setLoadingSolicitudes(false); return }
+    const { data } = await supabase
+      .from("boletos")
+      .select("*, eventos(titulo, fecha), profiles(nombre, email, avatar_url)")
+      .in("evento_id", eventosIds)
+      .eq("estado", "pendiente")
+    setSolicitudes(data || [])
+    setLoadingSolicitudes(false)
+  }
+
+  const aprobarSolicitud = async (boletoId) => {
+    setProcesando(boletoId)
+    await supabase.from("boletos").update({ estado: "activo" }).eq("id", boletoId)
+    setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
+    setProcesando(null)
+  }
+
+  const rechazarSolicitud = async (boletoId) => {
+    setProcesando(boletoId)
+    await supabase.from("boletos").update({ estado: "rechazado" }).eq("id", boletoId)
+    setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
+    setProcesando(null)
   }
 
   const cancelarEvento = async (eventoId) => {
@@ -226,8 +256,9 @@ export default function PanelAnfitrion() {
           {[
             { id: "eventos", label: "Mis eventos" },
             { id: "asistentes", label: eventoSeleccionado ? `Asistentes · ${eventoSeleccionado.titulo}` : "Asistentes" },
+            { id: "solicitudes", label: "Solicitudes pendientes" },
           ].map(t => (
-            <motion.button key={t.id} onClick={() => setTab(t.id)} whileTap={{ scale: 0.97 }}
+            <motion.button key={t.id} onClick={() => { setTab(t.id); if (t.id === "solicitudes") verSolicitudes() }} whileTap={{ scale: 0.97 }}
               style={{ padding: "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s", maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
             >{t.label}</motion.button>
           ))}
@@ -287,7 +318,44 @@ export default function PanelAnfitrion() {
             )}
           </div>
         )}
-
+{/* SOLICITUDES */}
+        {tab === "solicitudes" && (
+          <div>
+            {loadingSolicitudes ? (
+              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.35)" }}>Cargando solicitudes...</div>
+            ) : solicitudes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
+                <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay solicitudes pendientes</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando alguien solicite un boleto aparecerá aquí</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {solicitudes.map((sol, i) => (
+                  <motion.div key={sol.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                    style={{ background: "#0f0f11", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}
+                  >
+                    <div style={{ width: "40px", height: "40px", borderRadius: "999px", overflow: "hidden", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
+                      {sol.profiles?.avatar_url ? <img src={sol.profiles.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : sol.profiles?.nombre?.charAt(0) || "U"}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: "14px" }}>{sol.profiles?.nombre || "Usuario"}</div>
+                      <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>{sol.eventos?.titulo} · {sol.profiles?.email}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <motion.button onClick={() => aprobarSolicitud(sol.id)} whileTap={{ scale: 0.97 }} disabled={procesando === sol.id}
+                        style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "8px", color: "#34d399", padding: "8px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                      >{procesando === sol.id ? "..." : "✓ Aprobar"}</motion.button>
+                      <motion.button onClick={() => rechazarSolicitud(sol.id)} whileTap={{ scale: 0.97 }} disabled={procesando === sol.id}
+                        style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", color: "#f87171", padding: "8px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                      >✕ Rechazar</motion.button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {/* ASISTENTES */}
         {tab === "asistentes" && (
           <div>
