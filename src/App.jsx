@@ -161,7 +161,9 @@ function FeatureBadge({ label, color, border, icon }) {
 
 function HomePage({ user, onLogout }) {
   const [busquedaHero, setBusquedaHero] = useState("")
-   const [activeFilter, setActiveFilter] = useState("Todos")
+  const [activeFilter, setActiveFilter] = useState("Todos")
+  const [estadoHero, setEstadoHero] = useState("")
+  const [fechaHero, setFechaHero] = useState("")
   const [eventos, setEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(true)
   const [categoriaActiva, setCategoriaActiva] = useState(null)
@@ -255,21 +257,35 @@ function HomePage({ user, onLogout }) {
         >
           <div style={{ display: "flex", alignItems: "center", flex: 1, padding: "0 20px", gap: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(24px)" }}>
             <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input value={busquedaHero} onChange={e => setBusquedaHero(e.target.value)} onKeyDown={e => e.key === "Enter" && busquedaHero && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}`)} placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit" }} />
+            <input value={busquedaHero} onChange={e => setBusquedaHero(e.target.value)} onKeyDown={e => e.key === "Enter" && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)} placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit" }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "175px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Querétaro Centro</span>
+            <select value={estadoHero} onChange={e => setEstadoHero(e.target.value)}
+              style={{ background: "transparent", border: "none", outline: "none", color: estadoHero ? "white" : "rgba(255,255,255,0.6)", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", width: "140px" }}
+            >
+              <option value="" style={{ background: "#111" }}>Todo México</option>
+              {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
+                <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
+              ))}
+            </select>
             <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "165px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap", fontWeight: 500 }}>Cualquier fecha</span>
-            <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            <select value={fechaHero} onChange={e => setFechaHero(e.target.value)}
+              style={{ background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.6)", fontSize: "14px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", width: "140px" }}
+            >
+              <option value="" style={{ background: "#111" }}>Cualquier fecha</option>
+              <option value="hoy" style={{ background: "#111" }}>Hoy</option>
+              <option value="finde" style={{ background: "#111" }}>Este fin de semana</option>
+              <option value="semana" style={{ background: "#111" }}>Esta semana</option>
+              <option value="mes" style={{ background: "#111" }}>Este mes</option>
+            </select>
           </div>
           <motion.button whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
             style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", minWidth: "110px" }}
-          onClick={() => busquedaHero && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}`)}
+          onClick={() => navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)}
           >Buscar</motion.button>
         </motion.div>
       </section>

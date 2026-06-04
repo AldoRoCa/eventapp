@@ -117,6 +117,7 @@ export default function PanelAnfitrion() {
       titulo: evento.titulo,
       descripcion: evento.descripcion || "",
       ubicacion: evento.ubicacion,
+      estado_evento: evento.estado_evento || "",
       capacidad: evento.capacidad,
       precio: evento.precio,
       fecha: evento.fecha ? evento.fecha.split("T")[0] : "",
@@ -133,6 +134,7 @@ export default function PanelAnfitrion() {
         titulo: formEditar.titulo,
         descripcion: formEditar.descripcion,
         ubicacion: formEditar.ubicacion,
+        estado_evento: formEditar.estado_evento || null,
         capacidad: parseInt(formEditar.capacidad),
         precio: parseInt(formEditar.precio) || 0,
         fecha: fechaCompleta,
@@ -438,9 +440,18 @@ export default function PanelAnfitrion() {
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Ubicación</label>
-                  <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
-                </div>
+                    <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Ubicación</label>
+                    <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Estado</label>
+                    <select value={formEditar.estado_evento || ""} onChange={e => setFormEditar(f => ({ ...f, estado_evento: e.target.value }))} style={{ ...inputStyle, cursor: "pointer" }}>
+                      <option value="" style={{ background: "#111" }}>Selecciona un estado</option>
+                      {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
+                        <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
+                      ))}
+                    </select>
+                  </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Capacidad</label>

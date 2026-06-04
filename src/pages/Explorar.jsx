@@ -12,10 +12,16 @@ export default function Explorar() {
   const location = useLocation()
   const [categoria, setCategoria] = useState("Todas")
   const [orden, setOrden] = useState("fecha")
+  const [fechaFiltro, setFechaFiltro] = useState("")
+  const [estadoFiltro, setEstadoFiltro] = useState("")
 useEffect(() => {
     const params = new URLSearchParams(location.search)
     const q = params.get("q")
+    const estado = params.get("estado")
+    const fecha = params.get("fecha")
     if (q) setBusqueda(q)
+    if (estado) setEstadoFiltro(estado)
+    if (fecha) setFechaFiltro(fecha)
   }, [location.search])
   useEffect(() => {
     const cargar = async () => {
@@ -34,11 +40,23 @@ useEffect(() => {
     cargar()
   }, [categoria, orden])
 
-  const eventosFiltrados = eventos.filter(ev =>
-    ev.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-    ev.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    ev.categoria?.toLowerCase().includes(busqueda.toLowerCase())
-  )
+  const eventosFiltrados = eventos.filter(ev => {
+    const textoOk = !busqueda || ev.titulo.toLowerCase().includes(busqueda.toLowerCase()) || ev.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) || ev.categoria?.toLowerCase().includes(busqueda.toLowerCase())
+    const estadoOk = !estadoFiltro || ev.estado_evento === estadoFiltro
+    const fecha = new Date(ev.fecha)
+    const hoy = new Date()
+    hoy.setHours(0,0,0,0)
+    const manana = new Date(hoy); manana.setDate(hoy.getDate() + 1)
+    const finDeSemana = new Date(hoy); finDeSemana.setDate(hoy.getDate() + (7 - hoy.getDay()))
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0)
+    const finSemana = new Date(hoy); finSemana.setDate(hoy.getDate() + 7)
+    let fechaOk = true
+    if (fechaFiltro === "hoy") fechaOk = fecha >= hoy && fecha < manana
+    if (fechaFiltro === "finde") fechaOk = fecha >= hoy && fecha <= finDeSemana
+    if (fechaFiltro === "semana") fechaOk = fecha >= hoy && fecha <= finSemana
+    if (fechaFiltro === "mes") fechaOk = fecha >= hoy && fecha <= finMes
+    return textoOk && estadoOk && fechaOk
+  })
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>

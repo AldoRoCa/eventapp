@@ -35,6 +35,7 @@ const [imagenFile, setImagenFile] = useState(null)
     fecha: "",
     hora: "",
     ubicacion: "",
+    estado_evento: "",
     capacidad: "",
     precio: "",
     tipo_boleto: "instantaneo",
@@ -90,6 +91,7 @@ const [imagenFile, setImagenFile] = useState(null)
       categoria: form.categoria,
       fecha: fechaCompleta,
       ubicacion: form.ubicacion,
+      estado_evento: form.estado_evento || null,
       capacidad: parseInt(form.capacidad),
       precio: parseInt(form.precio) || 0,
       tipo_boleto: form.tipo_boleto,
@@ -200,9 +202,20 @@ const [imagenFile, setImagenFile] = useState(null)
               </div>
             </div>
 
-            <div>
-              <label style={labelStyle}>Ubicación *</label>
-              <input value={form.ubicacion} onChange={e => handleChange("ubicacion", e.target.value)} placeholder="Ej. Club Aurora, Juriquilla, Querétaro" style={inputStyle} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div>
+                <label style={labelStyle}>Ubicación *</label>
+                <input value={form.ubicacion} onChange={e => handleChange("ubicacion", e.target.value)} placeholder="Ej. Club Aurora, Juriquilla" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Estado *</label>
+                <select value={form.estado_evento} onChange={e => handleChange("estado_evento", e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+                  <option value="" style={{ background: "#111" }}>Selecciona un estado</option>
+                  {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
+                    <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
