@@ -11,6 +11,7 @@ import Explorar from "./pages/Explorar"
 import SerAnfitrion from "./pages/SerAnfitrion"
 import PanelAnfitrion from "./pages/PanelAnfitrion"
 import Perfil from "./pages/Perfil"
+import Admin from "./pages/Admin"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -34,14 +35,7 @@ const categoryIcons = {
   "Gaming": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
 }
 
-const events = [
-  { title: "Noche de Electrónica", host: "@colectivouteq", category: "Música", date: "Vie 15 Jun · 22:00", location: "Club Aurora, Juriquilla", attendees: 187, capacity: 200, price: 250, type: "Instantáneo", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80" },
-  { title: "Festival de Ingenierías", host: "@fes.ingenieria", category: "Universitario", date: "Mié 20 Jun · 18:00", location: "Centro Universitario UAQ", attendees: 142, capacity: 300, price: 180, type: "Instantáneo", img: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" },
-  { title: "Indie Night Rooftop", host: "@tec.cultural", category: "Música", date: "Vie 22 Jun · 21:00", location: "Terraza Tec QRO", attendees: 95, capacity: 150, price: 320, type: "Solicitud", img: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80" },
-  { title: "Expo Auto Clásicos", host: "@qro.cars", category: "Autos", date: "Sáb 23 Jun · 10:00", location: "Centro de Convenciones", attendees: 234, capacity: 500, price: 150, type: "Instantáneo", img: "https://images.unsplash.com/photo-1594502184342-2e12f877aa73?w=600&q=80" },
-  { title: "Círculo de Lectura Sci-Fi", host: "@booklovers.qro", category: "Cultura", date: "Dom 24 Jun · 17:00", location: "Biblioteca UP", attendees: 28, capacity: 40, price: 80, type: "Solicitud", img: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80" },
-  { title: "Torneo FIFA 26", host: "@esports.unaq", category: "Gaming", date: "Sáb 29 Jun · 14:00", location: "Campus UNAQ", attendees: 58, capacity: 64, price: 120, type: "Instantáneo", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80" },
-]
+
 
 const BadgeIcon = ({ type }) => {
   if (type === "verificado") return <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -167,7 +161,17 @@ function HomePage({ user, onLogout }) {
   const [eventos, setEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(true)
   const [categoriaActiva, setCategoriaActiva] = useState(null)
+  const [esAnfitrion, setEsAnfitrion] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const cargarPerfil = async () => {
+      if (!user) return
+      const { data } = await supabase.from("profiles").select("tipo, estado_anfitrion").eq("id", user.id).single()
+      if (data && data.tipo === "anfitrion" && data.estado_anfitrion === "aprobado") setEsAnfitrion(true)
+    }
+    cargarPerfil()
+  }, [user])
 
   useEffect(() => {
     const cargarEventos = async () => {
@@ -269,8 +273,7 @@ function HomePage({ user, onLogout }) {
                 <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
               ))}
             </select>
-            <svg width="12" height="12" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
+            </div>
           <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "165px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <select value={fechaHero} onChange={e => setFechaHero(e.target.value)}
@@ -357,12 +360,12 @@ function HomePage({ user, onLogout }) {
           style={{ maxWidth: "1230px", margin: "0 auto", background: "linear-gradient(135deg, #0d0b2e 0%, #120f3a 50%, #0d0b2e 100%)", border: "1px solid rgba(124,58,237,0.18)", borderRadius: "28px", padding: "72px 64px", textAlign: "center", position: "relative", overflow: "hidden" }}
         >
           <div style={{ position: "absolute", top: "-80px", left: "50%", transform: "translateX(-50%)", width: "600px", height: "320px", background: "radial-gradient(ellipse, rgba(124,58,237,0.14) 0%, transparent 70%)", pointerEvents: "none" }} />
-          <h2 style={{ fontSize: "2.1rem", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.5px", position: "relative" }}>¿Quieres organizar un evento?</h2>
-          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "36px", maxWidth: "560px", margin: "0 auto 36px", fontSize: "16px", fontWeight: 400 }}>Crea eventos públicos o privados. Gestiona boletos, cupos y pagos desde una sola plataforma.</p>
+          <h2 style={{ fontSize: "2.1rem", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.5px", position: "relative" }}>{esAnfitrion ? "Ya eres anfitrión en VELA 🎉" : "¿Quieres organizar un evento?"}</h2>
+          <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "36px", maxWidth: "560px", margin: "0 auto 36px", fontSize: "16px", fontWeight: 400 }}>{esAnfitrion ? "Crea tu próximo evento, revisa tus asistentes y gestiona solicitudes desde tu panel." : "Crea eventos públicos o privados. Gestiona boletos, cupos y pagos desde una sola plataforma."}</p>
           <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "40px", flexWrap: "wrap", position: "relative" }}>
             {ctaBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} />)}
           </div>
-          <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }} onClick={() => navigate("/ser-anfitrion")} style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}>Conviértete en anfitrión</motion.button>
+          <motion.button whileHover={{ boxShadow: "0 0 36px rgba(124,58,237,0.6)", opacity: 0.92 }} whileTap={{ scale: 0.97 }} onClick={() => navigate(esAnfitrion ? "/panel" : "/ser-anfitrion")} style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px 40px", fontWeight: 600, fontSize: "16px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 24px rgba(124,58,237,0.35)", position: "relative" }}>{esAnfitrion ? "Ir a mi panel" : "Conviértete en anfitrión"}</motion.button>
         </motion.div>
       </section>
 
@@ -428,6 +431,7 @@ export default function App() {
       <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
       <Route path="/panel" element={<PanelAnfitrion />} />
       <Route path="/perfil" element={<Perfil />} />
+      <Route path="/admin" element={<Admin />} />
     </Routes>
   )
 }

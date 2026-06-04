@@ -13,8 +13,8 @@ export default function CrearEvento() {
     const verificar = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { navigate("/login"); return }
-      const { data: perfil } = await supabase.from("profiles").select("tipo").eq("id", user.id).single()
-      if (!perfil || perfil.tipo !== "anfitrion") { navigate("/ser-anfitrion"); return }
+      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion").eq("id", user.id).single()
+      if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setVerificando(false)
     }
     verificar()

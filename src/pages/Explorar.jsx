@@ -41,18 +41,25 @@ useEffect(() => {
   }, [categoria, orden])
 
   const eventosFiltrados = eventos.filter(ev => {
+    const ahora = new Date()
+    const inicioEvento = new Date(ev.fecha)
+    const limiteVisible = new Date(inicioEvento.getTime() + 5 * 60 * 60 * 1000)
+    if (ahora > limiteVisible) return false
     const textoOk = !busqueda || ev.titulo.toLowerCase().includes(busqueda.toLowerCase()) || ev.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) || ev.categoria?.toLowerCase().includes(busqueda.toLowerCase())
-    const estadoOk = !estadoFiltro || ev.estado_evento === estadoFiltro
+    const normalizar = str => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""
+    const estadoOk = !estadoFiltro || normalizar(ev.estado_evento).includes(normalizar(estadoFiltro))
     const fecha = new Date(ev.fecha)
     const hoy = new Date()
     hoy.setHours(0,0,0,0)
     const manana = new Date(hoy); manana.setDate(hoy.getDate() + 1)
-    const finDeSemana = new Date(hoy); finDeSemana.setDate(hoy.getDate() + (7 - hoy.getDay()))
-    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0)
+    const diasHastaViernes = (5 - hoy.getDay() + 7) % 7 || 7
+    const inicioFinde = new Date(hoy); inicioFinde.setDate(hoy.getDate() + (hoy.getDay() >= 5 ? 0 : diasHastaViernes))
+    const finFinde = new Date(inicioFinde); finFinde.setDate(inicioFinde.getDate() + (7 - inicioFinde.getDay()) % 7 + 1)
     const finSemana = new Date(hoy); finSemana.setDate(hoy.getDate() + 7)
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0)
     let fechaOk = true
     if (fechaFiltro === "hoy") fechaOk = fecha >= hoy && fecha < manana
-    if (fechaFiltro === "finde") fechaOk = fecha >= hoy && fecha <= finDeSemana
+    if (fechaFiltro === "finde") fechaOk = fecha >= inicioFinde && fecha <= finFinde
     if (fechaFiltro === "semana") fechaOk = fecha >= hoy && fecha <= finSemana
     if (fechaFiltro === "mes") fechaOk = fecha >= hoy && fecha <= finMes
     return textoOk && estadoOk && fechaOk

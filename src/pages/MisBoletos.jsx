@@ -25,10 +25,7 @@ export default function MisBoletos() {
       const boletosData = data || []
       setBoletos(boletosData)
       setLoading(false)
-      const tienePendientes = boletosData.some(b => b.estado === "pendiente")
-      if (tienePendientes) {
-        setTimeout(() => window.location.reload(), 10000)
-      }
+      
     }
     cargar()
   }, [])
@@ -64,6 +61,12 @@ export default function MisBoletos() {
             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "15px", fontWeight: 400 }}>
               {boletos.length === 0 ? "No tienes boletos todavía." : `Tienes ${boletos.length} boleto${boletos.length > 1 ? "s" : ""} activo${boletos.length > 1 ? "s" : ""}.`}
             </p>
+            {boletos.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "10px", padding: "10px 16px" }}>
+                <svg width="14" height="14" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Los boletos se eliminan automáticamente 30 días después del evento. Te recomendamos tomar captura de pantalla como comprobante.</span>
+              </div>
+            )}
           </div>
 
           {boletos.length === 0 ? (

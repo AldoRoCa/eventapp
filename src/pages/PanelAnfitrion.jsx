@@ -476,7 +476,7 @@ export default function PanelAnfitrion() {
           </motion.div>
         )}
       </AnimatePresence>
-<AvatarModal src={perfil?.avatar_url} nombre={perfil?.nombre} size={0} editable={false} onUpload={null} />
+
 {modalAvatar && (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
     onClick={() => setModalAvatar(false)}

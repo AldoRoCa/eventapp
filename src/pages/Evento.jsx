@@ -37,11 +37,14 @@ export default function Evento() {
       if (user) {
         const { data: boleto } = await supabase
           .from("boletos")
-          .select("id")
+          .select("id, estado")
           .eq("evento_id", id)
           .eq("usuario_id", user.id)
           .single()
-        setTieneBoleto(!!boleto)
+        if (boleto) {
+          setTieneBoleto(true)
+          setEstadoBoleto(boleto.estado)
+        }
       }
 
       setLoading(false)
