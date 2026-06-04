@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 
 const categorias = ["Todas", "Fiestas", "Universitarios", "Cultura", "Autos", "Belleza", "Tecnología", "Gastronomía", "Gaming", "Música", "Deportes", "Arte", "Negocios"]
 
@@ -9,9 +9,14 @@ export default function Explorar() {
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState("")
+  const location = useLocation()
   const [categoria, setCategoria] = useState("Todas")
   const [orden, setOrden] = useState("fecha")
-
+useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const q = params.get("q")
+    if (q) setBusqueda(q)
+  }, [location.search])
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)

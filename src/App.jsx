@@ -160,7 +160,8 @@ function FeatureBadge({ label, color, border, icon }) {
 }
 
 function HomePage({ user, onLogout }) {
-  const [activeFilter, setActiveFilter] = useState("Todos")
+  const [busquedaHero, setBusquedaHero] = useState("")
+   const [activeFilter, setActiveFilter] = useState("Todos")
   const [eventos, setEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(true)
   const [categoriaActiva, setCategoriaActiva] = useState(null)
@@ -254,7 +255,7 @@ function HomePage({ user, onLogout }) {
         >
           <div style={{ display: "flex", alignItems: "center", flex: 1, padding: "0 20px", gap: "12px", background: "rgba(255,255,255,0.04)", backdropFilter: "blur(24px)" }}>
             <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit" }} />
+            <input value={busquedaHero} onChange={e => setBusquedaHero(e.target.value)} onKeyDown={e => e.key === "Enter" && busquedaHero && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}`)} placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "16px 0", fontFamily: "inherit" }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", padding: "0 20px", gap: "9px", cursor: "pointer", background: "rgba(255,255,255,0.03)", borderLeft: "1px solid rgba(255,255,255,0.08)", borderRight: "1px solid rgba(255,255,255,0.08)", minWidth: "175px", justifyContent: "center" }}>
             <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -268,6 +269,7 @@ function HomePage({ user, onLogout }) {
           </div>
           <motion.button whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
             style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", minWidth: "110px" }}
+          onClick={() => busquedaHero && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}`)}
           >Buscar</motion.button>
         </motion.div>
       </section>
