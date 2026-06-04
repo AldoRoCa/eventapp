@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
@@ -7,7 +7,23 @@ const categorias = ["Fiestas", "Universitarios", "Cultura", "Autos", "Belleza", 
 
 export default function CrearEvento() {
   const navigate = useNavigate()
+  const [verificando, setVerificando] = useState(true)
+
+  useEffect(() => {
+    const verificar = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { navigate("/login"); return }
+      const { data: perfil } = await supabase.from("profiles").select("tipo").eq("id", user.id).single()
+      if (!perfil || perfil.tipo !== "anfitrion") { navigate("/ser-anfitrion"); return }
+      setVerificando(false)
+    }
+    verificar()
+  }, [])
+
+  
+
   const [loading, setLoading] = useState(false)
+  
   const [error, setError] = useState("")
   const [exito, setExito] = useState(false)
 
@@ -80,6 +96,8 @@ export default function CrearEvento() {
     display: "block", fontSize: "13.5px", fontWeight: 500,
     color: "rgba(255,255,255,0.6)", marginBottom: "8px"
   }
+
+  if (verificando) return <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Verificando acceso...</div>
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
+import AvatarModal from "../AvatarModal"
 
 export default function PanelAnfitrion() {
   const navigate = useNavigate()
@@ -20,6 +21,7 @@ export default function PanelAnfitrion() {
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState("")
   const avatarRef = useRef(null)
+  const [modalAvatar, setModalAvatar] = useState(false)
 
   useEffect(() => {
     const cargar = async () => {
@@ -33,7 +35,7 @@ export default function PanelAnfitrion() {
         .eq("id", user.id)
         .single()
 
-      if (!perfil || perfil.tipo !== "anfitrion") {
+      if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") {
         navigate("/ser-anfitrion")
         return
       }
@@ -122,11 +124,13 @@ export default function PanelAnfitrion() {
     if (file.size > 5 * 1024 * 1024) { setMensaje("La imagen no puede pesar más de 5MB"); return }
     setSubiendoAvatar(true)
     const ext = file.name.split(".").pop()
-    const nombre = `${user.id}-avatar.${ext}`
-    await supabase.storage.from("avatars").upload(nombre, file, { upsert: true })
+    const nombre = `${user.id}-${Date.now()}.${ext}`
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(nombre, file)
+    if (uploadError) { setMensaje("Error al subir la imagen."); setSubiendoAvatar(false); return }
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombre)
+    const urlConCache = `${publicUrl}?t=${Date.now()}`
     await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id)
-    setPerfil(prev => ({ ...prev, avatar_url: publicUrl }))
+    setPerfil(prev => ({ ...prev, avatar_url: urlConCache }))
     setSubiendoAvatar(false)
     setMensaje("Foto de perfil actualizada.")
     setTimeout(() => setMensaje(""), 3000)
@@ -178,7 +182,7 @@ export default function PanelAnfitrion() {
           <div style={{ position: "relative", flexShrink: 0 }}>
             <div style={{ width: "88px", height: "88px", borderRadius: "999px", overflow: "hidden", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: 700, boxShadow: "0 0 24px rgba(124,58,237,0.4)" }}>
               {perfil?.avatar_url ? (
-                <img src={perfil.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={perfil.avatar_url} alt="avatar" onClick={() => setModalAvatar(true)} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
               ) : (
                 perfil?.nombre?.charAt(0) || "A"
               )}
@@ -393,7 +397,20 @@ export default function PanelAnfitrion() {
           </motion.div>
         )}
       </AnimatePresence>
-
+<AvatarModal src={perfil?.avatar_url} nombre={perfil?.nombre} size={0} editable={false} onUpload={null} />
+{modalAvatar && (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+    onClick={() => setModalAvatar(false)}
+    style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+  >
+    <motion.div initial={{ scale: 0.85 }} animate={{ scale: 1 }} onClick={e => e.stopPropagation()}
+      style={{ maxWidth: "400px", width: "100%" }}
+    >
+      <img src={perfil?.avatar_url} alt={perfil?.nombre} style={{ width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }} />
+      <div style={{ textAlign: "center", marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "15px" }}>{perfil?.nombre}</div>
+    </motion.div>
+  </motion.div>
+)}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )

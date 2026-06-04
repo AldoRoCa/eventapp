@@ -10,6 +10,7 @@ import MisBoletos from "./pages/MisBoletos"
 import Explorar from "./pages/Explorar"
 import SerAnfitrion from "./pages/SerAnfitrion"
 import PanelAnfitrion from "./pages/PanelAnfitrion"
+import Perfil from "./pages/Perfil"
 
 const categories = [
   { name: "Fiestas", count: 24, color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.18)", border: "rgba(124,58,237,0.45)" },
@@ -216,7 +217,7 @@ function HomePage({ user, onLogout }) {
           <motion.span onClick={() => navigate("/mis-boletos")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", fontWeight: 500, cursor: "pointer" }}>Mis Boletos</motion.span>
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <motion.span onClick={() => navigate("/panel")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", cursor: "pointer" }}>
+              <motion.span onClick={() => navigate("/perfil")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", cursor: "pointer" }}>
   Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}
 </motion.span>
               <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)" }} whileTap={{ scale: 0.97 }} onClick={onLogout}
@@ -408,6 +409,7 @@ export default function App() {
       <Route path="/explorar" element={<Explorar />} />
       <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
       <Route path="/panel" element={<PanelAnfitrion />} />
+      <Route path="/perfil" element={<Perfil />} />
     </Routes>
   )
 }

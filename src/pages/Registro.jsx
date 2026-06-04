@@ -8,9 +8,17 @@ export default function Registro() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
   const [error, setError] = useState("")
   const navigate = useNavigate()
-
+const handleAvatar = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setError("La imagen no puede pesar más de 5MB"); return }
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
   const handleRegistro = async () => {
     setLoading(true)
     setError("")
@@ -32,6 +40,15 @@ export default function Registro() {
     if (error) {
       setError("Error al crear la cuenta. Intenta con otro correo.")
     } else {
+      if (avatarFile && data.user) {
+        const ext = avatarFile.name.split(".").pop()
+        const nombreArchivo = `${data.user.id}-${Date.now()}.${ext}`
+        const { error: uploadError } = await supabase.storage.from("avatars").upload(nombreArchivo, avatarFile)
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombreArchivo)
+          await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", data.user.id)
+        }
+      }
       navigate("/")
     }
     setLoading(false)
@@ -96,7 +113,25 @@ export default function Registro() {
             style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "12px 16px", color: "white", fontSize: "14px", fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
           />
         </div>
-
+<div style={{ marginBottom: "24px" }}>
+          <label style={{ display: "block", fontSize: "13.5px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "8px" }}>Foto de perfil (opcional)</label>
+          <label style={{ cursor: "pointer", display: "block" }}>
+            <input type="file" accept="image/*" onChange={handleAvatar} style={{ display: "none" }} />
+            {avatarPreview ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <img src={avatarPreview} alt="preview" style={{ width: "56px", height: "56px", borderRadius: "999px", objectFit: "cover", border: "2px solid rgba(124,58,237,0.5)" }} />
+                <span style={{ color: "#a78bfa", fontSize: "13.5px", fontWeight: 500 }}>Cambiar foto</span>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.15)", borderRadius: "10px", padding: "12px 16px" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "999px", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="16" height="16" fill="none" stroke="#a78bfa" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "13.5px" }}>Subir foto de perfil</span>
+              </div>
+            )}
+          </label>
+        </div>
         <motion.button
           onClick={handleRegistro}
           whileHover={{ opacity: 0.9 }}
