@@ -55,19 +55,84 @@ export default function Evento() {
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     setComprando(true)
-    const estadoBoleto = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
-    const { error } = await supabase.from("boletos").insert({
+
+    if (evento.tipo_boleto === "solicitud") {
+      const { error } = await supabase.from("boletos").insert({
+        evento_id: id,
+        usuario_id: user.id,
+        estado: "pendiente"
+      })
+      if (!error) {
+        setTieneBoleto(true)
+        setExito(true)
+        setEstadoBoleto("pendiente")
+      }
+      setComprando(false)
+      return
+    }
+
+    if (evento.precio === 0) {
+      const { error } = await supabase.from("boletos").insert({
+        evento_id: id,
+        usuario_id: user.id,
+        estado: "activo"
+      })
+      if (!error) {
+        setTieneBoleto(true)
+        setAsistentes(a => a + 1)
+        setExito(true)
+        setEstadoBoleto("activo")
+      }
+      setComprando(false)
+      return
+    }
+
+    // Evento de pago — crear boleto pendiente_pago y redirigir a MP
+    const { error: boletoError } = await supabase.from("boletos").insert({
       evento_id: id,
       usuario_id: user.id,
-      estado: estadoBoleto
+      estado: "pendiente_pago"
     })
-    if (!error) {
-      setTieneBoleto(true)
-      if (estadoBoleto === "activo") setAsistentes(a => a + 1)
-      setExito(true)
-      setEstadoBoleto(estadoBoleto)
+    if (boletoError) { setComprando(false); return }
+
+    // Obtener token MP del anfitrión
+    const { data: anfitrion } = await supabase
+      .from("profiles")
+      .select("mp_access_token")
+      .eq("id", evento.anfitrion_id)
+      .single()
+
+    if (!anfitrion?.mp_access_token) {
+      alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago.")
+      setComprando(false)
+      return
     }
-    setComprando(false)
+
+    // Crear preferencia de pago
+    const { data: { session } } = await supabase.auth.getSession()
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-preferencia`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        evento_id: id,
+        titulo: evento.titulo,
+        precio: evento.precio,
+        cantidad: 1,
+        anfitrion_mp_token: anfitrion.mp_access_token,
+        comprador_email: user.email,
+      })
+    })
+
+    const preferencia = await response.json()
+    if (preferencia.init_point) {
+      window.location.href = preferencia.init_point
+    } else {
+      alert("Error al procesar el pago. Intenta de nuevo.")
+      setComprando(false)
+    }
   }
 
   if (loading) return (
