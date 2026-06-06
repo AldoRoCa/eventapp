@@ -262,7 +262,7 @@ export default function PanelAnfitrion() {
                 const clientId = import.meta.env.VITE_MP_CLIENT_ID
                 const redirectUri = encodeURIComponent(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mp-oauth`)
                 const state = user.id
-                window.location.href = `https://auth.mercadopago.com.mx/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${state}&redirect_uri=${redirectUri}`
+                window.location.href = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${state}&redirect_uri=${redirectUri}`
               }} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
                 style={{ background: "rgba(255,214,0,0.15)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: "8px", color: "#ffd600", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
               >⚡ Conectar Mercado Pago</motion.button>
