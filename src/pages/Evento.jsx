@@ -22,11 +22,11 @@ export default function Evento() {
 
       const { data: ev } = await supabase
         .from("eventos")
-        .select("*, profiles(nombre), max_boletos_por_persona")
+        .select("*, profiles(nombre)")
         .eq("id", id)
         .single()
       setEvento(ev)
-      console.log("anfitrion_id:", ev?.anfitrion_id)
+      console.log("anfitrion_id:", ev?.anfitrion_id, "max_boletos:", ev?.max_boletos_por_persona)
 
       const { count } = await supabase
         .from("boletos")
