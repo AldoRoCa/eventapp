@@ -87,30 +87,21 @@ export default function Evento() {
       return
     }
 
-    // Evento de pago — crear boleto pendiente_pago y redirigir a MP
-    const { error: boletoError } = await supabase.from("boletos").insert({
-      evento_id: id,
-      usuario_id: user.id,
-      estado: "pendiente_pago"
-    })
-    if (boletoError) { setComprando(false); return }
-
-    // Obtener token MP del anfitrión
+    // Evento de pago — redirigir a Stripe
     const { data: anfitrion } = await supabase
       .from("profiles")
-      .select("mp_access_token")
+      .select("stripe_account_id")
       .eq("id", evento.anfitrion_id)
       .single()
 
-    if (!anfitrion?.mp_access_token) {
-      alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago.")
+    if (!anfitrion?.stripe_account_id) {
+      alert("El anfitrión aún no ha conectado su cuenta de pagos.")
       setComprando(false)
       return
     }
 
-    // Crear preferencia de pago
     const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-preferencia`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-stripe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -120,15 +111,14 @@ export default function Evento() {
         evento_id: id,
         titulo: evento.titulo,
         precio: evento.precio,
-        cantidad: 1,
-        anfitrion_mp_token: anfitrion.mp_access_token,
-        comprador_email: user.email,
+        usuario_id: user.id,
+        anfitrion_stripe_id: anfitrion.stripe_account_id,
       })
     })
 
-    const preferencia = await response.json()
-    if (preferencia.init_point) {
-      window.location.href = preferencia.init_point
+    const data = await response.json()
+    if (data.url) {
+      window.location.href = data.url
     } else {
       alert("Error al procesar el pago. Intenta de nuevo.")
       setComprando(false)

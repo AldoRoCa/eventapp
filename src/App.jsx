@@ -12,6 +12,8 @@ import SerAnfitrion from "./pages/SerAnfitrion"
 import PanelAnfitrion from "./pages/PanelAnfitrion"
 import Perfil from "./pages/Perfil"
 import Admin from "./pages/Admin"
+import PagoExitoso from "./pages/PagoExitoso"
+import PagoFallido from "./pages/PagoFallido"
 
 
 const categories = [
@@ -433,6 +435,8 @@ export default function App() {
       <Route path="/panel" element={<PanelAnfitrion />} />
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/admin" element={<Admin />} />
+      <Route path="/pago-exitoso" element={<PagoExitoso />} />
+      <Route path="/pago-fallido" element={<PagoFallido />} />
     </Routes>
   )
 }
