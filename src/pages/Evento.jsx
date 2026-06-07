@@ -26,6 +26,7 @@ export default function Evento() {
         .eq("id", id)
         .single()
       setEvento(ev)
+      console.log("anfitrion_id:", ev?.anfitrion_id)
 
       const { count } = await supabase
         .from("boletos")
