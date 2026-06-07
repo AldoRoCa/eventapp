@@ -10,12 +10,15 @@ export default function PagoExitoso() {
   useEffect(() => {
     const activarBoleto = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      console.log("usuario en pago exitoso:", user?.id)
       if (user) {
-        await supabase
+        const { data, error } = await supabase
           .from("boletos")
           .update({ estado: "activo" })
           .eq("usuario_id", user.id)
           .eq("estado", "pendiente_pago")
+          .select()
+        console.log("boletos actualizados:", data, "error:", error)
       }
       setTimeout(() => navigate("/mis-boletos"), 3000)
     }
