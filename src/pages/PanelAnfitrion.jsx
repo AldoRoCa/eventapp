@@ -248,26 +248,9 @@ export default function PanelAnfitrion() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "10px", flexDirection: "column", alignItems: "flex-end" }}>
-            <motion.button onClick={() => navigate("/crear-evento")} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
-              style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: "12px 24px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 16px rgba(124,58,237,0.3)" }}
-            >+ Crear evento</motion.button>
-            {perfil?.mp_access_token ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "6px 12px" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
-                <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Mercado Pago conectado</span>
-              </div>
-            ) : (
-              <motion.button onClick={() => {
-                const clientId = import.meta.env.VITE_MP_CLIENT_ID
-                const redirectUri = encodeURIComponent(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mp-oauth`)
-                const state = user.id
-                window.location.href = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${state}&redirect_uri=${redirectUri}`
-              }} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
-                style={{ background: "rgba(255,214,0,0.15)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: "8px", color: "#ffd600", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-              >⚡ Conectar Mercado Pago</motion.button>
-            )}
-          </div>
+          <motion.button onClick={() => navigate("/crear-evento")} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: "12px 24px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 16px rgba(124,58,237,0.3)" }}
+          >+ Crear evento</motion.button>
         </div>
 
         {/* TABS */}
