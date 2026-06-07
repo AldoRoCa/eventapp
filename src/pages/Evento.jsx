@@ -88,6 +88,14 @@ export default function Evento() {
     }
 
     // Evento de pago — redirigir a Stripe
+    // Crear boleto pendiente_pago antes de ir a Stripe
+    const { error: boletoError } = await supabase.from("boletos").insert({
+      evento_id: id,
+      usuario_id: user.id,
+      estado: "pendiente_pago"
+    })
+    if (boletoError) { setComprando(false); return }
+
     const { data: anfitrion } = await supabase
       .from("profiles")
       .select("stripe_account_id")
