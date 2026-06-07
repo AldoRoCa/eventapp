@@ -38,6 +38,7 @@ const [imagenFile, setImagenFile] = useState(null)
     estado_evento: "",
     capacidad: "",
     precio: "",
+    max_boletos_por_persona: "5",
     tipo_boleto: "instantaneo",
     imagen_url: "",
   })
@@ -94,6 +95,7 @@ const [imagenFile, setImagenFile] = useState(null)
       estado_evento: form.estado_evento || null,
       capacidad: parseInt(form.capacidad),
       precio: parseInt(form.precio) || 0,
+      max_boletos_por_persona: parseInt(form.max_boletos_por_persona) || 5,
       tipo_boleto: form.tipo_boleto,
       imagen_url: imagenUrl,
       anfitrion_id: user.id,
@@ -234,7 +236,13 @@ const [imagenFile, setImagenFile] = useState(null)
               </div>
             </div>
 
-            <div>
+            <div style={{ marginTop: "20px" }}>
+              <label style={labelStyle}>Límite de boletos por persona</label>
+              <input type="number" value={form.max_boletos_por_persona} onChange={e => handleChange("max_boletos_por_persona", e.target.value)} placeholder="5" min="1" max="20" style={inputStyle} />
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", marginTop: "6px" }}>¿Cuántos boletos puede comprar una misma persona? Útil si quieres que vengan grupos. Por defecto son 5.</p>
+            </div>
+
+            <div style={{ marginTop: "20px" }}>
               <label style={labelStyle}>Tipo de boleto</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 {[
