@@ -269,7 +269,9 @@ export default function PanelAnfitrion() {
                   body: JSON.stringify({ usuario_id: user.id, email: perfil.email })
                 })
                 const data = await response.json()
+                console.log("Stripe response:", data)
                 if (data.url) window.location.href = data.url
+                else alert(JSON.stringify(data))
               }} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
                 style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)", borderRadius: "8px", color: "#a78bfa", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
               >💳 Conectar Stripe</motion.button>
