@@ -36,16 +36,19 @@ export default function Evento() {
       setAsistentes(count || 0)
 
       if (user) {
-        const { data: boleto } = await supabase
+        const { data: boletos } = await supabase
           .from("boletos")
           .select("id, estado")
           .eq("evento_id", id)
           .eq("usuario_id", user.id)
-          .in("estado", ["activo", "pendiente", "pendiente_pago"])
-          .single()
-        if (boleto) {
-          setTieneBoleto(true)
-          setEstadoBoleto(boleto.estado === "pendiente_pago" ? "activo" : boleto.estado)
+          .in("estado", ["activo", "pendiente"])
+          .order("created_at", { ascending: false })
+        if (boletos && boletos.length > 0) {
+          const limite = ev?.max_boletos_por_persona || 5
+          if (boletos.length >= limite) {
+            setTieneBoleto(true)
+            setEstadoBoleto(boletos[0].estado)
+          }
         }
       }
 
