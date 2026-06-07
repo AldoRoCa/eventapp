@@ -276,6 +276,9 @@ export default function PanelAnfitrion() {
                 style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)", borderRadius: "8px", color: "#a78bfa", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
               >💳 Conectar Stripe</motion.button>
             )}
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", maxWidth: "200px", textAlign: "right", lineHeight: 1.5 }}>
+              Para recibir pagos conecta tu cuenta bancaria vía Stripe. Solo se hace una vez — es la misma plataforma que usa Airbnb y Uber.
+            </div>
           </div>
         </div>
 

@@ -34,7 +34,7 @@ serve(async (req) => {
     const account = await accountResponse.json()
 
     if (!account.id) {
-      return new Response(JSON.stringify({ error: "Error creando cuenta Stripe" }), {
+      return new Response(JSON.stringify({ error: "Error creando cuenta Stripe", detalle: account }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       })
