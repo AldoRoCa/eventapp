@@ -22,7 +22,7 @@ export default function Evento() {
 
       const { data: ev } = await supabase
         .from("eventos")
-        .select("*, profiles(nombre)")
+        .select("*, profiles(nombre), max_boletos_por_persona")
         .eq("id", id)
         .single()
       setEvento(ev)
