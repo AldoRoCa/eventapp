@@ -9,14 +9,12 @@ export default function PagoExitoso() {
 
   useEffect(() => {
     const activarBoleto = async () => {
-      const eventoId = searchParams.get("evento_id")
-      const usuarioId = searchParams.get("usuario_id")
-      if (eventoId && usuarioId) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
         await supabase
           .from("boletos")
           .update({ estado: "activo" })
-          .eq("evento_id", eventoId)
-          .eq("usuario_id", usuarioId)
+          .eq("usuario_id", user.id)
           .eq("estado", "pendiente_pago")
       }
       setTimeout(() => navigate("/mis-boletos"), 3000)
