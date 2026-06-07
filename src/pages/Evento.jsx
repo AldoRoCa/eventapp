@@ -41,10 +41,11 @@ export default function Evento() {
           .select("id, estado")
           .eq("evento_id", id)
           .eq("usuario_id", user.id)
+          .in("estado", ["activo", "pendiente", "pendiente_pago"])
           .single()
         if (boleto) {
           setTieneBoleto(true)
-          setEstadoBoleto(boleto.estado)
+          setEstadoBoleto(boleto.estado === "pendiente_pago" ? "activo" : boleto.estado)
         }
       }
 
