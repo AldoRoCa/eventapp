@@ -24,7 +24,7 @@ const categories = [
   { name: "Belleza", count: 15, color: "#f472b6", glow: "#db2777", bg: "rgba(219,39,119,0.18)", border: "rgba(219,39,119,0.45)" },
   { name: "Tecnología", count: 10, color: "#22d3ee", glow: "#0891b2", bg: "rgba(8,145,178,0.18)", border: "rgba(8,145,178,0.45)" },
   { name: "Gastronomía", count: 14, color: "#f87171", glow: "#dc2626", bg: "rgba(220,38,38,0.18)", border: "rgba(220,38,38,0.45)" },
-  { name: "Gaming", count: 9, color: "#c084fc", glow: "#9333ea", bg: "rgba(147,51,234,0.18)", border: "rgba(147,51,234,0.45)" },
+  { name: "Deportes", count: 0, color: "#4ade80", glow: "#16a34a", bg: "rgba(22,163,74,0.18)", border: "rgba(22,163,74,0.45)" },
 ]
 
 const categoryIcons = {
@@ -35,7 +35,7 @@ const categoryIcons = {
   "Belleza": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 2L9.5 9H2l5.9 4.3-2.2 6.8L12 16l6.3 4.1-2.2-6.8L22 9h-7.5z"/></svg>,
   "Tecnología": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>,
   "Gastronomía": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
-  "Gaming": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  "Deportes": <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>,
 }
 
 
@@ -68,7 +68,7 @@ function CategoryCard({ cat, activa, onClick }) {
       {hovered && <div style={{ position: "absolute", inset: 0, borderRadius: "18px", background: `radial-gradient(circle at 30% 30%, ${cat.glow}20 0%, transparent 60%)`, pointerEvents: "none" }} />}
       <div style={{ color: cat.color, marginBottom: "20px", filter: hovered ? `drop-shadow(0 0 8px ${cat.glow}90)` : "none", transition: "filter 0.3s", position: "relative" }}>{categoryIcons[cat.name]}</div>
       <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "6px", color: hovered ? cat.color : "white", textShadow: hovered ? `0 0 20px ${cat.glow}80` : "none", transition: "color 0.3s, text-shadow 0.3s", position: "relative" }}>{cat.name}</div>
-      <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontWeight: 400, position: "relative" }}>{cat.count} eventos</div>
+      <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", fontWeight: 400, position: "relative" }}></div>
     </motion.div>
   )
 }
