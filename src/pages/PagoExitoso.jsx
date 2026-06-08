@@ -11,14 +11,13 @@ export default function PagoExitoso() {
     const activarBoleto = async () => {
       const evento_id = searchParams.get("evento_id")
       const usuario_id = searchParams.get("usuario_id")
-      const payment_intent = searchParams.get("payment_intent")
+      const payment_intent = null
 
       if (usuario_id && evento_id) {
         await supabase
           .from("boletos")
           .update({
-            estado: "pendiente",
-            stripe_payment_intent_id: payment_intent || null
+            estado: "activo"
           })
           .eq("usuario_id", usuario_id)
           .eq("evento_id", evento_id)

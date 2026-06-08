@@ -181,19 +181,11 @@ export default function PanelAnfitrion() {
     setTimeout(() => setMensaje(""), 3000)
   }
 
-  const conectarStripe = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-onboarding`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ usuario_id: user.id, email: perfil.email })
-    })
-    const data = await response.json()
-    if (data.url) window.location.href = data.url
-    else alert(JSON.stringify(data))
+  const conectarMP = () => {
+    const clientId = import.meta.env.VITE_MP_CLIENT_ID
+    const redirectUri = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mp-oauth`
+    const url = `https://auth.mercadopago.com.mx/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${user.id}&redirect_uri=${encodeURIComponent(redirectUri)}`
+    window.location.href = url
   }
 
   const inputStyle = {
@@ -282,20 +274,20 @@ export default function PanelAnfitrion() {
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: "12px 24px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 16px rgba(124,58,237,0.3)" }}
             >+ Crear evento</motion.button>
 
-            {perfil?.stripe_account_id ? (
+            {perfil?.mp_access_token ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "6px 12px" }}>
                   <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
-                  <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Stripe conectado ✓</span>
+                  <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Mercado Pago conectado ✓</span>
                 </div>
-                <motion.button onClick={conectarStripe} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+                <motion.button onClick={conectarMP} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.4)", padding: "4px 10px", fontSize: "11px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
                 >Reconectar</motion.button>
               </div>
             ) : (
-              <motion.button onClick={conectarStripe} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
-                style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)", borderRadius: "8px", color: "#a78bfa", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-              >💳 Conectar Stripe</motion.button>
+              <motion.button onClick={conectarMP} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+                style={{ background: "rgba(9,103,210,0.15)", border: "1px solid rgba(9,103,210,0.3)", borderRadius: "8px", color: "#60a5fa", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+              >💳 Conectar Mercado Pago</motion.button>
             )}
 
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", maxWidth: "200px", textAlign: "right", lineHeight: 1.5 }}>
