@@ -9,16 +9,20 @@ export default function PagoExitoso() {
 
   useEffect(() => {
     const activarBoleto = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log("usuario en pago exitoso:", user?.id)
-      if (user) {
-        const { data, error } = await supabase
+      const evento_id = searchParams.get("evento_id")
+      const usuario_id = searchParams.get("usuario_id")
+      const payment_intent = searchParams.get("payment_intent")
+
+      if (usuario_id && evento_id) {
+        await supabase
           .from("boletos")
-          .update({ estado: "activo" })
-          .eq("usuario_id", user.id)
+          .update({
+            estado: "pendiente",
+            stripe_payment_intent_id: payment_intent || null
+          })
+          .eq("usuario_id", usuario_id)
+          .eq("evento_id", evento_id)
           .eq("estado", "pendiente_pago")
-          .select()
-        console.log("boletos actualizados:", data, "error:", error)
       }
       setTimeout(() => navigate("/mis-boletos"), 3000)
     }

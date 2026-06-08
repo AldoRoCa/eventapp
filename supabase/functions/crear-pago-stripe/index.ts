@@ -60,7 +60,7 @@ serve(async (req) => {
       "mode": "payment",
       "customer": customerId,
       "payment_intent_data[setup_future_usage]": "on_session",
-      "success_url": `${Deno.env.get("SITE_URL")}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}`,
+      "success_url": `${Deno.env.get("SITE_URL")}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&payment_intent={PAYMENT_INTENT}`,
       "cancel_url": `${Deno.env.get("SITE_URL")}/evento/${evento_id}`,
       "payment_intent_data[application_fee_amount]": String(comision * 100),
       "payment_intent_data[transfer_data][destination]": anfitrion_stripe_id,

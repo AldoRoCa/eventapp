@@ -85,14 +85,30 @@ export default function PanelAnfitrion() {
 
   const aprobarSolicitud = async (boletoId) => {
     setProcesando(boletoId)
-    await supabase.from("boletos").update({ estado: "activo" }).eq("id", boletoId)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gestionar-solicitud`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ boleto_id: boletoId, accion: "aprobar" })
+    })
     setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
     setProcesando(null)
   }
 
   const rechazarSolicitud = async (boletoId) => {
     setProcesando(boletoId)
-    await supabase.from("boletos").update({ estado: "rechazado" }).eq("id", boletoId)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gestionar-solicitud`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ boleto_id: boletoId, accion: "rechazar" })
+    })
     setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
     setProcesando(null)
   }

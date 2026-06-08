@@ -81,19 +81,66 @@ export default function Evento() {
     setComprando(true)
 
     if (evento.tipo_boleto === "solicitud") {
-      const inserts = Array.from({ length: cantidad }, () => ({
-        evento_id: id,
-        usuario_id: user.id,
-        estado: "pendiente"
-      }))
-      const { error } = await supabase.from("boletos").insert(inserts)
-      if (!error) {
-        setTieneBoleto(true)
-        setExito(true)
-        setEstadoBoleto("pendiente")
+      if (evento.precio === 0) {
+        const inserts = Array.from({ length: cantidad }, () => ({
+          evento_id: id,
+          usuario_id: user.id,
+          estado: "pendiente"
+        }))
+        const { error } = await supabase.from("boletos").insert(inserts)
+        if (!error) {
+          setTieneBoleto(true)
+          setExito(true)
+          setEstadoBoleto("pendiente")
+        }
+        setComprando(false)
+        return
+      } else {
+        // Solicitud con precio — pagar primero, luego aprobar
+        const inserts = Array.from({ length: cantidad }, () => ({
+          evento_id: id,
+          usuario_id: user.id,
+          estado: "pendiente_pago"
+        }))
+        const { error: boletoError } = await supabase.from("boletos").insert(inserts)
+        if (boletoError) { setComprando(false); return }
+
+        const { data: anfitrion } = await supabase
+          .from("profiles")
+          .select("stripe_account_id")
+          .eq("id", evento.anfitrion_id)
+          .single()
+
+        if (!anfitrion?.stripe_account_id) {
+          alert("El anfitrión aún no ha conectado su cuenta de pagos.")
+          setComprando(false)
+          return
+        }
+
+        const { data: { session } } = await supabase.auth.getSession()
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-stripe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            evento_id: id,
+            titulo: evento.titulo,
+            precio: evento.precio * cantidad,
+            usuario_id: user.id,
+            anfitrion_stripe_id: anfitrion.stripe_account_id,
+          })
+        })
+        const data = await response.json()
+        if (data.url) {
+          window.location.href = data.url
+        } else {
+          alert("Error al procesar el pago. Intenta de nuevo.")
+          setComprando(false)
+        }
+        return
       }
-      setComprando(false)
-      return
     }
 
     if (evento.precio === 0) {
