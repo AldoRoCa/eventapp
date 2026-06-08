@@ -11,14 +11,19 @@ export default function PagoExitoso() {
     const activarBoleto = async () => {
       const evento_id = searchParams.get("evento_id")
       const usuario_id = searchParams.get("usuario_id")
-      const payment_intent = null
+      const status = searchParams.get("collection_status")
 
-      if (usuario_id && evento_id) {
+      if (usuario_id && evento_id && status === "approved") {
         await supabase
           .from("boletos")
-          .update({
-            estado: "activo"
-          })
+          .update({ estado: "activo" })
+          .eq("usuario_id", usuario_id)
+          .eq("evento_id", evento_id)
+          .eq("estado", "pendiente_pago")
+      } else if (status !== "approved") {
+        await supabase
+          .from("boletos")
+          .delete()
           .eq("usuario_id", usuario_id)
           .eq("evento_id", evento_id)
           .eq("estado", "pendiente_pago")
