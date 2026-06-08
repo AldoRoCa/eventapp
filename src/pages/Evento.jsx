@@ -161,7 +161,7 @@ export default function Evento() {
       return
     }
 
-    // Evento de pago — crear boletos pendiente_pago y redirigir a Stripe
+    // Evento de pago — crear boletos pendiente_pago y redirigir a MP
     const inserts = Array.from({ length: cantidad }, () => ({
       evento_id: id,
       usuario_id: user.id,
@@ -172,18 +172,18 @@ export default function Evento() {
 
     const { data: anfitrion } = await supabase
       .from("profiles")
-      .select("stripe_account_id")
+      .select("mp_access_token")
       .eq("id", evento.anfitrion_id)
       .single()
 
-    if (!anfitrion?.stripe_account_id) {
-      alert("El anfitrión aún no ha conectado su cuenta de pagos.")
+    if (!anfitrion?.mp_access_token) {
+      alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago.")
       setComprando(false)
       return
     }
 
     const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-stripe`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -192,9 +192,10 @@ export default function Evento() {
       body: JSON.stringify({
         evento_id: id,
         titulo: evento.titulo,
-        precio: evento.precio * cantidad,
+        precio: evento.precio,
         usuario_id: user.id,
-        anfitrion_stripe_id: anfitrion.stripe_account_id,
+        anfitrion_mp_token: anfitrion.mp_access_token,
+        cantidad: cantidad,
       })
     })
 
