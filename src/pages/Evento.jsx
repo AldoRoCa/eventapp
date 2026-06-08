@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
@@ -14,6 +14,10 @@ export default function Evento() {
   const [exito, setExito] = useState(false)
   const [estadoBoleto, setEstadoBoleto] = useState("activo")
   const [asistentes, setAsistentes] = useState(0)
+  const [cantidad, setCantidad] = useState(1)
+  const [precioMostrado, setPrecioMostrado] = useState(0)
+  const [boletosUsuario, setBoletosUsuario] = useState(0)
+  const precioTimerRef = useRef(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -22,11 +26,11 @@ export default function Evento() {
 
       const { data: ev } = await supabase
         .from("eventos")
-        .select("*, profiles(nombre)")
+        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, created_at, profiles(nombre)")
         .eq("id", id)
         .single()
       setEvento(ev)
-      console.log("anfitrion_id:", ev?.anfitrion_id, "max_boletos:", ev?.max_boletos_por_persona)
+      setPrecioMostrado(ev?.precio || 0)
 
       const { count } = await supabase
         .from("boletos")
@@ -43,9 +47,13 @@ export default function Evento() {
           .eq("usuario_id", user.id)
           .in("estado", ["activo", "pendiente"])
           .order("created_at", { ascending: false })
-        if (boletos && boletos.length > 0) {
+
+        const cantidadActual = boletos?.length || 0
+        setBoletosUsuario(cantidadActual)
+
+        if (cantidadActual > 0) {
           const limite = ev?.max_boletos_por_persona || 5
-          if (boletos.length >= limite) {
+          if (cantidadActual >= limite) {
             setTieneBoleto(true)
             setEstadoBoleto(boletos[0].estado)
           }
@@ -57,16 +65,31 @@ export default function Evento() {
     cargar()
   }, [id])
 
+  const limite = evento?.max_boletos_por_persona || 5
+  const espaciosDisponibles = Math.max(0, evento?.capacidad - asistentes)
+  const maxComprable = Math.min(limite - boletosUsuario, espaciosDisponibles)
+
+  const cambiarCantidad = (nueva) => {
+    if (nueva < 1 || nueva > maxComprable) return
+    setCantidad(nueva)
+
+    if (precioTimerRef.current) clearTimeout(precioTimerRef.current)
+    precioTimerRef.current = setTimeout(() => {
+      setPrecioMostrado((evento?.precio || 0) * nueva)
+    }, 1000)
+  }
+
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     setComprando(true)
 
     if (evento.tipo_boleto === "solicitud") {
-      const { error } = await supabase.from("boletos").insert({
+      const inserts = Array.from({ length: cantidad }, () => ({
         evento_id: id,
         usuario_id: user.id,
         estado: "pendiente"
-      })
+      }))
+      const { error } = await supabase.from("boletos").insert(inserts)
       if (!error) {
         setTieneBoleto(true)
         setExito(true)
@@ -77,14 +100,15 @@ export default function Evento() {
     }
 
     if (evento.precio === 0) {
-      const { error } = await supabase.from("boletos").insert({
+      const inserts = Array.from({ length: cantidad }, () => ({
         evento_id: id,
         usuario_id: user.id,
         estado: "activo"
-      })
+      }))
+      const { error } = await supabase.from("boletos").insert(inserts)
       if (!error) {
         setTieneBoleto(true)
-        setAsistentes(a => a + 1)
+        setAsistentes(a => a + cantidad)
         setExito(true)
         setEstadoBoleto("activo")
       }
@@ -92,13 +116,13 @@ export default function Evento() {
       return
     }
 
-    // Evento de pago — redirigir a Stripe
-    // Crear boleto pendiente_pago antes de ir a Stripe
-    const { error: boletoError } = await supabase.from("boletos").insert({
+    // Evento de pago — crear boletos pendiente_pago y redirigir a Stripe
+    const inserts = Array.from({ length: cantidad }, () => ({
       evento_id: id,
       usuario_id: user.id,
       estado: "pendiente_pago"
-    })
+    }))
+    const { error: boletoError } = await supabase.from("boletos").insert(inserts)
     if (boletoError) { setComprando(false); return }
 
     const { data: anfitrion } = await supabase
@@ -123,7 +147,7 @@ export default function Evento() {
       body: JSON.stringify({
         evento_id: id,
         titulo: evento.titulo,
-        precio: evento.precio,
+        precio: evento.precio * cantidad,
         usuario_id: user.id,
         anfitrion_stripe_id: anfitrion.stripe_account_id,
       })
@@ -155,6 +179,7 @@ export default function Evento() {
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
+  const precioTotal = evento.precio * cantidad
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -239,13 +264,49 @@ export default function Evento() {
         {/* COLUMNA DERECHA - COMPRAR */}
         <div style={{ position: "sticky", top: "88px" }}>
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "28px" }}>
-            <div style={{ marginBottom: "24px" }}>
-              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "4px" }}>Precio por boleto</div>
-              <div style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px" }}>
-                {evento.precio === 0 ? "Gratis" : `$${evento.precio}`}
+
+            {/* PRECIO */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "4px" }}>
+                {evento.precio === 0 ? "Precio" : cantidad > 1 ? `${cantidad} boletos` : "Precio por boleto"}
+              </div>
+              <div style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px", transition: "all 0.3s" }}>
+                {evento.precio === 0 ? "Gratis" : `$${precioTotal}`}
                 {evento.precio > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", marginLeft: "6px", fontWeight: 400 }}>MXN</span>}
               </div>
+              {evento.precio > 0 && cantidad > 1 && (
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
+                  ${evento.precio} × {cantidad} boletos
+                </div>
+              )}
             </div>
+
+            {/* SELECTOR DE CANTIDAD — solo si no es solicitud y no tiene boleto */}
+            {!tieneBoleto && evento.tipo_boleto !== "solicitud" && maxComprable > 0 && (
+              <div style={{ marginBottom: "20px" }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "10px", fontWeight: 500 }}>
+                  Cantidad de boletos · máx. {limite} por persona
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <button
+                    onClick={() => cambiarCantidad(cantidad - 1)}
+                    disabled={cantidad <= 1}
+                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad <= 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad <= 1 ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad <= 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
+                  >−</button>
+                  <span style={{ fontSize: "18px", fontWeight: 700, minWidth: "24px", textAlign: "center" }}>{cantidad}</span>
+                  <button
+                    onClick={() => cambiarCantidad(cantidad + 1)}
+                    disabled={cantidad >= maxComprable}
+                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad >= maxComprable ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad >= maxComprable ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad >= maxComprable ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
+                  >+</button>
+                </div>
+                {boletosUsuario > 0 && (
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>
+                    Ya tienes {boletosUsuario} boleto{boletosUsuario > 1 ? "s" : ""} para este evento
+                  </div>
+                )}
+              </div>
+            )}
 
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
               <span style={{ fontSize: "16px" }}>{evento.tipo_boleto === "instantaneo" ? "⚡" : "📋"}</span>
@@ -257,21 +318,21 @@ export default function Evento() {
 
             {exito && (
               <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#34d399", fontSize: "13.5px", textAlign: "center" }}>
-                {estadoBoleto === "activo" ? "✓ ¡Boleto obtenido exitosamente!" : "⏳ Solicitud enviada, espera la aprobación del anfitrión"}
+                {estadoBoleto === "activo" ? `✓ ¡${cantidad > 1 ? `${cantidad} boletos obtenidos` : "Boleto obtenido"} exitosamente!` : "⏳ Solicitud enviada, espera la aprobación del anfitrión"}
               </div>
             )}
 
             {tieneBoleto ? (
               <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
                 <div style={{ fontSize: "20px", marginBottom: "6px" }}>{estadoBoleto === "pendiente" ? "⏳" : "🎟️"}</div>
-                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>{estadoBoleto === "pendiente" ? "Solicitud enviada" : "Ya tienes tu boleto"}</div>
-                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>{estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalo en Mis Boletos"}</div>
+                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>{estadoBoleto === "pendiente" ? "Solicitud enviada" : "Ya alcanzaste el límite de boletos"}</div>
+                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>{estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalos en Mis Boletos"}</div>
               </div>
             ) : (
               <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
                 style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit", boxShadow: asistentes >= evento.capacidad ? "none" : "0 0 20px rgba(124,58,237,0.35)" }}
               >
-                {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? "Obtener boleto gratis" : `Comprar boleto · $${evento.precio}`}
+                {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${precioTotal} MXN`}
               </motion.button>
             )}
 
