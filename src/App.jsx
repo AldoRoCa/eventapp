@@ -52,8 +52,8 @@ function CategoryCard({ cat, activa, onClick }) {
   return (
     <motion.div
       onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
       onClick={onClick}
+      onHoverEnd={() => setHovered(false)}
       whileHover={{ y: -6, scale: 1.03 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
       style={{
@@ -74,6 +74,7 @@ function CategoryCard({ cat, activa, onClick }) {
 }
 
 function EventCard({ ev }) {
+  const navigate = useNavigate()
   const [hovered, setHovered] = useState(false)
   const pct = Math.round((ev.attendees / ev.capacity) * 100)
   const almostFull = pct >= 85
@@ -83,6 +84,7 @@ function EventCard({ ev }) {
       onHoverEnd={() => setHovered(false)}
       whileHover={{ y: -6 }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      onClick={() => navigate(`/evento/${ev.id}`)}
       style={{ borderRadius: "20px", overflow: "hidden", cursor: "pointer", background: "#0f0f11", border: `1px solid ${hovered ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.07)"}`, boxShadow: hovered ? "0 24px 48px rgba(0,0,0,0.6)" : "none", transition: "border 0.2s, box-shadow 0.2s" }}
     >
       <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
@@ -120,7 +122,7 @@ function EventCard({ ev }) {
             <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={() => ev.id && (window.location.href = `/evento/${ev.id}`)}
+            onClick={(e) => e.stopPropagation()}
             style={{ background: hovered ? "rgba(124,58,237,0.22)" : "rgba(255,255,255,0.05)", border: `1px solid ${hovered ? "rgba(167,139,250,0.45)" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", color: hovered ? "#c4b5fd" : "rgba(255,255,255,0.7)", padding: "10px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" }}
           >Ver detalles</motion.button>
         </div>
