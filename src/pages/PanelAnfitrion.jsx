@@ -68,6 +68,7 @@ export default function PanelAnfitrion() {
     setAsistentes(data || [])
     setLoadingAsistentes(false)
   }
+
   const verSolicitudes = async () => {
     setLoadingSolicitudes(true)
     setTab("solicitudes")
@@ -99,10 +100,7 @@ export default function PanelAnfitrion() {
   const cancelarEvento = async (eventoId) => {
     if (!window.confirm("¿Estás seguro de cancelar este evento? Se notificará a todos los asistentes y se procesarán los reembolsos.")) return
     setCancelando(eventoId)
-    const { error } = await supabase
-      .from("eventos")
-      .delete()
-      .eq("id", eventoId)
+    const { error } = await supabase.from("eventos").delete().eq("id", eventoId)
     if (!error) {
       setEventos(prev => prev.filter(e => e.id !== eventoId))
       setMensaje("Evento cancelado correctamente.")
@@ -140,7 +138,6 @@ export default function PanelAnfitrion() {
         fecha: fechaCompleta,
       })
       .eq("id", editando)
-
     if (!error) {
       setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, fecha: fechaCompleta } : e))
       setEditando(null)
@@ -166,6 +163,21 @@ export default function PanelAnfitrion() {
     setSubiendoAvatar(false)
     setMensaje("Foto de perfil actualizada.")
     setTimeout(() => setMensaje(""), 3000)
+  }
+
+  const conectarStripe = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-onboarding`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ usuario_id: user.id, email: perfil.email })
+    })
+    const data = await response.json()
+    if (data.url) window.location.href = data.url
+    else alert(JSON.stringify(data))
   }
 
   const inputStyle = {
@@ -200,7 +212,6 @@ export default function PanelAnfitrion() {
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 64px" }}>
 
-        {/* MENSAJE */}
         <AnimatePresence>
           {mensaje && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -231,6 +242,7 @@ export default function PanelAnfitrion() {
               )}
             </motion.button>
           </div>
+
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
               <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.3px" }}>{perfil?.nombre}</h1>
@@ -248,34 +260,28 @@ export default function PanelAnfitrion() {
               </div>
             </div>
           </div>
+
           <div style={{ display: "flex", gap: "10px", flexDirection: "column", alignItems: "flex-end" }}>
             <motion.button onClick={() => navigate("/crear-evento")} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
               style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: "12px 24px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 16px rgba(124,58,237,0.3)" }}
             >+ Crear evento</motion.button>
+
             {perfil?.stripe_account_id ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "6px 12px" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
-                <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Stripe conectado ✓</span>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "6px 12px" }}>
+                  <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
+                  <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>Stripe conectado ✓</span>
+                </div>
+                <motion.button onClick={conectarStripe} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(255,255,255,0.4)", padding: "4px 10px", fontSize: "11px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
+                >Reconectar</motion.button>
               </div>
             ) : (
-              <motion.button onClick={async () => {
-                const { data: { session } } = await supabase.auth.getSession()
-                const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-connect-onboarding`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
-                  },
-                  body: JSON.stringify({ usuario_id: user.id, email: perfil.email })
-                })
-                const data = await response.json()
-                console.log("Stripe response:", data)
-                if (data.url) window.location.href = data.url
-                else alert(JSON.stringify(data))
-              }} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
+              <motion.button onClick={conectarStripe} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
                 style={{ background: "rgba(99,91,255,0.15)", border: "1px solid rgba(99,91,255,0.3)", borderRadius: "8px", color: "#a78bfa", padding: "6px 14px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
               >💳 Conectar Stripe</motion.button>
             )}
+
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", maxWidth: "200px", textAlign: "right", lineHeight: 1.5 }}>
               Para recibir pagos conecta tu cuenta bancaria vía Stripe. Solo se hace una vez — es la misma plataforma que usa Airbnb y Uber.
             </div>
@@ -349,7 +355,8 @@ export default function PanelAnfitrion() {
             )}
           </div>
         )}
-{/* SOLICITUDES */}
+
+        {/* SOLICITUDES */}
         {tab === "solicitudes" && (
           <div>
             {loadingSolicitudes ? (
@@ -387,6 +394,7 @@ export default function PanelAnfitrion() {
             )}
           </div>
         )}
+
         {/* ASISTENTES */}
         {tab === "asistentes" && (
           <div>
@@ -448,7 +456,6 @@ export default function PanelAnfitrion() {
                 <h2 style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px" }}>Editar evento</h2>
                 <button onClick={() => setEditando(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1 }}>×</button>
               </div>
-
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Nombre *</label>
@@ -469,18 +476,18 @@ export default function PanelAnfitrion() {
                   </div>
                 </div>
                 <div>
-                    <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Ubicación</label>
-                    <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Estado</label>
-                    <select value={formEditar.estado_evento || ""} onChange={e => setFormEditar(f => ({ ...f, estado_evento: e.target.value }))} style={{ ...inputStyle, cursor: "pointer" }}>
-                      <option value="" style={{ background: "#111" }}>Selecciona un estado</option>
-                      {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
-                        <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Ubicación</label>
+                  <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Estado</label>
+                  <select value={formEditar.estado_evento || ""} onChange={e => setFormEditar(f => ({ ...f, estado_evento: e.target.value }))} style={{ ...inputStyle, cursor: "pointer" }}>
+                    <option value="" style={{ background: "#111" }}>Selecciona un estado</option>
+                    {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
+                      <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
+                    ))}
+                  </select>
+                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Capacidad</label>
@@ -492,7 +499,6 @@ export default function PanelAnfitrion() {
                   </div>
                 </div>
               </div>
-
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
                 <motion.button onClick={guardarEdicion} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={guardando}
                   style={{ flex: 1, background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "10px", color: "white", padding: "12px", fontWeight: 700, fontSize: "14px", cursor: guardando ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: guardando ? 0.7 : 1 }}
@@ -506,19 +512,20 @@ export default function PanelAnfitrion() {
         )}
       </AnimatePresence>
 
-{modalAvatar && (
-  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-    onClick={() => setModalAvatar(false)}
-    style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
-  >
-    <motion.div initial={{ scale: 0.85 }} animate={{ scale: 1 }} onClick={e => e.stopPropagation()}
-      style={{ maxWidth: "400px", width: "100%" }}
-    >
-      <img src={perfil?.avatar_url} alt={perfil?.nombre} style={{ width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }} />
-      <div style={{ textAlign: "center", marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "15px" }}>{perfil?.nombre}</div>
-    </motion.div>
-  </motion.div>
-)}
+      {modalAvatar && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={() => setModalAvatar(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <motion.div initial={{ scale: 0.85 }} animate={{ scale: 1 }} onClick={e => e.stopPropagation()}
+            style={{ maxWidth: "400px", width: "100%" }}
+          >
+            <img src={perfil?.avatar_url} alt={perfil?.nombre} style={{ width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }} />
+            <div style={{ textAlign: "center", marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "15px" }}>{perfil?.nombre}</div>
+          </motion.div>
+        </motion.div>
+      )}
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
