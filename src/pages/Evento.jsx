@@ -140,7 +140,7 @@ export default function Evento() {
           body: JSON.stringify({
             evento_id: id,
             titulo: evento.titulo,
-            precio: evento.precio,
+            precio: Math.round(evento.precio * 1.10),
             usuario_id: user.id,
             anfitrion_mp_token: anfitrion.mp_access_token,
             cantidad: cantidad,
@@ -205,7 +205,7 @@ export default function Evento() {
       body: JSON.stringify({
         evento_id: id,
         titulo: evento.titulo,
-        precio: evento.precio,
+        precio: Math.round(evento.precio * 1.10),
         usuario_id: user.id,
         anfitrion_mp_token: anfitrion.mp_access_token,
         cantidad: cantidad,
@@ -238,7 +238,7 @@ export default function Evento() {
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
-  const precioTotal = evento.precio * cantidad
+  const precioTotal = Math.round(evento.precio * 1.10) * cantidad
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -391,7 +391,7 @@ export default function Evento() {
               <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
                 style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit", boxShadow: asistentes >= evento.capacidad ? "none" : "0 0 20px rgba(124,58,237,0.35)" }}
               >
-                {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${precioTotal} MXN`}
+                {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
               </motion.button>
             )}
 
