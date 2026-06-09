@@ -52,9 +52,19 @@ export default function Evento() {
         setBoletosUsuario(cantidadActual)
 
         if (cantidadActual > 0) {
-          setEstadoBoleto(boletos[0].estado)
           const limite = ev?.max_boletos_por_persona || 5
-          if (cantidadActual >= limite || ev?.tipo_boleto === "solicitud") {
+          const activos = boletos.filter(b => b.estado === "activo").length
+          const pendientes = boletos.filter(b => b.estado === "pendiente").length
+          
+          if (activos > 0) {
+            setEstadoBoleto("activo")
+          } else if (pendientes > 0) {
+            setEstadoBoleto("pendiente")
+          }
+
+          if (cantidadActual >= limite) {
+            setTieneBoleto(true)
+          } else if (ev?.tipo_boleto === "solicitud" && pendientes > 0 && activos === 0) {
             setTieneBoleto(true)
           }
         }
