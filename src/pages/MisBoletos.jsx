@@ -132,7 +132,7 @@ export default function MisBoletos() {
                         </div>
                         <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 500 }}>Ver evento →</Link>
                         {boleto.mp_payment_id && (
-                          <a href={`https://www.mercadopago.com.mx/activities/checkout/detail/${boleto.mp_payment_id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
+                          <a href={`https://www.mercadopago.com.mx/activities`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
                         )}
                       </div>
                     </div>
