@@ -124,7 +124,7 @@ function EventCard({ ev }) {
             <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={() => navigate(`/evento/${ev.id}`)}
             style={{ background: hovered ? "rgba(124,58,237,0.22)" : "rgba(255,255,255,0.05)", border: `1px solid ${hovered ? "rgba(167,139,250,0.45)" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", color: hovered ? "#c4b5fd" : "rgba(255,255,255,0.7)", padding: "10px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit" }}
           >Ver detalles</motion.button>
         </div>
