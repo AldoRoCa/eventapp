@@ -17,7 +17,7 @@ export default function MisBoletos() {
 
       const { data } = await supabase
         .from("boletos")
-        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre))")
+        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre)), mp_payment_id")
         .eq("usuario_id", user.id)
         .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
@@ -131,6 +131,9 @@ export default function MisBoletos() {
                           <span style={{ fontSize: "12px", color: boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399", fontWeight: 600 }}>{boleto.estado === "pendiente" ? "Pendiente" : usado ? "Usado" : "Activo"}</span>
                         </div>
                         <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 500 }}>Ver evento →</Link>
+                        {boleto.mp_payment_id && (
+                          <a href={`https://www.mercadopago.com.mx/activities/checkout/detail/${boleto.mp_payment_id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
+                        )}
                       </div>
                     </div>
                   </motion.div>

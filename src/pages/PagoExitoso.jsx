@@ -12,11 +12,12 @@ export default function PagoExitoso() {
       const evento_id = searchParams.get("evento_id")
       const usuario_id = searchParams.get("usuario_id")
       const status = searchParams.get("collection_status")
+      const payment_id = searchParams.get("collection_id")
 
       if (usuario_id && evento_id && status === "approved") {
         await supabase
           .from("boletos")
-          .update({ estado: "activo" })
+          .update({ estado: "activo", mp_payment_id: payment_id || null })
           .eq("usuario_id", usuario_id)
           .eq("evento_id", evento_id)
           .eq("estado", "pendiente_pago")
