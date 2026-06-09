@@ -14,6 +14,9 @@ import Perfil from "./pages/Perfil"
 import Admin from "./pages/Admin"
 import PagoExitoso from "./pages/PagoExitoso"
 import PagoFallido from "./pages/PagoFallido"
+import Reembolsos from "./pages/Reembolsos"
+import PoliticasSeguridad from "./pages/PoliticasSeguridad"
+import AcercaDeVela from "./pages/AcercaDeVela"
 import Terminos from "./pages/Terminos"
 import Privacidad from "./pages/Privacidad"
 
@@ -389,14 +392,27 @@ function HomePage({ user, onLogout }) {
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "14px", lineHeight: 1.7, maxWidth: "210px", fontWeight: 400 }}>Conectando a la comunidad a través de experiencias únicas.</p>
           </div>
           {[
-            { title: "Para asistentes", links: ["Explorar eventos", "Descuentos estudiantes", "Mis boletos", "Reembolsos"] },
-            { title: "Para anfitriones", links: ["Crear evento", "Verificación", "Planes y precios", "Políticas de seguridad"] },
-            { title: "Empresa", links: ["Acerca de VELA", "Términos de uso", "Privacidad", "Contacto"] },
+            { title: "Para asistentes", links: [
+              { label: "Explorar eventos", href: "/explorar" },
+              { label: "Mis boletos", href: "/mis-boletos" },
+              { label: "Reembolsos", href: "/reembolsos" },
+            ]},
+            { title: "Para anfitriones", links: [
+              { label: "Crear evento", href: "/crear-evento" },
+              { label: "Verificación", href: "/ser-anfitrion" },
+              { label: "Políticas de seguridad", href: "/seguridad" },
+            ]},
+            { title: "Empresa", links: [
+              { label: "Acerca de VELA", href: "/acerca" },
+              { label: "Términos de uso", href: "/terminos" },
+              { label: "Privacidad", href: "/privacidad" },
+              { label: "Contacto", href: "mailto:panel.admin2026eventapp@gmail.com" },
+            ]},
           ].map(col => (
             <div key={col.title}>
               <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "16px", color: "rgba(255,255,255,0.8)" }}>{col.title}</div>
               {col.links.map(link => (
-                <motion.a key={link} href="#" whileHover={{ color: "rgba(255,255,255,0.75)" }} style={{ display: "block", marginBottom: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "14px", fontWeight: 400 }}>{link}</motion.a>
+                <motion.a key={link.label} href={link.href} whileHover={{ color: "rgba(255,255,255,0.75)" }} style={{ display: "block", marginBottom: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontSize: "14px", fontWeight: 400 }}>{link.label}</motion.a>
               ))}
             </div>
           ))}
@@ -443,6 +459,9 @@ export default function App() {
       <Route path="/pago-fallido" element={<PagoFallido />} />
       <Route path="/terminos" element={<Terminos />} />
       <Route path="/privacidad" element={<Privacidad />} />
+      <Route path="/reembolsos" element={<Reembolsos />} />
+      <Route path="/seguridad" element={<PoliticasSeguridad />} />
+      <Route path="/acerca" element={<AcercaDeVela />} />
     </Routes>
   )
 }
