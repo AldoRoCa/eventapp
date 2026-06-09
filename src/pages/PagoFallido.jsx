@@ -1,7 +1,26 @@
+import { useEffect } from "react"
 import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
+import { supabase } from "../supabase"
 
 export default function PagoFallido() {
+  const [searchParams] = useSearchParams()
+
+  useEffect(() => {
+    const limpiar = async () => {
+      const evento_id = searchParams.get("evento_id")
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && evento_id) {
+        await supabase
+          .from("boletos")
+          .delete()
+          .eq("usuario_id", user.id)
+          .eq("evento_id", evento_id)
+          .eq("estado", "pendiente_pago")
+      }
+    }
+    limpiar()
+  }, [])
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "white" }}>
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ textAlign: "center", padding: "48px" }}>
