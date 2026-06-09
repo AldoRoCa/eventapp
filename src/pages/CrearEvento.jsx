@@ -232,7 +232,15 @@ const [imagenFile, setImagenFile] = useState(null)
               </div>
               <div>
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>Lo que recibirás por cada boleto vendido</div>
                 <input type="number" value={form.precio} onChange={e => handleChange("precio", e.target.value)} placeholder="0 = Gratis" min="0" style={inputStyle} />
+                {form.precio > 0 && (
+                  <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "8px", fontSize: "13px" }}>
+                    <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
+                    <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(form.precio) * 1.10)} MXN</span>
+                    <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", marginLeft: "6px" }}>(incluye 10% de comisión VELA)</span>
+                  </div>
+                )}
               </div>
             </div>
 
