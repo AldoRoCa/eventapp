@@ -331,7 +331,7 @@ export default function Evento() {
             </div>
 
             {/* SELECTOR DE CANTIDAD — solo si no es solicitud y no tiene boleto */}
-            {!tieneBoleto && evento.tipo_boleto !== "solicitud" && maxComprable > 0 && (
+            {!tieneBoleto && maxComprable > 0 && (
               <div style={{ marginBottom: "20px" }}>
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "10px", fontWeight: 500 }}>
                   Cantidad de boletos · máx. {limite} por persona
