@@ -54,7 +54,7 @@ export default function Evento() {
         if (cantidadActual > 0) {
           setEstadoBoleto(boletos[0].estado)
           const limite = ev?.max_boletos_por_persona || 5
-          if (cantidadActual >= limite) {
+          if (cantidadActual >= limite || ev?.tipo_boleto === "solicitud") {
             setTieneBoleto(true)
           }
         }
