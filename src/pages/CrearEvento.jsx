@@ -13,8 +13,9 @@ export default function CrearEvento() {
     const verificar = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { navigate("/login"); return }
-      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_access_token").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
+      setPerfil(perfil)
       setVerificando(false)
     }
     verificar()
@@ -28,6 +29,7 @@ export default function CrearEvento() {
   const [exito, setExito] = useState(false)
 const [imagenFile, setImagenFile] = useState(null)
   const [imagenPreview, setImagenPreview] = useState(null)
+  const [perfil, setPerfil] = useState(null)
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
@@ -233,7 +235,12 @@ const [imagenFile, setImagenFile] = useState(null)
               <div>
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>Lo que recibirás por cada boleto vendido</div>
-                <input type="number" value={form.precio} onChange={e => handleChange("precio", e.target.value)} placeholder="0 = Gratis" min="0" style={inputStyle} />
+                <input type="number" value={form.precio} onChange={e => perfil?.mp_access_token ? handleChange("precio", e.target.value) : null} placeholder={perfil?.mp_access_token ? "0 = Gratis" : "Activa Mercado Pago para cobrar"} min="0" style={{ ...inputStyle, opacity: perfil?.mp_access_token ? 1 : 0.5, cursor: perfil?.mp_access_token ? "text" : "not-allowed" }} />
+                {!perfil?.mp_access_token && (
+                  <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ color: "#fbbf24" }}>⚠️ Conecta Mercado Pago en tu panel para poder cobrar por tus eventos.</span>
+                  </div>
+                )}
                 {form.precio > 0 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "8px", fontSize: "13px" }}>
                     <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
