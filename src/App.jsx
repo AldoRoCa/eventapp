@@ -406,7 +406,7 @@ function HomePage({ user, onLogout }) {
               { label: "Acerca de VELA", href: "/acerca" },
               { label: "Términos de uso", href: "/terminos" },
               { label: "Privacidad", href: "/privacidad" },
-              { label: "Contacto", href: "mailto:panel.admin2026eventapp@gmail.com" },
+              { label: "panel.admin2026eventapp@gmail.com", href: "mailto:panel.admin2026eventapp@gmail.com" },
             ]},
           ].map(col => (
             <div key={col.title}>
