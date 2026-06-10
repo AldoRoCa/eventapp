@@ -195,7 +195,7 @@ const [imagenFile, setImagenFile] = useState(null)
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "28px", marginBottom: "16px" }}>
             <h2 style={{ fontSize: "15px", fontWeight: 600, marginBottom: "24px", color: "rgba(255,255,255,0.8)" }}>Fecha y lugar</h2>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px", alignItems: "start" }}>
               <div>
                 <label style={labelStyle}>Fecha *</label>
                 <input type="date" value={form.fecha} onChange={e => handleChange("fecha", e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
@@ -227,20 +227,16 @@ const [imagenFile, setImagenFile] = useState(null)
           <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "28px", marginBottom: "16px" }}>
             <h2 style={{ fontSize: "15px", fontWeight: 600, marginBottom: "24px", color: "rgba(255,255,255,0.8)" }}>Boletos y acceso</h2>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px", alignItems: "start" }}>
               <div>
                 <label style={labelStyle}>Capacidad máxima *</label>
+                <div style={{ height: "24px" }} />
                 <input type="number" value={form.capacidad} onChange={e => handleChange("capacidad", e.target.value)} placeholder="Ej. 200" min="1" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>Lo que recibirás por cada boleto vendido</div>
                 <input type="number" value={form.precio} onChange={e => perfil?.mp_access_token ? handleChange("precio", e.target.value) : null} placeholder={perfil?.mp_access_token ? "0 = Gratis" : "Activa Mercado Pago para cobrar"} min="0" style={{ ...inputStyle, opacity: perfil?.mp_access_token ? 1 : 0.5, cursor: perfil?.mp_access_token ? "text" : "not-allowed" }} />
-                {!perfil?.mp_access_token && (
-                  <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ color: "#fbbf24" }}>⚠️ Conecta Mercado Pago en tu panel para poder cobrar por tus eventos.</span>
-                  </div>
-                )}
                 {form.precio > 0 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "8px", fontSize: "13px" }}>
                     <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
@@ -250,6 +246,11 @@ const [imagenFile, setImagenFile] = useState(null)
                 )}
               </div>
             </div>
+            {!perfil?.mp_access_token && (
+              <div style={{ marginBottom: "20px", padding: "10px 14px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "8px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "#fbbf24" }}>⚠️ Conecta Mercado Pago en tu panel para poder cobrar por tus eventos.</span>
+              </div>
+            )}
 
             <div style={{ marginTop: "20px" }}>
               <label style={labelStyle}>Límite de boletos por persona</label>
