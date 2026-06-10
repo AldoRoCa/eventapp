@@ -27,7 +27,7 @@ export default function Evento() {
 
       const { data: ev } = await supabase
         .from("eventos")
-        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, created_at, profiles(nombre)")
+        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, created_at, profiles(nombre, avatar_url)")
         .eq("id", id)
         .single()
       setEvento(ev)
@@ -287,8 +287,13 @@ export default function Evento() {
         {/* COLUMNA IZQUIERDA */}
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 700 }}>
-              {evento.profiles?.nombre?.charAt(0) || "A"}
+            <div style={{ width: "40px", height: "40px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 700, cursor: evento.profiles?.avatar_url ? "pointer" : "default" }}
+              onClick={() => evento.profiles?.avatar_url && setFotoZoom(evento.profiles.avatar_url)}>
+              {evento.profiles?.avatar_url ? (
+                <img src={evento.profiles.avatar_url} alt={evento.profiles.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                evento.profiles?.nombre?.charAt(0) || "A"
+              )}
             </div>
             <div>
               <div style={{ fontSize: "14px", fontWeight: 600 }}>{evento.profiles?.nombre || "Anfitrión"}</div>
