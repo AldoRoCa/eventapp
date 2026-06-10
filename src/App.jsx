@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, lazy, Suspense } from "react"
+const LogoCube = lazy(() => import("./components/LogoCube"))
 import { Routes, Route, useNavigate, Link } from "react-router-dom"
 import { motion } from "framer-motion"
 import { supabase } from "./supabase"
@@ -263,6 +264,8 @@ function HomePage({ user, perfil, onLogout }) {
       {/* HERO */}
       <section style={{ padding: "110px 64px 90px", textAlign: "center", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
         <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+        
+            
         <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           style={{ fontSize: "clamp(3rem, 6vw, 5.2rem)", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-2px", margin: "0 0 20px", position: "relative" }}
         >
