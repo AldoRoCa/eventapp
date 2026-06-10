@@ -274,7 +274,7 @@ export default function Evento() {
         <img src={evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80"} alt={evento.titulo}
           onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,8,8,0.95) 100%)" }} />
+        <div onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")} style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,8,8,0.95) 100%)", cursor: "zoom-in" }} />
         <div style={{ position: "absolute", bottom: "40px", left: "64px" }}>
           <span style={{ background: "rgba(124,58,237,0.8)", backdropFilter: "blur(12px)", borderRadius: "999px", padding: "6px 16px", fontSize: "13px", fontWeight: 600, marginBottom: "12px", display: "inline-block" }}>{evento.categoria}</span>
           <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", fontWeight: 700, letterSpacing: "-1px", margin: "8px 0 0" }}>{evento.titulo}</h1>
