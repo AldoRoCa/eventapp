@@ -147,8 +147,9 @@ export default function PanelAnfitrion() {
       estado_evento: evento.estado_evento || "",
       capacidad: evento.capacidad,
       precio: evento.precio,
+      max_boletos_por_persona: evento.max_boletos_por_persona || 5,
       fecha: evento.fecha ? evento.fecha.split("T")[0] : "",
-      hora: evento.fecha ? evento.fecha.split("T")[1]?.slice(0, 5) : "",
+      hora: evento.fecha ? new Date(evento.fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }) : "",
     })
   }
 
@@ -164,6 +165,7 @@ export default function PanelAnfitrion() {
         estado_evento: formEditar.estado_evento || null,
         capacidad: parseInt(formEditar.capacidad),
         precio: parseInt(formEditar.precio) || 0,
+        max_boletos_por_persona: parseInt(formEditar.max_boletos_por_persona) || 5,
         fecha: fechaCompleta,
       })
       .eq("id", editando)
@@ -518,6 +520,10 @@ export default function PanelAnfitrion() {
                     <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Precio (MXN)</label>
                     <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} style={inputStyle} />
                   </div>
+                </div>
+                <div style={{ marginTop: "12px" }}>
+                  <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>Límite de boletos por persona</label>
+                  <input type="number" value={formEditar.max_boletos_por_persona} onChange={e => setFormEditar(f => ({ ...f, max_boletos_por_persona: e.target.value }))} min="1" max="20" style={inputStyle} />
                 </div>
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
