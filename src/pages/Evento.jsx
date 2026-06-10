@@ -17,6 +17,7 @@ export default function Evento() {
   const [cantidad, setCantidad] = useState(1)
   const [precioMostrado, setPrecioMostrado] = useState(0)
   const [boletosUsuario, setBoletosUsuario] = useState(0)
+  const [fotoZoom, setFotoZoom] = useState(null)
   const precioTimerRef = useRef(null)
 
   useEffect(() => {
@@ -242,6 +243,17 @@ export default function Evento() {
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      {fotoZoom && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          onClick={() => setFotoZoom(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="portada"
+            style={{ maxWidth: "900px", width: "100%", borderRadius: "16px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
+            onClick={e => e.stopPropagation()}
+          />
+        </motion.div>
+      )}
 
       {/* NAVBAR */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -260,7 +272,8 @@ export default function Evento() {
       {/* IMAGEN HERO */}
       <div style={{ position: "relative", height: "380px", overflow: "hidden" }}>
         <img src={evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80"} alt={evento.titulo}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
+          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,8,8,0.95) 100%)" }} />
         <div style={{ position: "absolute", bottom: "40px", left: "64px" }}>
           <span style={{ background: "rgba(124,58,237,0.8)", backdropFilter: "blur(12px)", borderRadius: "999px", padding: "6px 16px", fontSize: "13px", fontWeight: 600, marginBottom: "12px", display: "inline-block" }}>{evento.categoria}</span>
