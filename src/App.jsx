@@ -235,7 +235,18 @@ function HomePage({ user, onLogout }) {
           {user ? (
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <motion.span onClick={() => navigate("/perfil")} whileHover={{ color: "white" }} style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", cursor: "pointer" }}>
-  Hola, {user.user_metadata?.nombre || user.email.split("@")[0]}
+  <div style={{ display: "flex", alignItems: "center", gap: "8px" }} onClick={() => navigate("/perfil")}>
+                  {perfil?.avatar_url ? (
+                    <img src={perfil.avatar_url} alt="avatar" onClick={(e) => { e.stopPropagation(); setFotoZoom(perfil.avatar_url) }} style={{ width: "32px", height: "32px", borderRadius: "999px", objectFit: "cover", border: "1.5px solid rgba(124,58,237,0.5)", cursor: "pointer" }} />
+                  ) : (
+                    <div style={{ width: "32px", height: "32px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>
+                      {(perfil?.nombre || user.email)?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", cursor: "pointer" }}>
+                    {perfil?.nombre || user.email.split("@")[0]}
+                  </span>
+                </div>
 </motion.span>
               <motion.button whileHover={{ borderColor: "rgba(255,255,255,0.55)" }} whileTap={{ scale: 0.97 }} onClick={onLogout}
                 style={{ backgroundColor: "transparent", color: "rgba(255,255,255,0.6)", border: "1.5px solid rgba(255,255,255,0.15)", padding: "8px 18px", borderRadius: "10px", fontWeight: 500, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
@@ -427,13 +438,25 @@ function HomePage({ user, onLogout }) {
 
 export default function App() {
   const [user, setUser] = useState(null)
+  const [perfil, setPerfil] = useState(null)
+  const [fotoZoom, setFotoZoom] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
+        setPerfil(data)
+      }
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
+        setPerfil(data)
+      } else {
+        setPerfil(null)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -443,6 +466,18 @@ export default function App() {
   }
 
   return (
+    <>
+    {fotoZoom && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={() => setFotoZoom(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="foto"
+            style={{ maxWidth: "400px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
+            onClick={e => e.stopPropagation()}
+          />
+        </motion.div>
+      )}
     <Routes>
       <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
       <Route path="/login" element={<Login />} />
@@ -463,5 +498,6 @@ export default function App() {
       <Route path="/seguridad" element={<PoliticasSeguridad />} />
       <Route path="/acerca" element={<AcercaDeVela />} />
     </Routes>
+    </>
   )
 }
