@@ -50,7 +50,8 @@ export default function Evento() {
           .order("created_at", { ascending: false })
 
         const cantidadActual = boletos?.length || 0
-        setBoletosUsuario(cantidadActual)
+        const activosActual = boletos?.filter(b => b.estado === "activo").length || 0
+        setBoletosUsuario(activosActual)
 
         if (cantidadActual > 0) {
           const limite = ev?.max_boletos_por_persona || 5
