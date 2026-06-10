@@ -163,7 +163,7 @@ function FeatureBadge({ label, color, border, icon }) {
   )
 }
 
-function HomePage({ user, onLogout }) {
+function HomePage({ user, perfil, onLogout }) {
   const [busquedaHero, setBusquedaHero] = useState("")
   const [activeFilter, setActiveFilter] = useState("Todos")
   const [estadoHero, setEstadoHero] = useState("")
@@ -479,7 +479,7 @@ export default function App() {
         </motion.div>
       )}
     <Routes>
-      <Route path="/" element={<HomePage user={user} onLogout={handleLogout} />} />
+      <Route path="/" element={<HomePage user={user} perfil={perfil} onLogout={handleLogout} />} />
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
       <Route path="/crear-evento" element={<CrearEvento />} />
