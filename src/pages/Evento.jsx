@@ -412,7 +412,8 @@ export default function Evento() {
               </div>
             ) : (
               <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
-                style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit", boxShadow: asistentes >= evento.capacidad ? "none" : "0 0 20px rgba(124,58,237,0.35)" }}
+                className={asistentes >= evento.capacidad ? "" : "btn-3d"}
+style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : undefined, border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit" }}
               >
                 {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
               </motion.button>

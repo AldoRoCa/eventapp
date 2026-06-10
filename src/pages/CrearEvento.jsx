@@ -117,7 +117,9 @@ const [imagenFile, setImagenFile] = useState(null)
     width: "100%", background: "rgba(255,255,255,0.05)",
     border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
     padding: "12px 16px", color: "white", fontSize: "14px",
-    fontFamily: "inherit", outline: "none", boxSizing: "border-box"
+    fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.3) inset, 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,58,237,0.15)",
+    transition: "all 0.2s"
   }
 
   const labelStyle = {
@@ -309,7 +311,7 @@ const [imagenFile, setImagenFile] = useState(null)
           </div>
 
           <motion.button onClick={handleSubmit} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={loading}
-            style={{ width: "100%", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "14px", color: "white", padding: "16px", fontWeight: 700, fontSize: "16px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? 0.7 : 1, boxShadow: "0 0 24px rgba(124,58,237,0.35)" }}
+            className="btn-3d" style={{ width: "100%", borderRadius: "14px", padding: "16px", fontSize: "16px", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}
           >
             {loading ? "Creando evento..." : "Publicar evento"}
           </motion.button>

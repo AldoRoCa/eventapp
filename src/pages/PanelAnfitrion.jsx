@@ -207,7 +207,9 @@ export default function PanelAnfitrion() {
     width: "100%", background: "rgba(255,255,255,0.05)",
     border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px",
     padding: "10px 14px", color: "white", fontSize: "14px",
-    fontFamily: "inherit", outline: "none", boxSizing: "border-box"
+    fontFamily: "inherit", outline: "none", boxSizing: "border-box",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.3) inset, 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(124,58,237,0.15)",
+    transition: "all 0.2s"
   }
 
   if (loading) return (

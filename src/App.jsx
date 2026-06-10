@@ -218,7 +218,7 @@ function HomePage({ user, perfil, onLogout }) {
   ]
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: "hidden" }}>
 
       {/* NAVBAR */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -308,7 +308,7 @@ function HomePage({ user, perfil, onLogout }) {
             </select>
           </div>
           <motion.button whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }}
-            style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", color: "white", padding: "0 32px", fontWeight: 700, fontSize: "15px", cursor: "pointer", whiteSpace: "nowrap", fontFamily: "inherit", minWidth: "110px" }}
+            className="btn-3d" style={{ padding: "0 32px", fontSize: "15px", whiteSpace: "nowrap", minWidth: "110px" }}
           onClick={() => navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)}
           >Buscar</motion.button>
         </motion.div>
