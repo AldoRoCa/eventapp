@@ -402,8 +402,12 @@ export default function Evento() {
             {tieneBoleto ? (
               <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
                 <div style={{ fontSize: "20px", marginBottom: "6px" }}>{estadoBoleto === "pendiente" ? "⏳" : "🎟️"}</div>
-                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>{estadoBoleto === "pendiente" ? "Solicitud enviada" : "Ya alcanzaste el límite de boletos"}</div>
-                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>{estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalos en Mis Boletos"}</div>
+                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>
+                  {estadoBoleto === "pendiente" ? "Solicitud enviada" : boletosUsuario >= limite ? "Ya alcanzaste el límite de boletos" : "Ya tienes boletos para este evento"}
+                </div>
+                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                  {estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalos en Mis Boletos"}
+                </div>
               </div>
             ) : (
               <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
