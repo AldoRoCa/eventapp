@@ -25,6 +25,7 @@ export default function PanelAnfitrion() {
   const [mensaje, setMensaje] = useState("")
   const avatarRef = useRef(null)
   const [modalAvatar, setModalAvatar] = useState(false)
+  const [fotoZoom, setFotoZoom] = useState(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -394,7 +395,7 @@ export default function PanelAnfitrion() {
                     style={{ background: "#0f0f11", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "16px 20px", display: "flex", alignItems: "center", gap: "14px" }}
                   >
                     <div style={{ width: "40px", height: "40px", borderRadius: "999px", overflow: "hidden", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
-                      {sol.profiles?.avatar_url ? <img src={sol.profiles.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : sol.profiles?.nombre?.charAt(0) || "U"}
+                      {sol.profiles?.avatar_url ? <img src={sol.profiles.avatar_url} alt="" onClick={() => setFotoZoom(sol.profiles.avatar_url)} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} /> : sol.profiles?.nombre?.charAt(0) || "U"}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>{sol.profiles?.nombre || "Usuario"}</div>
@@ -440,7 +441,7 @@ export default function PanelAnfitrion() {
                     >
                       <div style={{ width: "40px", height: "40px", borderRadius: "999px", overflow: "hidden", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, flexShrink: 0 }}>
                         {boleto.profiles?.avatar_url ? (
-                          <img src={boleto.profiles.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <img src={boleto.profiles.avatar_url} alt="" onClick={() => setFotoZoom(boleto.profiles.avatar_url)} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
                         ) : (
                           boleto.profiles?.nombre?.charAt(0) || "U"
                         )}
@@ -543,6 +544,18 @@ export default function PanelAnfitrion() {
             <img src={perfil?.avatar_url} alt={perfil?.nombre} style={{ width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }} />
             <div style={{ textAlign: "center", marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "15px" }}>{perfil?.nombre}</div>
           </motion.div>
+        </motion.div>
+      )}
+
+      {fotoZoom && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={() => setFotoZoom(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="foto"
+            style={{ maxWidth: "400px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
+            onClick={e => e.stopPropagation()}
+          />
         </motion.div>
       )}
 
