@@ -35,9 +35,9 @@ serve(async (req) => {
         marketplace: Deno.env.get("MP_CLIENT_ID")!,
         marketplace_fee: comision,
         back_urls: {
-          success: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}`,
-          failure: `${siteUrl}/pago-fallido?evento_id=${evento_id}`,
-          pending: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}`,
+          success: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&collection_status=approved`,
+          failure: `${siteUrl}/pago-fallido?evento_id=${evento_id}&usuario_id=${usuario_id}`,
+          pending: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&collection_status=pending`,
         },
         auto_return: "approved",
         metadata: {
