@@ -249,7 +249,7 @@ export default function Evento() {
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
         >
           <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="portada"
-            style={{ maxWidth: "900px", width: "100%", borderRadius: "16px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
+            style={{ maxWidth: "400px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
             onClick={e => e.stopPropagation()}
           />
         </motion.div>
