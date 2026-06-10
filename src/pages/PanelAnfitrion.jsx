@@ -114,12 +114,24 @@ export default function PanelAnfitrion() {
   }
 
   const cancelarEvento = async (eventoId) => {
-    if (!window.confirm("¿Estás seguro de cancelar este evento? Se notificará a todos los asistentes y se procesarán los reembolsos.")) return
+    if (!window.confirm("¿Estás seguro de cancelar este evento? Se procesarán los reembolsos automáticamente a todos los asistentes.")) return
     setCancelando(eventoId)
-    const { error } = await supabase.from("eventos").delete().eq("id", eventoId)
-    if (!error) {
+    const { data: { session } } = await supabase.auth.getSession()
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cancelar-evento`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ evento_id: eventoId, anfitrion_id: user.id })
+    })
+    const data = await response.json()
+    if (data.ok) {
       setEventos(prev => prev.filter(e => e.id !== eventoId))
-      setMensaje("Evento cancelado correctamente.")
+      setMensaje(`Evento cancelado. ${data.reembolsados > 0 ? `Se procesaron ${data.reembolsados} reembolso${data.reembolsados > 1 ? "s" : ""} automáticamente.` : ""}`)
+      setTimeout(() => setMensaje(""), 5000)
+    } else {
+      setMensaje("Error al cancelar el evento. Intenta de nuevo.")
       setTimeout(() => setMensaje(""), 3000)
     }
     setCancelando(null)
