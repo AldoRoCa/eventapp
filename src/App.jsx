@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 const LogoCube = lazy(() => import("./components/LogoCube"))
 import { Routes, Route, useNavigate, Link } from "react-router-dom"
 import { motion } from "framer-motion"
@@ -169,8 +170,7 @@ function HomePage({ user, perfil, onLogout }) {
   const [activeFilter, setActiveFilter] = useState("Todos")
   const [estadoHero, setEstadoHero] = useState("")
   const [fechaHero, setFechaHero] = useState("")
-  const [eventos, setEventos] = useState([])
-  const [loadingEventos, setLoadingEventos] = useState(true)
+  const queryClient = useQueryClient()
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [esAnfitrion, setEsAnfitrion] = useState(false)
   const navigate = useNavigate()
@@ -184,21 +184,20 @@ function HomePage({ user, perfil, onLogout }) {
     cargarPerfil()
   }, [user])
 
-  useEffect(() => {
-    const cargarEventos = async () => {
-      setLoadingEventos(true)
+  const { data: eventos = [], isLoading: loadingEventos } = useQuery({
+    queryKey: ["eventos", categoriaActiva],
+    queryFn: async () => {
       let query = supabase
         .from("eventos")
         .select("*, profiles(nombre)")
         .gte("fecha", new Date().toISOString())
-.order("fecha", { ascending: true })
+        .order("fecha", { ascending: true })
       if (categoriaActiva) query = query.eq("categoria", categoriaActiva)
       const { data, error } = await query
-      if (!error && data) setEventos(data)
-      setLoadingEventos(false)
-    }
-    cargarEventos()
-  }, [categoriaActiva])
+      if (error) throw error
+      return data || []
+    },
+  })
 
   const heroBadges = [
     { label: "Eventos verificados", color: "#34d399", border: "#059669", iconType: "verificado" },

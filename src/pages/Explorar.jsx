@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { Link, useLocation } from "react-router-dom"
 
+
 const categorias = ["Todas", "Fiestas", "Universitarios", "Cultura", "Autos", "Belleza", "Tecnología", "Gastronomía", "Gaming", "Música", "Deportes", "Arte", "Negocios"]
 
 export default function Explorar() {
