@@ -263,7 +263,8 @@ function HomePage({ user, perfil, onLogout }) {
 
       {/* HERO */}
       <section style={{ padding: "110px 64px 90px", textAlign: "center", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
-        <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+       <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: "700px", height: "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+        
         
             
         <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
