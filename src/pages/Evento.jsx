@@ -3,9 +3,20 @@ import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener("resize", handler)
+    return () => window.removeEventListener("resize", handler)
+  }, [])
+  return isMobile
+}
+
 export default function Evento() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [evento, setEvento] = useState(null)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
@@ -57,21 +68,12 @@ export default function Evento() {
           const limite = ev?.max_boletos_por_persona || 5
           const activos = boletos.filter(b => b.estado === "activo").length
           const pendientes = boletos.filter(b => b.estado === "pendiente").length
-          
-          if (activos > 0) {
-            setEstadoBoleto("activo")
-          } else if (pendientes > 0) {
-            setEstadoBoleto("pendiente")
-          }
-
-          if (cantidadActual >= limite) {
-            setTieneBoleto(true)
-          } else if (ev?.tipo_boleto === "solicitud" && pendientes > 0 && activos === 0) {
-            setTieneBoleto(true)
-          }
+          if (activos > 0) setEstadoBoleto("activo")
+          else if (pendientes > 0) setEstadoBoleto("pendiente")
+          if (cantidadActual >= limite) setTieneBoleto(true)
+          else if (ev?.tipo_boleto === "solicitud" && pendientes > 0 && activos === 0) setTieneBoleto(true)
         }
       }
-
       setLoading(false)
     }
     cargar()
@@ -84,7 +86,6 @@ export default function Evento() {
   const cambiarCantidad = (nueva) => {
     if (nueva < 1 || nueva > maxComprable) return
     setCantidad(nueva)
-
     if (precioTimerRef.current) clearTimeout(precioTimerRef.current)
     precioTimerRef.current = setTimeout(() => {
       setPrecioMostrado((evento?.precio || 0) * nueva)
@@ -97,130 +98,52 @@ export default function Evento() {
 
     if (evento.tipo_boleto === "solicitud") {
       if (evento.precio === 0) {
-        const inserts = Array.from({ length: cantidad }, () => ({
-          evento_id: id,
-          usuario_id: user.id,
-          estado: "pendiente"
-        }))
+        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente" }))
         const { error } = await supabase.from("boletos").insert(inserts)
-        if (!error) {
-          setTieneBoleto(true)
-          setExito(true)
-          setEstadoBoleto("pendiente")
-        }
+        if (!error) { setTieneBoleto(true); setExito(true); setEstadoBoleto("pendiente") }
         setComprando(false)
         return
       } else {
-        // Solicitud con precio — pagar primero, luego aprobar
-        const inserts = Array.from({ length: cantidad }, () => ({
-          evento_id: id,
-          usuario_id: user.id,
-          estado: "pendiente_pago"
-        }))
+        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
         const { error: boletoError } = await supabase.from("boletos").insert(inserts)
         if (boletoError) { setComprando(false); return }
-
-        const { data: anfitrion } = await supabase
-          .from("profiles")
-          .select("mp_access_token")
-          .eq("id", evento.anfitrion_id)
-          .single()
-
-        if (!anfitrion?.mp_access_token) {
-          alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago.")
-          setComprando(false)
-          return
-        }
-
+        const { data: anfitrion } = await supabase.from("profiles").select("mp_access_token").eq("id", evento.anfitrion_id).single()
+        if (!anfitrion?.mp_access_token) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
         const { data: { session } } = await supabase.auth.getSession()
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            evento_id: id,
-            titulo: evento.titulo,
-            precio: Math.round(evento.precio * 1.10),
-            usuario_id: user.id,
-            anfitrion_mp_token: anfitrion.mp_access_token,
-            cantidad: cantidad,
-          })
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+          body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, anfitrion_mp_token: anfitrion.mp_access_token, cantidad })
         })
         const data = await response.json()
-        if (data.url) {
-          window.location.href = data.url
-        } else {
-          alert("Error al procesar el pago. Intenta de nuevo.")
-          setComprando(false)
-        }
+        if (data.url) window.location.href = data.url
+        else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
         return
       }
     }
 
     if (evento.precio === 0) {
-      const inserts = Array.from({ length: cantidad }, () => ({
-        evento_id: id,
-        usuario_id: user.id,
-        estado: "activo"
-      }))
+      const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "activo" }))
       const { error } = await supabase.from("boletos").insert(inserts)
-      if (!error) {
-        setTieneBoleto(true)
-        setAsistentes(a => a + cantidad)
-        setExito(true)
-        setEstadoBoleto("activo")
-      }
+      if (!error) { setTieneBoleto(true); setAsistentes(a => a + cantidad); setExito(true); setEstadoBoleto("activo") }
       setComprando(false)
       return
     }
 
-    // Evento de pago — crear boletos pendiente_pago y redirigir a MP
-    const inserts = Array.from({ length: cantidad }, () => ({
-      evento_id: id,
-      usuario_id: user.id,
-      estado: "pendiente_pago"
-    }))
+    const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
     const { error: boletoError } = await supabase.from("boletos").insert(inserts)
     if (boletoError) { setComprando(false); return }
-
-    const { data: anfitrion } = await supabase
-      .from("profiles")
-      .select("mp_access_token")
-      .eq("id", evento.anfitrion_id)
-      .single()
-
-    if (!anfitrion?.mp_access_token) {
-      alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago.")
-      setComprando(false)
-      return
-    }
-
+    const { data: anfitrion } = await supabase.from("profiles").select("mp_access_token").eq("id", evento.anfitrion_id).single()
+    if (!anfitrion?.mp_access_token) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
     const { data: { session } } = await supabase.auth.getSession()
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        evento_id: id,
-        titulo: evento.titulo,
-        precio: Math.round(evento.precio * 1.10),
-        usuario_id: user.id,
-        anfitrion_mp_token: anfitrion.mp_access_token,
-        cantidad: cantidad,
-      })
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, anfitrion_mp_token: anfitrion.mp_access_token, cantidad })
     })
-
     const data = await response.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else {
-      alert("Error al procesar el pago. Intenta de nuevo.")
-      setComprando(false)
-    }
+    if (data.url) window.location.href = data.url
+    else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
   }
 
   if (loading) return (
@@ -242,53 +165,148 @@ export default function Evento() {
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
   const precioTotal = Math.round(evento.precio * 1.10) * cantidad
 
+  // Bloque de compra — se reutiliza en móvil y desktop
+  const BloqueCompra = () => (
+    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: isMobile ? "22px 18px" : "28px" }}>
+      {/* PRECIO */}
+      <div style={{ marginBottom: "20px" }}>
+        <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "4px" }}>
+          {evento.precio === 0 ? "Precio" : cantidad > 1 ? `${cantidad} boletos` : "Precio por boleto"}
+        </div>
+        <div style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px", transition: "all 0.3s" }}>
+          {evento.precio === 0 ? "Gratis" : `$${precioTotal}`}
+          {evento.precio > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", marginLeft: "6px", fontWeight: 400 }}>MXN</span>}
+        </div>
+        {evento.precio > 0 && cantidad > 1 && (
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
+            ${evento.precio} × {cantidad} boletos
+          </div>
+        )}
+      </div>
+
+      {/* SELECTOR CANTIDAD */}
+      {!tieneBoleto && maxComprable > 0 && (
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "10px", fontWeight: 500 }}>
+            Cantidad de boletos · máx. {limite} por persona
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <button onClick={() => cambiarCantidad(cantidad - 1)} disabled={cantidad <= 1}
+              style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad <= 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad <= 1 ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad <= 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
+            >−</button>
+            <span style={{ fontSize: "18px", fontWeight: 700, minWidth: "24px", textAlign: "center" }}>{cantidad}</span>
+            <button onClick={() => cambiarCantidad(cantidad + 1)} disabled={cantidad >= maxComprable}
+              style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad >= maxComprable ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad >= maxComprable ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad >= maxComprable ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
+            >+</button>
+          </div>
+          {boletosUsuario > 0 && (
+            <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>
+              Ya tienes {boletosUsuario} boleto{boletosUsuario > 1 ? "s" : ""} para este evento
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TIPO BOLETO */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <span style={{ fontSize: "16px" }}>{evento.tipo_boleto === "instantaneo" ? "⚡" : "📋"}</span>
+        <div>
+          <div style={{ fontSize: "13px", fontWeight: 600 }}>{evento.tipo_boleto === "instantaneo" ? "Boleto instantáneo" : "Por solicitud"}</div>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{evento.tipo_boleto === "instantaneo" ? "Recibes tu boleto al instante" : "El anfitrión debe aprobar"}</div>
+        </div>
+      </div>
+
+      {exito && (
+        <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#34d399", fontSize: "13.5px", textAlign: "center" }}>
+          {estadoBoleto === "activo" ? `✓ ¡${cantidad > 1 ? `${cantidad} boletos obtenidos` : "Boleto obtenido"} exitosamente!` : "⏳ Solicitud enviada, espera la aprobación del anfitrión"}
+        </div>
+      )}
+
+      {tieneBoleto ? (
+        <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
+          <div style={{ fontSize: "20px", marginBottom: "6px" }}>{estadoBoleto === "pendiente" ? "⏳" : "🎟️"}</div>
+          <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>
+            {estadoBoleto === "pendiente" ? "Solicitud enviada" : boletosUsuario >= limite ? "Ya alcanzaste el límite de boletos" : "Ya tienes boletos para este evento"}
+          </div>
+          <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+            {estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalos en Mis Boletos"}
+          </div>
+        </div>
+      ) : (
+        <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
+          className={asistentes >= evento.capacidad ? "" : "btn-3d"}
+          style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : undefined, border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+        >
+          {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
+        </motion.button>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "center", marginTop: "16px" }}>
+        <svg width="13" height="13" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reembolso garantizado si el evento se cancela</span>
+      </div>
+    </div>
+  )
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+
+      {/* ZOOM FOTO */}
       {fotoZoom && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           onClick={() => setFotoZoom(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
         >
           <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="portada"
-            style={{ maxWidth: "400px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)" }}
+            style={{ maxWidth: "500px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.6)", margin: "auto" }}
             onClick={e => e.stopPropagation()}
           />
         </motion.div>
       )}
 
       {/* NAVBAR */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "white" }}>
-          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
-            <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: isMobile ? "0 18px" : "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", color: "white" }}>
+          <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 14px rgba(124,58,237,0.5)" }}>
+            <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
+          <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
         <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Volver
+          {!isMobile && "Volver"}
         </Link>
       </nav>
 
       {/* IMAGEN HERO */}
-      <div style={{ position: "relative", height: "380px", overflow: "hidden" }}>
-        <img src={evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80"} alt={evento.titulo}
+      <div style={{ position: "relative", height: isMobile ? "240px" : "380px", overflow: "hidden" }}>
+        <img
+          src={evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80"}
+          alt={evento.titulo}
           onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
-          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />
-        <div onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")} style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,8,8,0.95) 100%)", cursor: "zoom-in" }} />
-        <div style={{ position: "absolute", bottom: "40px", left: "64px" }}>
-          <span style={{ background: "rgba(124,58,237,0.8)", backdropFilter: "blur(12px)", borderRadius: "999px", padding: "6px 16px", fontSize: "13px", fontWeight: 600, marginBottom: "12px", display: "inline-block" }}>{evento.categoria}</span>
-          <h1 style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", fontWeight: 700, letterSpacing: "-1px", margin: "8px 0 0" }}>{evento.titulo}</h1>
+          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }}
+        />
+        <div onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
+          style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(8,8,8,0.95) 100%)", cursor: "zoom-in" }}
+        />
+        <div style={{ position: "absolute", bottom: isMobile ? "20px" : "40px", left: isMobile ? "18px" : "64px", right: isMobile ? "18px" : "64px" }}>
+          <span style={{ background: "rgba(124,58,237,0.8)", backdropFilter: "blur(12px)", borderRadius: "999px", padding: "5px 14px", fontSize: "12px", fontWeight: 600, marginBottom: "10px", display: "inline-block" }}>{evento.categoria}</span>
+          <h1 style={{ fontSize: isMobile ? "1.5rem" : "clamp(1.8rem, 4vw, 3rem)", fontWeight: 700, letterSpacing: "-0.5px", margin: "8px 0 0", lineHeight: 1.2 }}>{evento.titulo}</h1>
         </div>
       </div>
 
-      {/* CONTENIDO */}
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 64px", display: "grid", gridTemplateColumns: "1fr 360px", gap: "48px", alignItems: "start" }}>
+      {/* CONTENIDO MÓVIL */}
+      {isMobile ? (
+        <div style={{ padding: "24px 18px 48px" }}>
 
-        {/* COLUMNA IZQUIERDA */}
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px" }}>
-            <div style={{ width: "40px", height: "40px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 700, cursor: evento.profiles?.avatar_url ? "pointer" : "default" }}
+          {/* BLOQUE COMPRA ARRIBA EN MÓVIL */}
+          <div style={{ marginBottom: "32px" }}>
+            <BloqueCompra />
+          </div>
+
+          {/* ANFITRIÓN */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px", fontWeight: 700, flexShrink: 0, cursor: evento.profiles?.avatar_url ? "pointer" : "default" }}
               onClick={() => evento.profiles?.avatar_url && setFotoZoom(evento.profiles.avatar_url)}>
               {evento.profiles?.avatar_url ? (
                 <img src={evento.profiles.avatar_url} alt={evento.profiles.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -298,134 +316,113 @@ export default function Evento() {
             </div>
             <div>
               <div style={{ fontSize: "14px", fontWeight: 600 }}>{evento.profiles?.nombre || "Anfitrión"}</div>
-              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)" }}>Organizador del evento</div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>Organizador del evento</div>
             </div>
           </div>
 
+          {/* DESCRIPCIÓN */}
           {evento.descripcion && (
-            <div style={{ marginBottom: "36px" }}>
-              <h2 style={{ fontSize: "17px", fontWeight: 600, marginBottom: "14px" }}>Acerca del evento</h2>
-              <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.75, fontSize: "15px", fontWeight: 400 }}>{evento.descripcion}</p>
+            <div style={{ marginBottom: "28px" }}>
+              <h2 style={{ fontSize: "16px", fontWeight: 600, marginBottom: "12px" }}>Acerca del evento</h2>
+              <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.75, fontSize: "14.5px", fontWeight: 400 }}>{evento.descripcion}</p>
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          {/* GRID DETALLES — 2 columnas centrado */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
             {[
-              { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, label: "Fecha", value: fechaFormato },
-              { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Hora", value: horaFormato },
-              { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>, label: "Ubicación", value: evento.ubicacion },
-              { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, label: "Asistentes", value: `${asistentes} / ${evento.capacidad}` },
+              { icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, label: "Fecha", value: fechaFormato },
+              { icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Hora", value: horaFormato },
+              { icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>, label: "Ubicación", value: evento.ubicacion },
+              { icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, label: "Asistentes", value: `${asistentes} / ${evento.capacidad}` },
             ].map((item, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: "14px" }}>
-                <div style={{ color: "#a78bfa", flexShrink: 0, marginTop: "2px" }}>{item.icon}</div>
-                <div>
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "4px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>{item.label}</div>
-                  <div style={{ fontSize: "14px", fontWeight: 500 }}>{item.value}</div>
+              <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 14px", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <div style={{ color: "#a78bfa", flexShrink: 0, marginTop: "1px" }}>{item.icon}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginBottom: "3px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>{item.label}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 500, wordBreak: "break-word" }}>{item.value}</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop: "20px" }}>
+          {/* BARRA ASISTENTES */}
+          <div style={{ marginTop: "4px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-              <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>{asistentes} de {evento.capacidad} lugares ocupados</span>
-              {almostFull && <span style={{ fontSize: "13px", color: "#a78bfa", fontWeight: 600 }}>¡Casi lleno!</span>}
+              <span style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)" }}>{asistentes} de {evento.capacidad} lugares ocupados</span>
+              {almostFull && <span style={{ fontSize: "12.5px", color: "#a78bfa", fontWeight: 600 }}>¡Casi lleno!</span>}
             </div>
-            <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "999px", height: "6px", overflow: "hidden" }}>
+            <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "999px", height: "5px", overflow: "hidden" }}>
               <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8 }}
-                style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "6px", borderRadius: "999px" }}
+                style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "5px", borderRadius: "999px" }}
               />
             </div>
           </div>
         </div>
 
-        {/* COLUMNA DERECHA - COMPRAR */}
-        <div style={{ position: "sticky", top: "88px" }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "28px" }}>
-
-            {/* PRECIO */}
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginBottom: "4px" }}>
-                {evento.precio === 0 ? "Precio" : cantidad > 1 ? `${cantidad} boletos` : "Precio por boleto"}
-              </div>
-              <div style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px", transition: "all 0.3s" }}>
-                {evento.precio === 0 ? "Gratis" : `$${precioTotal}`}
-                {evento.precio > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", marginLeft: "6px", fontWeight: 400 }}>MXN</span>}
-              </div>
-              {evento.precio > 0 && cantidad > 1 && (
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "2px" }}>
-                  ${evento.precio} × {cantidad} boletos
-                </div>
-              )}
-            </div>
-
-            {/* SELECTOR DE CANTIDAD — solo si no es solicitud y no tiene boleto */}
-            {!tieneBoleto && maxComprable > 0 && (
-              <div style={{ marginBottom: "20px" }}>
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginBottom: "10px", fontWeight: 500 }}>
-                  Cantidad de boletos · máx. {limite} por persona
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button
-                    onClick={() => cambiarCantidad(cantidad - 1)}
-                    disabled={cantidad <= 1}
-                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad <= 1 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad <= 1 ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad <= 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
-                  >−</button>
-                  <span style={{ fontSize: "18px", fontWeight: 700, minWidth: "24px", textAlign: "center" }}>{cantidad}</span>
-                  <button
-                    onClick={() => cambiarCantidad(cantidad + 1)}
-                    disabled={cantidad >= maxComprable}
-                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", background: cantidad >= maxComprable ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", color: cantidad >= maxComprable ? "rgba(255,255,255,0.2)" : "white", fontSize: "18px", cursor: cantidad >= maxComprable ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "all 0.15s" }}
-                  >+</button>
-                </div>
-                {boletosUsuario > 0 && (
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>
-                    Ya tienes {boletosUsuario} boleto{boletosUsuario > 1 ? "s" : ""} para este evento
-                  </div>
+      ) : (
+        /* CONTENIDO DESKTOP */
+        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "48px 64px", display: "grid", gridTemplateColumns: "1fr 360px", gap: "48px", alignItems: "start" }}>
+          {/* COLUMNA IZQUIERDA */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: 700, cursor: evento.profiles?.avatar_url ? "pointer" : "default" }}
+                onClick={() => evento.profiles?.avatar_url && setFotoZoom(evento.profiles.avatar_url)}>
+                {evento.profiles?.avatar_url ? (
+                  <img src={evento.profiles.avatar_url} alt={evento.profiles.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  evento.profiles?.nombre?.charAt(0) || "A"
                 )}
               </div>
-            )}
-
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <span style={{ fontSize: "16px" }}>{evento.tipo_boleto === "instantaneo" ? "⚡" : "📋"}</span>
               <div>
-                <div style={{ fontSize: "13px", fontWeight: 600 }}>{evento.tipo_boleto === "instantaneo" ? "Boleto instantáneo" : "Por solicitud"}</div>
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{evento.tipo_boleto === "instantaneo" ? "Recibes tu boleto al instante" : "El anfitrión debe aprobar"}</div>
+                <div style={{ fontSize: "14px", fontWeight: 600 }}>{evento.profiles?.nombre || "Anfitrión"}</div>
+                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)" }}>Organizador del evento</div>
               </div>
             </div>
 
-            {exito && (
-              <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "16px", color: "#34d399", fontSize: "13.5px", textAlign: "center" }}>
-                {estadoBoleto === "activo" ? `✓ ¡${cantidad > 1 ? `${cantidad} boletos obtenidos` : "Boleto obtenido"} exitosamente!` : "⏳ Solicitud enviada, espera la aprobación del anfitrión"}
+            {evento.descripcion && (
+              <div style={{ marginBottom: "36px" }}>
+                <h2 style={{ fontSize: "17px", fontWeight: 600, marginBottom: "14px" }}>Acerca del evento</h2>
+                <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.75, fontSize: "15px", fontWeight: 400 }}>{evento.descripcion}</p>
               </div>
             )}
 
-            {tieneBoleto ? (
-              <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "16px", textAlign: "center" }}>
-                <div style={{ fontSize: "20px", marginBottom: "6px" }}>{estadoBoleto === "pendiente" ? "⏳" : "🎟️"}</div>
-                <div style={{ fontWeight: 600, color: "#34d399", fontSize: "14px" }}>
-                  {estadoBoleto === "pendiente" ? "Solicitud enviada" : boletosUsuario >= limite ? "Ya alcanzaste el límite de boletos" : "Ya tienes boletos para este evento"}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              {[
+                { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, label: "Fecha", value: fechaFormato },
+                { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Hora", value: horaFormato },
+                { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>, label: "Ubicación", value: evento.ubicacion },
+                { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, label: "Asistentes", value: `${asistentes} / ${evento.capacidad}` },
+              ].map((item, i) => (
+                <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: "14px" }}>
+                  <div style={{ color: "#a78bfa", flexShrink: 0, marginTop: "2px" }}>{item.icon}</div>
+                  <div>
+                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "4px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>{item.label}</div>
+                    <div style={{ fontSize: "14px", fontWeight: 500 }}>{item.value}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
-                  {estadoBoleto === "pendiente" ? "El anfitrión debe aprobarla" : "Revísalos en Mis Boletos"}
-                </div>
-              </div>
-            ) : (
-              <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
-                className={asistentes >= evento.capacidad ? "" : "btn-3d"}
-style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.08)" : undefined, border: "none", borderRadius: "12px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.4)" : "white", padding: "15px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit" }}
-              >
-                {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
-              </motion.button>
-            )}
+              ))}
+            </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "center", marginTop: "16px" }}>
-              <svg width="13" height="13" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reembolso garantizado si el evento se cancela</span>
+            <div style={{ marginTop: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>{asistentes} de {evento.capacidad} lugares ocupados</span>
+                {almostFull && <span style={{ fontSize: "13px", color: "#a78bfa", fontWeight: 600 }}>¡Casi lleno!</span>}
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "999px", height: "6px", overflow: "hidden" }}>
+                <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8 }}
+                  style={{ background: "linear-gradient(90deg, #6d28d9, #a78bfa)", height: "6px", borderRadius: "999px" }}
+                />
+              </div>
             </div>
           </div>
+
+          {/* COLUMNA DERECHA */}
+          <div style={{ position: "sticky", top: "88px" }}>
+            <BloqueCompra />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
