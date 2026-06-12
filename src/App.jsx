@@ -71,8 +71,8 @@ function CategoryCard({ cat, activa, onClick }) {
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onTouchStart={() => setTouched(true)}
-      onTouchEnd={() => { setTimeout(() => setTouched(false), 400); onClick() }}
-      onClick={onClick}
+      onTouchEnd={(e) => { e.preventDefault(); setTimeout(() => setTouched(false), 400); onClick() }}
+      onClick={(e) => { if (e.isTrusted) onClick() }}
       whileTap={{ scale: 0.97 }}
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
@@ -207,7 +207,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
         .order("fecha", { ascending: true })
 
       if (categoriaActiva) query = query.eq("categoria", categoriaActiva)
-      if (estadoHero) query = query.ilike("ubicacion", `%${estadoHero}%`)
+      if (estadoHero) query = query.eq("estado_evento", estadoHero)
 
       if (fechaHero) {
         const ahora = new Date()
