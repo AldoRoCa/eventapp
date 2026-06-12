@@ -3,7 +3,18 @@ import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener("resize", handler)
+    return () => window.removeEventListener("resize", handler)
+  }, [])
+  return isMobile
+}
+
 export default function MisBoletos() {
+  const isMobile = useIsMobile()
   const [boletos, setBoletos] = useState([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
@@ -14,18 +25,14 @@ export default function MisBoletos() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { navigate("/login"); return }
       setUser(user)
-
       const { data } = await supabase
         .from("boletos")
         .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre)), mp_payment_id")
         .eq("usuario_id", user.id)
         .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
-
-      const boletosData = data || []
-      setBoletos(boletosData)
+      setBoletos(data || [])
       setLoading(false)
-      
     }
     cargar()
   }, [])
@@ -40,108 +47,172 @@ export default function MisBoletos() {
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
 
       {/* NAVBAR */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "12px", textDecoration: "none", color: "white" }}>
-          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
-            <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: `0 ${isMobile ? "18px" : "64px"}`, height: isMobile ? "56px" : "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", color: "white" }}>
+          <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 16px rgba(124,58,237,0.55)" }}>
+            <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
+          <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
         <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Volver al inicio
+          <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          {!isMobile && "Volver al inicio"}
         </Link>
       </nav>
 
-      <div style={{ maxWidth: "860px", margin: "0 auto", padding: "56px 24px" }}>
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      {/* HEADER con degradado */}
+      <div style={{ background: "linear-gradient(135deg, #0d0b2e 0%, #120f3a 40%, #080808 100%)", padding: isMobile ? "32px 18px 28px" : "52px 64px 44px", borderBottom: "1px solid rgba(124,58,237,0.12)", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-40px", left: "30%", width: "500px", height: "250px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: "860px", margin: "0 auto", position: "relative" }}>
+          <h1 style={{ fontSize: isMobile ? "1.8rem" : "2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "6px" }}>Mis boletos</h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14.5px", fontWeight: 400, margin: 0 }}>
+            {boletos.length === 0 ? "No tienes boletos todavía." : `Tienes ${boletos.length} boleto${boletos.length > 1 ? "s" : ""} activo${boletos.length > 1 ? "s" : ""}.`}
+          </p>
+        </div>
+      </div>
 
-          <div style={{ marginBottom: "40px" }}>
-            <h1 style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "8px" }}>Mis boletos</h1>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "15px", fontWeight: 400 }}>
-              {boletos.length === 0 ? "No tienes boletos todavía." : `Tienes ${boletos.length} boleto${boletos.length > 1 ? "s" : ""} activo${boletos.length > 1 ? "s" : ""}.`}
-            </p>
-            {boletos.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "14px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", borderRadius: "10px", padding: "10px 16px" }}>
-                <svg width="14" height="14" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>Los boletos se eliminan automáticamente 30 días después del evento. Te recomendamos tomar captura de pantalla como comprobante.</span>
-              </div>
-            )}
+      <div style={{ maxWidth: "860px", margin: "0 auto", padding: isMobile ? "24px 18px 48px" : "40px 24px 60px" }}>
+
+        {boletos.length > 0 && (
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "28px", background: "rgba(124,58,237,0.07)", border: "1.5px solid rgba(124,58,237,0.18)", borderRadius: "12px", padding: "12px 16px" }}>
+            <svg width="14" height="14" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: "2px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>Los boletos se eliminan automáticamente 30 días después del evento. Te recomendamos tomar captura de pantalla como comprobante.</span>
           </div>
+        )}
 
-          {boletos.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
-              <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎟️</div>
-              <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>Aún no tienes boletos</div>
-              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "28px" }}>Explora eventos y compra tu primer boleto</div>
-              <Link to="/" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", borderRadius: "10px", color: "white", padding: "12px 28px", fontWeight: 600, fontSize: "14px", textDecoration: "none", display: "inline-block" }}>
-                Explorar eventos
-              </Link>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {boletos.map((boleto, i) => {
-                const ev = boleto.eventos
-                const fecha = ev?.fecha ? new Date(ev.fecha) : null
-                const ahora = new Date()
-                const usado = fecha && boleto.estado === "activo" && (ahora - fecha) > 5 * 60 * 60 * 1000
-                const fechaFormato = fecha ? fecha.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "Fecha no disponible"
-                const horaFormato = fecha ? fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : ""
+        {boletos.length === 0 ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            style={{ textAlign: "center", padding: isMobile ? "56px 20px" : "80px 24px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "20px" }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎟️</div>
+            <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>Aún no tienes boletos</div>
+            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "28px" }}>Explora eventos y compra tu primer boleto</div>
+            <Link to="/" style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", borderRadius: "12px", color: "white", padding: "12px 28px", fontWeight: 600, fontSize: "14px", textDecoration: "none", display: "inline-block", boxShadow: "0 0 20px rgba(124,58,237,0.35)" }}>
+              Explorar eventos
+            </Link>
+          </motion.div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            {boletos.map((boleto, i) => {
+              const ev = boleto.eventos
+              const fecha = ev?.fecha ? new Date(ev.fecha) : null
+              const ahora = new Date()
+              const usado = fecha && boleto.estado === "activo" && (ahora - fecha) > 5 * 60 * 60 * 1000
+              const fechaFormato = fecha ? fecha.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "Fecha no disponible"
+              const horaFormato = fecha ? fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : ""
 
-                return (
-                  <motion.div key={boleto.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                    style={{ background: "#0f0f11", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", overflow: "hidden", display: "grid", gridTemplateColumns: "200px 1fr auto" }}
-                  >
-                    {/* imagen */}
-                    <div style={{ position: "relative", height: "100%", minHeight: "140px" }}>
-                      <img src={ev?.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80"} alt={ev?.titulo}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, transparent 60%, #0f0f11 100%)" }} />
-                    </div>
+              const estadoColor = boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"
+              const estadoBg = boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.1)"
+              const estadoBorder = boleto.estado === "pendiente" ? "rgba(245,158,11,0.3)" : usado ? "rgba(255,255,255,0.1)" : "rgba(16,185,129,0.3)"
+              const estadoLabel = boleto.estado === "pendiente" ? "Pendiente" : usado ? "Usado" : "Activo"
 
-                    {/* info */}
-                    <div style={{ padding: "24px 20px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                        <span style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.35)", borderRadius: "999px", padding: "3px 10px", fontSize: "12px", fontWeight: 600, color: "#a78bfa" }}>{ev?.categoria}</span>
-                      </div>
-                      <div style={{ fontWeight: 700, fontSize: "18px", marginBottom: "4px", letterSpacing: "-0.3px" }}>{ev?.titulo}</div>
-                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginBottom: "16px" }}>por {ev?.profiles?.nombre || "Anfitrión"}</div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                          {fechaFormato} · {horaFormato}
+              return (
+                <motion.div key={boleto.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+                  style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "20px", overflow: "hidden" }}
+                >
+                  {isMobile ? (
+                    /* MÓVIL: layout vertical */
+                    <div>
+                      {/* Imagen arriba */}
+                      <div style={{ position: "relative", height: "150px" }}>
+                        <img src={ev?.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80"} alt={ev?.titulo}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(15,15,17,0.9))" }} />
+                        {/* Badge categoría sobre imagen */}
+                        <span style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(124,58,237,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: "999px", padding: "4px 12px", fontSize: "12px", fontWeight: 600, color: "white" }}>{ev?.categoria}</span>
+                        {/* Badge estado sobre imagen */}
+                        <div style={{ position: "absolute", top: "12px", right: "12px", display: "flex", alignItems: "center", gap: "5px", background: estadoBg, border: `1px solid ${estadoBorder}`, backdropFilter: "blur(8px)", borderRadius: "999px", padding: "4px 10px" }}>
+                          <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: estadoColor }} />
+                          <span style={{ fontSize: "11.5px", color: estadoColor, fontWeight: 600 }}>{estadoLabel}</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                          {ev?.ubicacion}
+                      </div>
+                      {/* Info abajo */}
+                      <div style={{ padding: "18px 18px 20px" }}>
+                        <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "3px", letterSpacing: "-0.3px" }}>{ev?.titulo}</div>
+                        <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px", marginBottom: "14px" }}>por {ev?.profiles?.nombre || "Anfitrión"}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {fechaFormato} · {horaFormato}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            {ev?.ubicacion}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "2px" }}>Pagado</div>
+                            <div style={{ fontWeight: 700, fontSize: "20px", letterSpacing: "-0.5px" }}>{ev?.precio === 0 ? "Gratis" : `$${ev?.precio}`}</div>
+                            {ev?.precio > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>MXN</div>}
+                          </div>
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+                            <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>
+                              Ver evento
+                              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </Link>
+                            {boleto.mp_payment_id && (
+                              <a href="https://www.mercadopago.com.mx/activities" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* precio y estado */}
-                    <div style={{ padding: "24px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", borderLeft: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "4px" }}>Pagado</div>
-                        <div style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>{ev?.precio === 0 ? "Gratis" : `$${ev?.precio}`}</div>
-                        {ev?.precio > 0 && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>MXN</div>}
+                  ) : (
+                    /* DESKTOP: layout horizontal */
+                    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr auto" }}>
+                      {/* Imagen */}
+                      <div style={{ position: "relative", minHeight: "150px" }}>
+                        <img src={ev?.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=80"} alt={ev?.titulo}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, transparent 60%, #0f0f11 100%)" }} />
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", background: boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.05)" : "rgba(16,185,129,0.1)", border: `1px solid ${boleto.estado === "pendiente" ? "rgba(245,158,11,0.25)" : usado ? "rgba(255,255,255,0.1)" : "rgba(16,185,129,0.25)"}`, borderRadius: "999px", padding: "5px 12px" }}>
-                          <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"}} />
-                          <span style={{ fontSize: "12px", color: boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399", fontWeight: 600 }}>{boleto.estado === "pendiente" ? "Pendiente" : usado ? "Usado" : "Activo"}</span>
+                      {/* Info */}
+                      <div style={{ padding: "24px 20px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                          <span style={{ background: "rgba(124,58,237,0.2)", border: "1.5px solid rgba(124,58,237,0.35)", borderRadius: "999px", padding: "3px 12px", fontSize: "12px", fontWeight: 600, color: "#a78bfa" }}>{ev?.categoria}</span>
                         </div>
-                        <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 500 }}>Ver evento →</Link>
-                        {boleto.mp_payment_id && (
-                          <a href={`https://www.mercadopago.com.mx/activities`} target="_blank" rel="noopener noreferrer" style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
-                        )}
+                        <div style={{ fontWeight: 700, fontSize: "18px", marginBottom: "4px", letterSpacing: "-0.3px" }}>{ev?.titulo}</div>
+                        <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginBottom: "16px" }}>por {ev?.profiles?.nombre || "Anfitrión"}</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {fechaFormato} · {horaFormato}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>
+                            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            {ev?.ubicacion}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Precio y estado */}
+                      <div style={{ padding: "24px 24px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: "160px" }}>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "4px" }}>Pagado</div>
+                          <div style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>{ev?.precio === 0 ? "Gratis" : `$${ev?.precio}`}</div>
+                          {ev?.precio > 0 && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>MXN</div>}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", background: estadoBg, border: `1.5px solid ${estadoBorder}`, borderRadius: "999px", padding: "5px 12px" }}>
+                            <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: estadoColor }} />
+                            <span style={{ fontSize: "12px", color: estadoColor, fontWeight: 600 }}>{estadoLabel}</span>
+                          </div>
+                          <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>
+                            Ver evento
+                            <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                          </Link>
+                          {boleto.mp_payment_id && (
+                            <a href="https://www.mercadopago.com.mx/activities" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          )}
-        </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
