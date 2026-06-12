@@ -198,14 +198,37 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
   }, [user])
 
   const { data: eventos = [], isLoading: loadingEventos } = useQuery({
-    queryKey: ["eventos", categoriaActiva],
+    queryKey: ["eventos", categoriaActiva, estadoHero, fechaHero],
     queryFn: async () => {
       let query = supabase
         .from("eventos")
         .select("*, profiles(nombre)")
         .gte("fecha", new Date().toISOString())
         .order("fecha", { ascending: true })
+
       if (categoriaActiva) query = query.eq("categoria", categoriaActiva)
+      if (estadoHero) query = query.ilike("ubicacion", `%${estadoHero}%`)
+
+      if (fechaHero) {
+        const ahora = new Date()
+        if (fechaHero === "hoy") {
+          const finHoy = new Date(); finHoy.setHours(23, 59, 59, 999)
+          query = query.lte("fecha", finHoy.toISOString())
+        } else if (fechaHero === "finde") {
+          const dia = ahora.getDay()
+          const diffSab = dia === 0 ? -1 : 6 - dia
+          const sabado = new Date(ahora); sabado.setDate(ahora.getDate() + diffSab); sabado.setHours(0, 0, 0, 0)
+          const domingo = new Date(sabado); domingo.setDate(sabado.getDate() + 1); domingo.setHours(23, 59, 59, 999)
+          query = query.gte("fecha", sabado.toISOString()).lte("fecha", domingo.toISOString())
+        } else if (fechaHero === "semana") {
+          const finSemana = new Date(ahora); finSemana.setDate(ahora.getDate() + (7 - ahora.getDay())); finSemana.setHours(23, 59, 59, 999)
+          query = query.lte("fecha", finSemana.toISOString())
+        } else if (fechaHero === "mes") {
+          const finMes = new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59, 999)
+          query = query.lte("fecha", finMes.toISOString())
+        }
+      }
+
       const { data, error } = await query
       if (error) throw error
       return data || []
@@ -370,7 +393,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
               <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 <select value={fechaHero} onChange={e => setFechaHero(e.target.value)}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0", maxWidth: "110px" }}
                 >
                   <option value="" style={{ background: "#111" }}>Cualquier fecha</option>
                   <option value="hoy" style={{ background: "#111" }}>Hoy</option>
