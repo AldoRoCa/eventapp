@@ -21,6 +21,7 @@ import PoliticasSeguridad from "./pages/PoliticasSeguridad"
 import AcercaDeVela from "./pages/AcercaDeVela"
 import Terminos from "./pages/Terminos"
 import Privacidad from "./pages/Privacidad"
+import Contacto from "./pages/Contacto"
 
 // Hook para detectar si es móvil
 function useIsMobile() {
@@ -560,7 +561,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
               { label: "Acerca de VELA", href: "/acerca" },
               { label: "Términos de uso", href: "/terminos" },
               { label: "Privacidad", href: "/privacidad" },
-              { label: "Contacto", href: "mailto:panel.admin2026eventapp@gmail.com" },
+              { label: "Contacto", href: "/contacto" },
             ]},
           ].map(col => (
             <div key={col.title}>
@@ -640,6 +641,7 @@ export default function App() {
         <Route path="/reembolsos" element={<Reembolsos />} />
         <Route path="/seguridad" element={<PoliticasSeguridad />} />
         <Route path="/acerca" element={<AcercaDeVela />} />
+        <Route path="/contacto" element={<Contacto />} />
       </Routes>
     </>
   )
