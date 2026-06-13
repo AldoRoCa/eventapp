@@ -142,7 +142,7 @@ export default function Evento() {
           {evento.precio === 0 ? "Precio" : cantidad > 1 ? `${cantidad} boletos` : "Precio por boleto"}
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-          <span style={{ fontSize: "2.6rem", fontWeight: 800, letterSpacing: "-2px", background: evento.precio === 0 ? "linear-gradient(135deg, #34d399, #60a5fa)" : "linear-gradient(135deg, #a78bfa, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+          <span style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px" }}>
             {evento.precio === 0 ? "Gratis" : `$${precioTotal}`}
           </span>
           {evento.precio > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>MXN</span>}
@@ -228,19 +228,17 @@ export default function Evento() {
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
 
       {/* ZOOM FOTO */}
-      <AnimatePresence>
-        {fotoZoom && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setFotoZoom(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(16px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
-          >
-            <motion.img initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }} src={fotoZoom} alt="portada"
-              style={{ maxWidth: "500px", width: "100%", borderRadius: "20px", boxShadow: "0 0 80px rgba(124,58,237,0.3), 0 32px 64px rgba(0,0,0,0.8)", margin: "auto" }}
-              onClick={e => e.stopPropagation()}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {fotoZoom && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          onClick={() => setFotoZoom(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(14px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}
+        >
+          <motion.img initial={{ scale: 0.85 }} animate={{ scale: 1 }} src={fotoZoom} alt="portada"
+            style={{ maxWidth: "500px", width: "100%", borderRadius: "20px", boxShadow: "0 32px 64px rgba(0,0,0,0.7)", margin: "auto" }}
+            onClick={e => e.stopPropagation()}
+          />
+        </motion.div>
+      )}
 
       {/* NAVBAR */}
       <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: isMobile ? "0 18px" : "0 64px", height: isMobile ? "56px" : "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -257,23 +255,25 @@ export default function Evento() {
       </nav>
 
       {/* IMAGEN HERO */}
-      <div style={{ position: "relative", height: isMobile ? "260px" : "420px", overflow: "hidden" }}>
+      <div
+        style={{ position: "relative", height: isMobile ? "260px" : "420px", overflow: "hidden", cursor: "zoom-in" }}
+        onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
+      >
         <motion.img
           src={evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80"}
           alt={evento.titulo}
           initial={{ scale: 1.05 }} animate={{ scale: 1 }} transition={{ duration: 0.8 }}
-          onClick={() => setFotoZoom(evento.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80")}
-          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
         />
         {/* Degradado mejorado */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 40%, rgba(8,8,8,0.97) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 40%, rgba(8,8,8,0.97) 100%)", pointerEvents: "none" }} />
         {/* Glow lateral izquierdo */}
         <div style={{ position: "absolute", bottom: 0, left: 0, width: "300px", height: "200px", background: "radial-gradient(ellipse at bottom left, rgba(124,58,237,0.2) 0%, transparent 70%)", pointerEvents: "none" }} />
 
         <div style={{ position: "absolute", bottom: isMobile ? "20px" : "44px", left: isMobile ? "18px" : "64px", right: isMobile ? "18px" : "64px" }}>
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <span style={{ background: "rgba(124,58,237,0.85)", backdropFilter: "blur(12px)", borderRadius: "999px", padding: "5px 14px", fontSize: "12px", fontWeight: 600, marginBottom: "10px", display: "inline-block", boxShadow: "0 0 16px rgba(124,58,237,0.4)" }}>{evento.categoria}</span>
-            <h1 style={{ fontSize: isMobile ? "1.6rem" : "clamp(2rem, 4vw, 3.2rem)", fontWeight: 800, letterSpacing: "-0.8px", margin: "8px 0 0", lineHeight: 1.15, textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}>{evento.titulo}</h1>
+            <h1 style={{ fontSize: isMobile ? "1.5rem" : "clamp(1.8rem, 4vw, 3rem)", fontWeight: 700, letterSpacing: "-0.5px", margin: "8px 0 0", lineHeight: 1.2 }}>{evento.titulo}</h1>
           </motion.div>
         </div>
 
