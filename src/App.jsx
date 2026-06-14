@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-const LogoCube = lazy(() => import("./components/LogoCube"))
+
 import { Routes, Route, useNavigate, Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase } from "./supabase"
@@ -22,6 +22,7 @@ import AcercaDeVela from "./pages/AcercaDeVela"
 import Terminos from "./pages/Terminos"
 import Privacidad from "./pages/Privacidad"
 import Contacto from "./pages/Contacto"
+import ParticleHero from "./components/ParticleHero"
 
 // Hook para detectar si es móvil
 function useIsMobile() {
@@ -261,7 +262,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
 
       {/* ── NAVBAR ── */}
       {isMobile ? (
-        <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: "rgba(8,8,8,0.92)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           {/* Fila 1: Logo + perfil + salir */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 18px", height: "56px" }}>
             {/* Logo */}
@@ -312,7 +313,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
           </div>
         </nav>
       ) : (
-        <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
               <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -350,9 +351,12 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
         </nav>
       )}
 
+      {/* Espaciador: compensa el navbar fijo */}
+      <div style={{ height: isMobile ? "94px" : "68px" }} />
+
       {/* ── HERO ── */}
-      <section style={{ padding: isMobile ? "60px 18px 48px" : "110px 64px 90px", textAlign: "center", maxWidth: "1000px", margin: "0 auto", position: "relative" }}>
-        <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", width: isMobile ? "320px" : "700px", height: isMobile ? "200px" : "350px", background: "radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <ParticleHero>
+        <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto", textAlign: "center", padding: isMobile ? "0 18px" : "0 24px" }}>
         <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
           style={{ fontSize: isMobile ? "2.6rem" : "clamp(3rem, 6vw, 5.2rem)", fontWeight: 700, lineHeight: 1.1, letterSpacing: isMobile ? "-1px" : "-2px", margin: "0 0 16px", position: "relative" }}
         >
@@ -447,7 +451,8 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
             >Buscar</motion.button>
           </motion.div>
         )}
-      </section>
+        </div>
+      </ParticleHero>
 
       {/* ── CATEGORIES ── */}
       <section style={{ padding: isMobile ? "40px 18px 48px" : "56px 64px 64px", maxWidth: "1360px", margin: "0 auto" }}>
