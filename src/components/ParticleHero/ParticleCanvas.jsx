@@ -92,11 +92,38 @@ export default function ParticleCanvas({ engine, progressRef, isMobile, reducedM
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(canvas);
 
+    // --- Pausa por visibilidad -----------------------------------------
+    // En cuanto el usuario hace scroll más allá de esta sección (o cambia
+    // de pestaña), no tiene sentido seguir calculando la física de 1800+
+    // partículas y redibujando cada frame — solo consume CPU/GPU/batería
+    // de una sección que nadie está viendo. Mantenemos la cadena de rAF
+    // viva (es barata) pero saltamos todo el trabajo pesado mientras
+    // cualquiera de las dos condiciones sea cierta.
+    let isOnScreen = true;
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        isOnScreen = entries[0]?.isIntersecting ?? true;
+      },
+      { threshold: 0 }
+    );
+    intersectionObserver.observe(canvas);
+
+    let isTabVisible = !document.hidden;
+    const onVisibilityChange = () => {
+      isTabVisible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     const tmp = [0, 0]; // reused scratch array for project() — avoids per-particle allocation
 
     let rafId;
 
     function frame(now) {
+      if (!isOnScreen || !isTabVisible) {
+        rafId = requestAnimationFrame(frame);
+        return;
+      }
+
       const progress = reducedMotion ? 1 : progressRef.current;
 
       engine.update(progress, now);
@@ -108,7 +135,7 @@ export default function ParticleCanvas({ engine, progressRef, isMobile, reducedM
       // --- Central ambient glow behind the formed bolt ----------------
       const formedStrength = clamp((progress - FORMED_START) / (1 - FORMED_START), 0, 1);
       if (formedStrength > 0.01) {
-        const breathe = 1 + Math.sin(now * 0.00125) * 0.15;
+        const breathe = 1 + Math.sin(now * 0.0008) * 0.08;
         const glowRadius = proj.scale * 1.15 * breathe;
         const grad = ctx.createRadialGradient(
           proj.originX, proj.originY, 0,
@@ -147,6 +174,8 @@ export default function ParticleCanvas({ engine, progressRef, isMobile, reducedM
     return () => {
       cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
     // engine is stable for the lifetime of a given isMobile value (see
     // useParticleEngine), progressRef/canvasRef are refs (stable

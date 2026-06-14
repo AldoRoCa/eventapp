@@ -29,16 +29,20 @@ import { lerp, clamp, easeInOutCubic, createRng } from './particleUtils';
 const MAX_DELAY = 0.16;
 
 /** Peak organic wobble amplitude during the transition (normalized units). */
-const WOBBLE_AMOUNT = 0.045;
+const WOBBLE_AMOUNT = 0.03;
 
-/** Ambient drift radius once the bolt has formed (normalized units). */
-const AMBIENT_AMOUNT = 0.014;
+/** Ambient drift radius once the bolt has formed (normalized units).
+ *  Set to 0: per-particle drift, even at tiny amplitude, reads as
+ *  "trembling" once ~1800 points are doing it simultaneously behind
+ *  static text. All "alive" feeling now comes from the smooth central
+ *  glow pulse in ParticleCanvas instead. */
+const AMBIENT_AMOUNT = 0;
 
 /** Progress at which the "formed" breathing/twinkle effects fully kick in. */
 export const FORMED_START = 0.9;
 
 /** Progress at which ambient drift fully kicks in (slightly later than FORMED_START). */
-export const AMBIENT_START = 0.97;
+export const AMBIENT_START = 0.93;
 
 /** Number of small ambient/sparkle particles added on top of the main set. */
 const AMBIENT_COUNT_DESKTOP = 70;
@@ -153,10 +157,12 @@ function buildEngine(isMobile) {
     const formedStrength = clamp((progress - FORMED_START) / (1 - FORMED_START), 0, 1);
     const ambientStrength = clamp((progress - AMBIENT_START) / (1 - AMBIENT_START), 0, 1);
 
-    // Global "breathing" pulse applied to every particle's size once formed.
-    // Slow (period ~5s) and subtle (+/-12%) so it reads as "alive" rather
-    // than "blinking".
-    const breathe = 1 + Math.sin(elapsedMs * 0.00125) * 0.12 * formedStrength;
+    // NOTE: per-particle size "breathing" was removed — oscillating the
+    // size of ~1800 discrete points, even by a few percent, reads as
+    // "trembling" once they're sitting still behind static text. The
+    // slow ambient glow pulse in ParticleCanvas (a smooth gradient, not
+    // discrete points) now provides all the "alive" feeling instead.
+    const breathe = 1;
 
     for (let i = 0; i < count; i++) {
       // --- Position -------------------------------------------------
@@ -167,8 +173,11 @@ function buildEngine(isMobile) {
       let py = lerp(y0[i], y1[i], eased);
 
       // Organic wobble: peaks mid-transition, vanishes at both ends so
-      // particles land precisely on the bolt silhouette.
-      const wobbleEnvelope = Math.sin(eased * Math.PI);
+      // particles land precisely on the bolt silhouette. La curva
+      // adicional (1 - eased * 0.85) hace que decaiga mucho más rápido
+      // en el último tercio de la transición, eliminando el "temblor"
+      // residual justo cuando aparece el texto.
+      const wobbleEnvelope = Math.sin(eased * Math.PI) * (1 - eased * 0.85);
       if (wobbleEnvelope > 0.001) {
         px += Math.sin(elapsedMs * 0.0011 * speed[i] + phase[i]) * WOBBLE_AMOUNT * wobbleEnvelope;
         py += Math.cos(elapsedMs * 0.0013 * speed[i] + phase[i] * 1.7) * WOBBLE_AMOUNT * wobbleEnvelope;
@@ -192,8 +201,10 @@ function buildEngine(isMobile) {
         fadeIn = clamp((progress - appearAt[i]) / (1 - appearAt[i]), 0, 1);
       }
 
-      // Twinkle: gentle per-particle flicker once formed.
-      const twinkle = 1 - 0.22 * formedStrength * (0.5 + 0.5 * Math.sin(elapsedMs * 0.0021 * speed[i] + phase[i] * 2.1));
+      // Twinkle: parpadeo sutil por partícula una vez formado el rayo.
+      // Amplitud y frecuencia reducidas para que se vea como "brillo"
+      // y no como "vibración".
+      const twinkle = 1 - 0.03 * formedStrength * (0.5 + 0.5 * Math.sin(elapsedMs * 0.0012 * speed[i] + phase[i] * 2.1));
 
       opacity[i] = baseOpacity[i] * fadeIn * twinkle;
     }

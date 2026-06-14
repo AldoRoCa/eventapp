@@ -32,7 +32,7 @@ import { clamp, easeOutCubic, lerp } from './particleUtils';
 const MOBILE_BREAKPOINT = 768;
 
 /** Progress at which the overlay content starts fading in. */
-const OVERLAY_FADE_START = 0.62;
+const OVERLAY_FADE_START = 0.78;
 
 function useIsMobileViewport() {
   const [isMobile, setIsMobile] = useState(
