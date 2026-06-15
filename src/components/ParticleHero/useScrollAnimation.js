@@ -61,11 +61,16 @@ export function useScrollAnimation(containerRef, { scrollDistance }) {
       start: 'top top',
       end: () => `+=${scrollDistance}`,
       pin: true,
-      pinType: 'transform',
-      // A small scrub value smooths out jittery trackpad/scroll-wheel
-      // input without introducing noticeable lag between scroll and
-      // particle motion.
-      scrub: 0.4,
+      // Helps GSAP "anticipate" reaching the pin boundary on fast
+      // scrolls/trackpad flicks, reducing the small visual snap that can
+      // otherwise occur right as the section pins/unpins.
+      anticipatePin: 1,
+      // scrub: true ata el progreso DIRECTAMENTE a la posición de
+      // scroll (sin un tween de suavizado independiente). Un scrub
+      // numérico (ej. 0.4) seguía "reajustándose" en micro-incrementos
+      // de sub-píxel incluso con el scroll detenido, lo cual hacía
+      // "temblar" el texto por el antialiasing de las fuentes.
+      scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;
         if (self.progress >= 0.98) {

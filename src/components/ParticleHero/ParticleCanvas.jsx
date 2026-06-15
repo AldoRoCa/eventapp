@@ -21,7 +21,7 @@
 
 import { useEffect, useRef } from 'react';
 import { computeProjection, project, clamp } from './particleUtils';
-import { FORMED_START } from './useParticleEngine';
+import { FORMED_START, CANVAS_FADE_START, CANVAS_MIN_OPACITY } from './useParticleEngine';
 
 /** Sprite resolution in px. Small is fine — they're heavily scaled/blurred by nature. */
 const SPRITE_SIZE = 64;
@@ -128,6 +128,13 @@ export default function ParticleCanvas({ engine, progressRef, isMobile, reducedM
 
       engine.update(progress, now);
 
+      // Desvanece el canvas completo a medida que el texto del overlay
+      // toma protagonismo — al llegar a progress=1, el rayo queda como
+      // una marca de agua tenue detrás del texto en lugar de una forma
+      // nítida.
+      const fadeT = clamp((progress - CANVAS_FADE_START) / (1 - CANVAS_FADE_START), 0, 1);
+      canvas.style.opacity = String(1 - fadeT * (1 - CANVAS_MIN_OPACITY));
+
       const cssW = canvas.clientWidth;
       const cssH = canvas.clientHeight;
       ctx.clearRect(0, 0, cssW, cssH);
@@ -135,13 +142,19 @@ export default function ParticleCanvas({ engine, progressRef, isMobile, reducedM
       // --- Central ambient glow behind the formed bolt ----------------
       const formedStrength = clamp((progress - FORMED_START) / (1 - FORMED_START), 0, 1);
       if (formedStrength > 0.01) {
-        const breathe = 1 + Math.sin(now * 0.0008) * 0.08;
+        // La amplitud de la "respiración" aumenta JUNTO con
+        // formedStrength — cuando formedStrength=0.1 el brillo está
+        // tenue Y casi sin oscilar; cuando formedStrength=1 está
+        // totalmente visible Y respirando al máximo. Sin esto, la
+        // oscilación ya estaría a media marcha justo cuando el brillo
+        // se vuelve visible, percibiéndose como un "temblor" al aparecer.
+        const breathe = 1 + Math.sin(now * 0.0008) * 0.08 * formedStrength;
         const glowRadius = proj.scale * 1.15 * breathe;
         const grad = ctx.createRadialGradient(
           proj.originX, proj.originY, 0,
           proj.originX, proj.originY, glowRadius
         );
-        grad.addColorStop(0, `rgba(124, 58, 237, ${0.16 * formedStrength})`);
+        grad.addColorStop(0, `rgba(124, 58, 237, ${0.5 * formedStrength})`);
         grad.addColorStop(1, 'rgba(124, 58, 237, 0)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, cssW, cssH);

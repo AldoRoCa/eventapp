@@ -38,11 +38,28 @@ const WOBBLE_AMOUNT = 0.03;
  *  glow pulse in ParticleCanvas instead. */
 const AMBIENT_AMOUNT = 0;
 
-/** Progress at which the "formed" breathing/twinkle effects fully kick in. */
-export const FORMED_START = 0.9;
+/** Progress at which the "formed" breathing/twinkle effects fully kick in.
+ *  Widened from 0.9 to 0.75: a 10% window meant the glow could appear
+ *  almost entirely within a single scroll tick, "popping in" while its
+ *  breathing oscillation was already mid-cycle. A 25% window makes the
+ *  whole reveal gradual. */
+export const FORMED_START = 0.75;
 
 /** Progress at which ambient drift fully kicks in (slightly later than FORMED_START). */
 export const AMBIENT_START = 0.93;
+
+/**
+ * Progress at which the whole canvas (particles + central glow) starts
+ * fading down to CANVAS_MIN_OPACITY. By the time the overlay text is
+ * fully visible, the bolt becomes a faint glow behind it rather than a
+ * crisp shape — this both looks more like a "watermark" logo and masks
+ * any residual micro-movement, since faint particles moving a tiny
+ * amount are essentially imperceptible.
+ */
+export const CANVAS_FADE_START = 0.8;
+
+/** Minimum canvas opacity once fully faded (never goes fully invisible). */
+export const CANVAS_MIN_OPACITY = 0.3;
 
 /** Number of small ambient/sparkle particles added on top of the main set. */
 const AMBIENT_COUNT_DESKTOP = 70;
