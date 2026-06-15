@@ -132,18 +132,63 @@ export default function PanelAnfitrion() {
   }
 
   const guardarEdicion = async () => {
+    const titulo = formEditar.titulo.trim()
+    const ubicacion = formEditar.ubicacion.trim()
+
+    if (!titulo || !ubicacion || !formEditar.fecha || !formEditar.hora || !formEditar.capacidad) {
+      setMensaje("Por favor llena todos los campos obligatorios")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    if (titulo.length > 150) {
+      setMensaje("El título no puede tener más de 150 caracteres")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    if (ubicacion.length > 200) {
+      setMensaje("La ubicación no puede tener más de 200 caracteres")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    if ((formEditar.descripcion || "").length > 2000) {
+      setMensaje("La descripción no puede tener más de 2000 caracteres")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    const capacidad = parseInt(formEditar.capacidad)
+    if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 50000) {
+      setMensaje("La capacidad debe ser un número entre 1 y 50,000")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    const precio = formEditar.precio === "" ? 0 : parseInt(formEditar.precio)
+    if (!Number.isInteger(precio) || precio < 0 || precio > 50000) {
+      setMensaje("El precio debe ser un número entre 0 y 50,000")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    const maxBoletos = formEditar.max_boletos_por_persona === "" ? 5 : parseInt(formEditar.max_boletos_por_persona)
+    if (!Number.isInteger(maxBoletos) || maxBoletos < 1 || maxBoletos > 20) {
+      setMensaje("El máximo de boletos por persona debe ser un número entre 1 y 20")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+
     setGuardando(true)
     const fechaCompleta = `${formEditar.fecha}T${formEditar.hora}:00`
     const { error } = await supabase.from("eventos").update({
-      titulo: formEditar.titulo, descripcion: formEditar.descripcion, ubicacion: formEditar.ubicacion,
-      estado_evento: formEditar.estado_evento || null, capacidad: parseInt(formEditar.capacidad),
-      precio: parseInt(formEditar.precio) || 0, max_boletos_por_persona: parseInt(formEditar.max_boletos_por_persona) || 5,
+      titulo, descripcion: (formEditar.descripcion || "").trim(), ubicacion,
+      estado_evento: formEditar.estado_evento || null, capacidad,
+      precio, max_boletos_por_persona: maxBoletos,
       fecha: fechaCompleta,
     }).eq("id", editando)
     if (!error) {
-      setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, fecha: fechaCompleta } : e))
+      setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, titulo, ubicacion, capacidad, precio, max_boletos_por_persona: maxBoletos, fecha: fechaCompleta } : e))
       setEditando(null)
       setMensaje("Evento actualizado correctamente.")
+      setTimeout(() => setMensaje(""), 3000)
+    } else {
+      setMensaje("Error al actualizar el evento. Intenta de nuevo.")
       setTimeout(() => setMensaje(""), 3000)
     }
     setGuardando(false)

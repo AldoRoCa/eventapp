@@ -55,10 +55,42 @@ export default function CrearEvento() {
 
   const handleSubmit = async () => {
     setError("")
-    if (!form.titulo || !form.categoria || !form.fecha || !form.hora || !form.ubicacion || !form.capacidad) {
+
+    const titulo = form.titulo.trim()
+    const ubicacion = form.ubicacion.trim()
+
+    if (!titulo || !form.categoria || !form.fecha || !form.hora || !ubicacion || !form.capacidad) {
       setError("Por favor llena todos los campos obligatorios")
       return
     }
+    if (titulo.length > 150) {
+      setError("El título no puede tener más de 150 caracteres")
+      return
+    }
+    if (ubicacion.length > 200) {
+      setError("La ubicación no puede tener más de 200 caracteres")
+      return
+    }
+    if (form.descripcion.length > 2000) {
+      setError("La descripción no puede tener más de 2000 caracteres")
+      return
+    }
+    const capacidad = parseInt(form.capacidad)
+    if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 50000) {
+      setError("La capacidad debe ser un número entre 1 y 50,000")
+      return
+    }
+    const precio = form.precio === "" ? 0 : parseInt(form.precio)
+    if (!Number.isInteger(precio) || precio < 0 || precio > 50000) {
+      setError("El precio debe ser un número entre 0 y 50,000")
+      return
+    }
+    const maxBoletos = form.max_boletos_por_persona === "" ? 5 : parseInt(form.max_boletos_por_persona)
+    if (!Number.isInteger(maxBoletos) || maxBoletos < 1 || maxBoletos > 20) {
+      setError("El máximo de boletos por persona debe ser un número entre 1 y 20")
+      return
+    }
+
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError("Debes iniciar sesión para crear un evento"); setLoading(false); return }
@@ -76,10 +108,10 @@ export default function CrearEvento() {
     }
 
     const { error } = await supabase.from("eventos").insert({
-      titulo: form.titulo, descripcion: form.descripcion, categoria: form.categoria,
-      fecha: fechaCompleta, ubicacion: form.ubicacion, estado_evento: form.estado_evento || null,
-      capacidad: parseInt(form.capacidad), precio: parseInt(form.precio) || 0,
-      max_boletos_por_persona: parseInt(form.max_boletos_por_persona) || 5,
+      titulo, descripcion: form.descripcion.trim(), categoria: form.categoria,
+      fecha: fechaCompleta, ubicacion, estado_evento: form.estado_evento || null,
+      capacidad, precio,
+      max_boletos_por_persona: maxBoletos,
       tipo_boleto: form.tipo_boleto, imagen_url: imagenUrl, anfitrion_id: user.id,
     })
 
