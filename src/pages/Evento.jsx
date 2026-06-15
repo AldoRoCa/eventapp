@@ -86,10 +86,10 @@ export default function Evento() {
         const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
         const { error: boletoError } = await supabase.from("boletos").insert(inserts)
         if (boletoError) { setComprando(false); return }
-        const { data: anfitrion } = await supabase.from("profiles").select("mp_access_token").eq("id", evento.anfitrion_id).single()
-        if (!anfitrion?.mp_access_token) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
+        const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
+        if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
         const { data: { session } } = await supabase.auth.getSession()
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, anfitrion_mp_token: anfitrion.mp_access_token, cantidad }) })
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
         const data = await response.json()
         if (data.url) window.location.href = data.url
         else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
@@ -105,10 +105,10 @@ export default function Evento() {
     const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
     const { error: boletoError } = await supabase.from("boletos").insert(inserts)
     if (boletoError) { setComprando(false); return }
-    const { data: anfitrion } = await supabase.from("profiles").select("mp_access_token").eq("id", evento.anfitrion_id).single()
-    if (!anfitrion?.mp_access_token) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
+    const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
+    if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
     const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, anfitrion_mp_token: anfitrion.mp_access_token, cantidad }) })
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
     const data = await response.json()
     if (data.url) window.location.href = data.url
     else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }

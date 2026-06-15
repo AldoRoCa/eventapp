@@ -14,12 +14,43 @@ serve(async (req) => {
   }
 
   try {
-    const { evento_id, titulo, precio, usuario_id, anfitrion_mp_token, cantidad } = await req.json()
+    const { evento_id, titulo, precio, usuario_id, cantidad } = await req.json()
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
+
+    // Buscar el token de Mercado Pago del anfitrión del evento. Esto se
+    // hace aquí, con service_role, para que el token NUNCA viaje al
+    // navegador del comprador.
+    const { data: evento, error: eventoError } = await supabase
+      .from("eventos")
+      .select("anfitrion_id")
+      .eq("id", evento_id)
+      .single()
+
+    if (eventoError || !evento) {
+      return new Response(JSON.stringify({ error: "Evento no encontrado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      })
+    }
+
+    const { data: anfitrionProfile, error: anfitrionError } = await supabase
+      .from("profiles")
+      .select("mp_access_token")
+      .eq("id", evento.anfitrion_id)
+      .single()
+
+    if (anfitrionError || !anfitrionProfile?.mp_access_token) {
+      return new Response(JSON.stringify({ error: "El anfitrión no ha conectado su cuenta de Mercado Pago" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      })
+    }
+
+    const anfitrionMpToken = anfitrionProfile.mp_access_token
 
     // Rate limiting
     const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
@@ -51,7 +82,7 @@ serve(async (req) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${anfitrion_mp_token}`,
+        "Authorization": `Bearer ${anfitrionMpToken}`,
         "X-Integrator-Id": Deno.env.get("MP_CLIENT_ID")!,
       },
       body: JSON.stringify({
