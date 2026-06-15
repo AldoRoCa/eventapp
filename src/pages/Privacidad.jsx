@@ -14,7 +14,7 @@ const secciones = [
       "• Número de teléfono (opcional).",
       "• Fecha de nacimiento (para verificación de edad en el registro como anfitrión).",
       "• Identificación oficial (INE/pasaporte) para el proceso de verificación de anfitriones.",
-      "• Información de pago procesada por Stripe — VELA no almacena datos de tarjetas.",
+      "• Información de pago procesada por Mercado Pago — VELA no almacena datos de tarjetas.",
       "• Historial de boletos y eventos.",
     ]
   },
@@ -34,7 +34,7 @@ const secciones = [
     titulo: "4. Transferencia de datos",
     contenido: [
       "Tus datos personales pueden ser compartidos con:",
-      "• Stripe Inc., para el procesamiento seguro de pagos.",
+      "• Mercado Pago, para el procesamiento seguro de pagos.",
       "• Supabase Inc., como proveedor de infraestructura de base de datos.",
       "• Autoridades competentes cuando la ley mexicana lo requiera.",
       "No vendemos ni compartimos tus datos con terceros con fines publicitarios.",

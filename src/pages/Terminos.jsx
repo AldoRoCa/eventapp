@@ -30,7 +30,7 @@ const secciones = [
   {
     titulo: "5. Compra de boletos",
     contenido: [
-      "Las compras realizadas en VELA son procesadas de forma segura a través de Stripe. Al comprar un boleto aceptas el precio y condiciones del evento publicadas por el anfitrión.",
+      "Las compras realizadas en VELA son procesadas de forma segura a través de Mercado Pago. Al comprar un boleto aceptas el precio y condiciones del evento publicadas por el anfitrión.",
       "VELA aplica una comisión de servicio del 10% sobre el precio del boleto, que se refleja en el total al momento del pago.",
       "Los boletos no son reembolsables salvo en caso de cancelación del evento por parte del anfitrión.",
     ]
@@ -46,7 +46,7 @@ const secciones = [
   {
     titulo: "7. Pagos y comisiones",
     contenido: [
-      "VELA retiene el 10% del precio de cada boleto vendido como comisión de plataforma. El 90% restante es transferido al anfitrión a través de Stripe Connect.",
+      "VELA retiene el 10% del precio de cada boleto vendido como comisión de plataforma. El 90% restante es transferido al anfitrión a través de Mercado Pago.",
       "Los eventos gratuitos no generan comisión.",
     ]
   },
