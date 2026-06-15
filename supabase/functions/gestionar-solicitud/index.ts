@@ -18,6 +18,40 @@ serve(async (req) => {
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
 
+    // Identificar al usuario autenticado a partir de su token
+    const authHeader = req.headers.get("Authorization") ?? ""
+    const jwt = authHeader.replace("Bearer ", "")
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      })
+    }
+
+    // Rate limiting
+    const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("identifier", user.id)
+      .eq("endpoint", "gestionar-solicitud")
+      .gte("window_start", windowStart)
+
+    if ((count || 0) >= 30) {
+      return new Response(JSON.stringify({ error: "Demasiadas solicitudes. Intenta más tarde." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      })
+    }
+
+    await supabase.from("rate_limits").insert({
+      identifier: user.id,
+      endpoint: "gestionar-solicitud",
+      window_start: new Date().toISOString(),
+    })
+
     const { data: boleto } = await supabase
       .from("boletos")
       .select("*, eventos(precio, anfitrion_id)")
@@ -28,6 +62,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Boleto no encontrado" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
+      })
+    }
+
+    // Verificar que el usuario autenticado es el anfitrión del evento
+    if (boleto.eventos?.anfitrion_id !== user.id) {
+      return new Response(JSON.stringify({ error: "Sin permiso para gestionar esta solicitud" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
       })
     }
 
