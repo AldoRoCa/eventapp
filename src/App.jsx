@@ -384,10 +384,10 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
             </div>
             {/* Filtros en fila */}
             <div style={{ display: "flex", gap: "10px" }}>
-              <div style={{ flex: 0.9, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
                 <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <select value={estadoHero} onChange={e => setEstadoHero(e.target.value)}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: estadoHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: estadoHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
                 >
                   <option value="" style={{ background: "#111" }}>Todo México</option>
                   {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
@@ -395,14 +395,14 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
                   ))}
                 </select>
               </div>
-              <div style={{ flex: 1.1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
                 <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 <select value={fechaHero} onChange={e => setFechaHero(e.target.value)}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0", maxWidth: "110px" }}
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
                 >
-                  <option value="" style={{ background: "#111" }}>Cualquier fecha</option>
+                  <option value="" style={{ background: "#111" }}>Fecha</option>
                   <option value="hoy" style={{ background: "#111" }}>Hoy</option>
-                  <option value="finde" style={{ background: "#111" }}>Este fin de semana</option>
+                  <option value="finde" style={{ background: "#111" }}>Fin de semana</option>
                   <option value="semana" style={{ background: "#111" }}>Esta semana</option>
                   <option value="mes" style={{ background: "#111" }}>Este mes</option>
                 </select>
