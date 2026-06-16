@@ -11,6 +11,7 @@ export default function Admin() {
   const [mensaje, setMensaje] = useState("")
   const [tab, setTab] = useState("solicitudes")
   const [anfitriones, setAnfitriones] = useState([])
+  const [reportes, setReportes] = useState([])
 
   useEffect(() => {
     const verificar = async () => {
@@ -20,6 +21,7 @@ export default function Admin() {
       if (!perfil?.es_admin) { navigate("/"); return }
       await cargarSolicitudes()
       await cargarAnfitriones()
+      await cargarReportes()
       setLoading(false)
     }
     verificar()
@@ -43,6 +45,50 @@ export default function Admin() {
       .eq("estado_anfitrion", "aprobado")
       .order("created_at", { ascending: false })
     setAnfitriones(data || [])
+  }
+
+  const cargarReportes = async () => {
+    const { data } = await supabase
+      .from("reportes_eventos")
+      .select("*")
+      .eq("estado", "pendiente")
+      .order("created_at", { ascending: true })
+    setReportes(data || [])
+  }
+
+  const resolverReporte = async (reporte, accion) => {
+    const confirmText = accion === "aprobar"
+      ? `¿Aprobar este reporte? Se reembolsarán y eliminarán TODOS los boletos del evento "${reporte.evento_titulo_snapshot}".`
+      : `¿Rechazar este reporte? No se hará ningún reembolso.`
+    if (!window.confirm(confirmText)) return
+
+    setProcesando(reporte.id)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/resolver-reporte`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ reporte_id: reporte.id, accion }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje(json.error || "No se pudo resolver el reporte.")
+      } else {
+        setReportes(prev => prev.filter(r => r.id !== reporte.id))
+        setMensaje(
+          accion === "aprobar"
+            ? `Reporte aprobado. ${json.reembolsados > 0 ? `Se procesaron ${json.reembolsados} reembolso${json.reembolsados > 1 ? "s" : ""}.` : "El evento ya no tenía boletos pendientes de reembolso."}`
+            : "Reporte rechazado."
+        )
+      }
+    } catch {
+      setMensaje("Error de conexión al resolver el reporte.")
+    }
+    setTimeout(() => setMensaje(""), 4000)
+    setProcesando(null)
   }
 
   const aprobar = async (id, nombre) => {
@@ -117,6 +163,7 @@ export default function Admin() {
           {[
             { id: "solicitudes", label: `Solicitudes pendientes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` },
             { id: "anfitriones", label: `Anfitriones aprobados (${anfitriones.length})` },
+            { id: "reportes", label: `Reportes de eventos ${reportes.length > 0 ? `(${reportes.length})` : ""}` },
           ].map(t => (
             <motion.button key={t.id} onClick={() => setTab(t.id)} whileTap={{ scale: 0.97 }}
               style={{ padding: "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s" }}
@@ -213,6 +260,57 @@ export default function Admin() {
                     >{procesando === anf.id ? "..." : "Revocar"}</motion.button>
                   </motion.div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "reportes" && (
+          <div>
+            {reportes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>🛡️</div>
+                <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay reportes pendientes</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando alguien reporte un evento aparecerá aquí</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {reportes.map((rep, i) => {
+                  const motivoLabel = rep.motivo === "no_ocurrio" ? "El evento no ocurrió" : rep.motivo === "anfitrion_no_responde" ? "El anfitrión no responde" : "Otro"
+                  return (
+                    <motion.div key={rep.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                      style={{ background: "#0f0f11", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "16px", padding: "24px" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "4px" }}>{rep.evento_titulo_snapshot}</div>
+                          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>Anfitrión: {rep.anfitrion_nombre_snapshot || "Desconocido"}</div>
+                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", marginTop: "4px" }}>Reportado el {new Date(rep.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                          <motion.button onClick={() => resolverReporte(rep, "aprobar")} whileTap={{ scale: 0.97 }} disabled={procesando === rep.id}
+                            style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px", color: "#f87171", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                          >{procesando === rep.id ? "..." : "Aprobar y reembolsar"}</motion.button>
+                          <motion.button onClick={() => resolverReporte(rep, "rechazar")} whileTap={{ scale: 0.97 }} disabled={procesando === rep.id}
+                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", color: "rgba(255,255,255,0.6)", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                          >Rechazar</motion.button>
+                        </div>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginTop: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Motivo</div>
+                          <div style={{ fontSize: "13.5px", color: "#f87171", fontWeight: 600 }}>{motivoLabel}</div>
+                        </div>
+                        {rep.descripcion && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Descripción del usuario</div>
+                            <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{rep.descripcion}</div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
               </div>
             )}
           </div>

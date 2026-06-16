@@ -18,6 +18,12 @@ export default function MisBoletos() {
   const [boletos, setBoletos] = useState([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
+  const [reportando, setReportando] = useState(null) // boleto_id del modal abierto
+  const [motivoReporte, setMotivoReporte] = useState("no_ocurrio")
+  const [descripcionReporte, setDescripcionReporte] = useState("")
+  const [enviandoReporte, setEnviandoReporte] = useState(false)
+  const [reportesEnviados, setReportesEnviados] = useState({}) // { [boleto_id]: true }
+  const [mensaje, setMensaje] = useState("")
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -32,10 +38,57 @@ export default function MisBoletos() {
         .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
       setBoletos(data || [])
+
+      // Saber qué boletos ya fueron reportados, para no mostrar el botón
+      // de "Reportar" otra vez (el backend lo rechazaría de todos modos,
+      // pero así el usuario ve el estado correcto sin necesidad de intentarlo).
+      const { data: reportes } = await supabase
+        .from("reportes_eventos")
+        .select("boleto_id")
+        .eq("usuario_id", user.id)
+      const mapa = {}
+      for (const r of reportes || []) mapa[r.boleto_id] = true
+      setReportesEnviados(mapa)
+
       setLoading(false)
     }
     cargar()
   }, [])
+
+  const enviarReporte = async () => {
+    if (!reportando) return
+    setEnviandoReporte(true)
+    setMensaje("")
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reportar-evento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          boleto_id: reportando,
+          motivo: motivoReporte,
+          descripcion: descripcionReporte.trim() || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje(json.error || "No se pudo enviar el reporte. Intenta de nuevo.")
+      } else {
+        setReportesEnviados(prev => ({ ...prev, [reportando]: true }))
+        setReportando(null)
+        setMotivoReporte("no_ocurrio")
+        setDescripcionReporte("")
+        setMensaje("Reporte enviado. Nuestro equipo lo revisará.")
+        setTimeout(() => setMensaje(""), 5000)
+      }
+    } catch {
+      setMensaje("Error de conexión. Intenta de nuevo.")
+    }
+    setEnviandoReporte(false)
+  }
 
   if (loading) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -154,6 +207,12 @@ export default function MisBoletos() {
                             {boleto.mp_payment_id && (
                               <a href="https://www.mercadopago.com.mx/activities" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
                             )}
+                            {usado && boleto.estado === "activo" && !reportesEnviados[boleto.id] && (
+                              <button onClick={() => setReportando(boleto.id)} style={{ fontSize: "12.5px", color: "#f87171", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>Reportar evento</button>
+                            )}
+                            {reportesEnviados[boleto.id] && (
+                              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -204,6 +263,12 @@ export default function MisBoletos() {
                           {boleto.mp_payment_id && (
                             <a href="https://www.mercadopago.com.mx/activities" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
                           )}
+                          {usado && boleto.estado === "activo" && !reportesEnviados[boleto.id] && (
+                            <button onClick={() => setReportando(boleto.id)} style={{ fontSize: "12.5px", color: "#f87171", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>Reportar evento</button>
+                          )}
+                          {reportesEnviados[boleto.id] && (
+                            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -214,6 +279,64 @@ export default function MisBoletos() {
           </div>
         )}
       </div>
+
+      {/* Mensaje flotante de éxito/error */}
+      {mensaje && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          style={{ position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)", background: "#1a1a1d", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "12px", padding: "12px 20px", fontSize: "13.5px", zIndex: 200, maxWidth: "90vw", textAlign: "center" }}
+        >
+          {mensaje}
+        </motion.div>
+      )}
+
+      {/* MODAL: reportar evento */}
+      {reportando && (
+        <div onClick={() => !enviandoReporte && setReportando(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+        >
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#111114", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "18px", padding: "26px 24px", maxWidth: "420px", width: "100%" }}
+          >
+            <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>Reportar evento</div>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginBottom: "18px", lineHeight: 1.5 }}>
+              Usa esto solo si el evento no ocurrió o el anfitrión no cumplió. Un administrador revisará tu reporte.
+            </p>
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>Motivo</label>
+              <select value={motivoReporte} onChange={e => setMotivoReporte(e.target.value)}
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", colorScheme: "dark" }}
+              >
+                <option value="no_ocurrio">El evento no ocurrió</option>
+                <option value="anfitrion_no_responde">El anfitrión no responde</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>Cuéntanos qué pasó (opcional)</label>
+              <textarea value={descripcionReporte} onChange={e => setDescripcionReporte(e.target.value.slice(0, 1000))} rows={4}
+                placeholder="Describe brevemente lo que sucedió..."
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => setReportando(null)} disabled={enviandoReporte}
+                style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Cancelar
+              </button>
+              <button onClick={enviarReporte} disabled={enviandoReporte}
+                style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: enviandoReporte ? "rgba(239,68,68,0.4)" : "#ef4444", color: "white", fontWeight: 600, fontSize: "14px", cursor: enviandoReporte ? "default" : "pointer", fontFamily: "inherit" }}
+              >
+                {enviandoReporte ? "Enviando..." : "Enviar reporte"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
