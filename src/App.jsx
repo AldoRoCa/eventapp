@@ -171,7 +171,7 @@ function FeatureBadge({ label, color, border, icon }) {
   const [hovered, setHovered] = useState(false)
   return (
     <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)} whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.97 }}
-      style={{ display: "flex", alignItems: "center", gap: "8px", border: `1px solid ${hovered ? border : border + "70"}`, borderRadius: "999px", padding: "9px 20px", fontSize: "13.5px", fontWeight: 500, color: hovered ? "white" : color, background: hovered ? `${border}28` : `${border}10`, cursor: "default", transition: "all 0.2s", boxShadow: hovered ? `0 0 16px ${border}35` : "none" }}
+      style={{ display: "flex", alignItems: "center", gap: "8px", border: `1px solid ${hovered ? border : border + "70"}`, borderRadius: "999px", padding: "9px 20px", fontSize: "13.5px", fontWeight: 500, color: hovered ? "white" : color, background: hovered ? `${border}28` : `#0e0e10`, backgroundImage: hovered ? "none" : `linear-gradient(${border}1a, ${border}1a)`, cursor: "default", transition: "all 0.2s", boxShadow: hovered ? `0 0 16px ${border}35` : "none" }}
     >
       <span style={{ color: hovered ? "white" : color, display: "flex" }}>{icon}</span>
       {label}

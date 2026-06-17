@@ -45,7 +45,7 @@ export default function PanelAnfitrion() {
       const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
-      const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("fecha", { ascending: true })
+      const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("created_at", { ascending: false })
       setEventos(eventos || [])
       setLoading(false)
     }
