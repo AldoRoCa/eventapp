@@ -118,6 +118,7 @@ export default function PanelAnfitrion() {
 
   const abrirEditar = (evento) => {
     setEditando(evento.id)
+    const fechaLocal = evento.fecha ? new Date(evento.fecha) : null
     setFormEditar({
       titulo: evento.titulo,
       descripcion: evento.descripcion || "",
@@ -126,14 +127,26 @@ export default function PanelAnfitrion() {
       capacidad: evento.capacidad,
       precio: evento.precio,
       max_boletos_por_persona: evento.max_boletos_por_persona || 5,
-      fecha: evento.fecha ? evento.fecha.split("T")[0] : "",
-      hora: evento.fecha ? new Date(evento.fecha).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }) : "",
+      // Extraídas ambas de la MISMA fecha ya convertida a hora local —
+      // antes "fecha" se tomaba directo del string UTC sin convertir,
+      // mientras "hora" sí se convertía, lo cual desalineaba la fecha un
+      // día para eventos guardados después de las 6pm hora de Querétaro.
+      fecha: fechaLocal ? `${fechaLocal.getFullYear()}-${String(fechaLocal.getMonth() + 1).padStart(2, "0")}-${String(fechaLocal.getDate()).padStart(2, "0")}` : "",
+      hora: fechaLocal ? fechaLocal.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }) : "",
     })
   }
 
   const guardarEdicion = async () => {
     const titulo = formEditar.titulo.trim()
     const ubicacion = formEditar.ubicacion.trim()
+
+    const eventoOriginal = eventos.find(e => e.id === editando)
+    if (eventoOriginal && new Date(eventoOriginal.fecha) < new Date(Date.now() - 5 * 60 * 60 * 1000)) {
+      setMensaje("Este evento ya finalizó (pasaron más de 5 horas desde su inicio) y no se puede editar.")
+      setTimeout(() => setMensaje(""), 4000)
+      setEditando(null)
+      return
+    }
 
     if (!titulo || !ubicacion || !formEditar.fecha || !formEditar.hora || !formEditar.capacidad) {
       setMensaje("Por favor llena todos los campos obligatorios")
@@ -175,18 +188,26 @@ export default function PanelAnfitrion() {
     }
 
     setGuardando(true)
-    const fechaCompleta = `${formEditar.fecha}T${formEditar.hora}:00`
-    const { error } = await supabase.from("eventos").update({
+    const fechaCompleta = new Date(`${formEditar.fecha}T${formEditar.hora}:00`).toISOString()
+    const { data, error } = await supabase.from("eventos").update({
       titulo, descripcion: (formEditar.descripcion || "").trim(), ubicacion,
       estado_evento: formEditar.estado_evento || null, capacidad,
       precio, max_boletos_por_persona: maxBoletos,
       fecha: fechaCompleta,
-    }).eq("id", editando)
-    if (!error) {
+    }).eq("id", editando).select()
+
+    if (!error && data && data.length > 0) {
       setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, titulo, ubicacion, capacidad, precio, max_boletos_por_persona: maxBoletos, fecha: fechaCompleta } : e))
       setEditando(null)
       setMensaje("Evento actualizado correctamente.")
       setTimeout(() => setMensaje(""), 3000)
+    } else if (!error && (!data || data.length === 0)) {
+      // RLS bloqueó la actualización sin lanzar un error explícito (esto
+      // pasa, por ejemplo, si el evento ya finalizó hace más de 5 horas
+      // justo mientras el modal estaba abierto).
+      setMensaje("No se pudo guardar: este evento ya no se puede editar (probablemente finalizó).")
+      setTimeout(() => setMensaje(""), 4000)
+      setEditando(null)
     } else {
       setMensaje("Error al actualizar el evento. Intenta de nuevo.")
       setTimeout(() => setMensaje(""), 3000)
@@ -362,6 +383,7 @@ export default function PanelAnfitrion() {
                 {eventos.map(ev => {
                   const fecha = new Date(ev.fecha)
                   const pasado = fecha < new Date()
+                  const finalizado = fecha < new Date(Date.now() - 5 * 60 * 60 * 1000)
                   return (
                     <motion.div key={ev.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px" }}
@@ -383,8 +405,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Asistentes</motion.button>
-                            <motion.button onClick={() => abrirEditar(ev)} whileTap={{ scale: 0.95 }}
-                              style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            <motion.button onClick={() => !finalizado && abrirEditar(ev)} whileTap={{ scale: finalizado ? 1 : 0.95 }} disabled={finalizado}
+                              title={finalizado ? "No se puede editar un evento finalizado" : ""}
+                              style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: finalizado ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: finalizado ? "not-allowed" : "pointer", fontFamily: "inherit" }}
                             >Editar</motion.button>
                             <motion.button onClick={() => cancelarEvento(ev.id)} whileTap={{ scale: 0.95 }} disabled={cancelando === ev.id}
                               style={{ flex: 1, background: "rgba(239,68,68,0.08)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
@@ -411,8 +434,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ver asistentes</motion.button>
-                            <motion.button onClick={() => abrirEditar(ev)} whileTap={{ scale: 0.97 }}
-                              style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            <motion.button onClick={() => !finalizado && abrirEditar(ev)} whileTap={{ scale: finalizado ? 1 : 0.97 }} disabled={finalizado}
+                              title={finalizado ? "No se puede editar un evento finalizado" : ""}
+                              style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: finalizado ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: finalizado ? "not-allowed" : "pointer", fontFamily: "inherit" }}
                             >Editar</motion.button>
                             <motion.button onClick={() => cancelarEvento(ev.id)} whileTap={{ scale: 0.97 }} disabled={cancelando === ev.id}
                               style={{ background: "rgba(239,68,68,0.08)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "9px", color: "#f87171", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
@@ -561,11 +585,24 @@ export default function PanelAnfitrion() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Capacidad</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
                     <input type="number" value={formEditar.capacidad} onChange={e => setFormEditar(f => ({ ...f, capacidad: e.target.value }))} style={inputStyle} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Precio (MXN)</label>
-                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} style={inputStyle} />
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
+                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!perfil?.mp_access_token}
+                      style={{ ...inputStyle, opacity: perfil?.mp_access_token ? 1 : 0.5, cursor: perfil?.mp_access_token ? "text" : "not-allowed" }} />
+                    {!perfil?.mp_access_token && (
+                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>Conecta Mercado Pago para poder cobrar por tus boletos.</div>
+                    )}
+                    {formEditar.precio > 0 && (
+                      <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
+                        <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(formEditar.precio) * 1.10)} MXN</span>
+                        <span style={{ color: "rgba(255,255,255,0.28)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
@@ -25,6 +25,11 @@ export default function CrearEvento() {
   const [imagenFile, setImagenFile] = useState(null)
   const [imagenPreview, setImagenPreview] = useState(null)
   const [perfil, setPerfil] = useState(null)
+  const errorRef = useRef(null)
+
+  useEffect(() => {
+    if (error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [error])
   const [form, setForm] = useState({
     titulo: "", descripcion: "", categoria: "", fecha: "", hora: "",
     ubicacion: "", estado_evento: "", capacidad: "", precio: "",
@@ -180,12 +185,6 @@ export default function CrearEvento() {
       <div style={{ maxWidth: "720px", margin: "0 auto", padding: isMobile ? "24px 18px 48px" : "36px 24px 60px" }}>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
 
-          {error && (
-            <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", color: "#f87171", fontSize: "13.5px" }}
-            >{error}</motion.div>
-          )}
-
           {exito && (
             <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
               style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid rgba(16,185,129,0.3)", borderRadius: "12px", padding: "12px 16px", marginBottom: "20px", color: "#34d399", fontSize: "13.5px" }}
@@ -269,6 +268,7 @@ export default function CrearEvento() {
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
               <div>
                 <label style={labelStyle}>Capacidad máxima *</label>
+                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
                 <input type="number" value={form.capacidad} onChange={e => handleChange("capacidad", e.target.value)} placeholder="Ej. 200" min="1" style={inputStyle} />
               </div>
               <div>
@@ -346,6 +346,12 @@ export default function CrearEvento() {
             </div>
             <input value={form.imagen_url} onChange={e => handleChange("imagen_url", e.target.value)} placeholder="https://..." style={inputStyle} />
           </div>
+
+          {error && (
+            <motion.div ref={errorRef} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+              style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "12px", padding: "12px 16px", marginBottom: "16px", color: "#f87171", fontSize: "13.5px" }}
+            >{error}</motion.div>
+          )}
 
           <motion.button onClick={handleSubmit} whileTap={{ scale: 0.97 }} disabled={loading}
             className="btn-3d"

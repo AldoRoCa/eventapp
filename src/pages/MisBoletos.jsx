@@ -308,9 +308,9 @@ export default function MisBoletos() {
               <select value={motivoReporte} onChange={e => setMotivoReporte(e.target.value)}
                 style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", colorScheme: "dark" }}
               >
-                <option value="no_ocurrio">El evento no ocurrió</option>
-                <option value="anfitrion_no_responde">El anfitrión no responde</option>
-                <option value="otro">Otro</option>
+                <option value="no_ocurrio" style={{ background: "#111", color: "white" }}>El evento no ocurrió</option>
+                <option value="anfitrion_no_responde" style={{ background: "#111", color: "white" }}>El anfitrión no responde</option>
+                <option value="otro" style={{ background: "#111", color: "white" }}>Otro</option>
               </select>
             </div>
 
