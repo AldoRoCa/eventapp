@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { motion } from "framer-motion"
 import { Link, useSearchParams } from "react-router-dom"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 
 export default function PagoFallido() {
   const [searchParams] = useSearchParams()
@@ -9,7 +9,7 @@ export default function PagoFallido() {
   useEffect(() => {
     const limpiar = async () => {
       const evento_id = searchParams.get("evento_id")
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (user && evento_id) {
         await supabase
           .from("boletos")

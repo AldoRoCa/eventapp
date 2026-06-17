@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
 
 function useIsMobile() {
@@ -29,11 +29,12 @@ export default function Evento() {
   const [precioMostrado, setPrecioMostrado] = useState(0)
   const [boletosUsuario, setBoletosUsuario] = useState(0)
   const [fotoZoom, setFotoZoom] = useState(null)
+  const [ratingAnfitrion, setRatingAnfitrion] = useState(null) // { promedio, total } o null si no hay reseñas
   const precioTimerRef = useRef(null)
 
   useEffect(() => {
     const cargar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       setUser(user)
       const { data: ev } = await supabase
         .from("eventos")
@@ -41,6 +42,17 @@ export default function Evento() {
         .eq("id", id).single()
       setEvento(ev)
       setPrecioMostrado(ev?.precio || 0)
+
+      if (ev?.anfitrion_id) {
+        const { data: resenas } = await supabase
+          .from("resenas")
+          .select("estrellas_anfitrion")
+          .eq("anfitrion_id", ev.anfitrion_id)
+        if (resenas && resenas.length > 0) {
+          const promedio = resenas.reduce((sum, r) => sum + r.estrellas_anfitrion, 0) / resenas.length
+          setRatingAnfitrion({ promedio, total: resenas.length })
+        }
+      }
       const { count } = await supabase.from("boletos").select("*", { count: "exact", head: true }).eq("evento_id", id).eq("estado", "activo")
       setAsistentes(count || 0)
       if (user) {
@@ -303,7 +315,13 @@ export default function Evento() {
             </div>
             <div>
               <div style={{ fontSize: "14px", fontWeight: 600 }}>{evento.profiles?.nombre || "Anfitrión"}</div>
-              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>Organizador del evento</div>
+              {ratingAnfitrion ? (
+                <div style={{ fontSize: "12px", color: "#facc15", display: "flex", alignItems: "center", gap: "4px" }}>
+                  ★ {ratingAnfitrion.promedio.toFixed(1)} <span style={{ color: "rgba(255,255,255,0.3)" }}>({ratingAnfitrion.total} reseña{ratingAnfitrion.total > 1 ? "s" : ""})</span>
+                </div>
+              ) : (
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>Organizador del evento</div>
+              )}
             </div>
           </motion.div>
 
@@ -360,7 +378,13 @@ export default function Evento() {
               </div>
               <div>
                 <div style={{ fontSize: "15px", fontWeight: 700 }}>{evento.profiles?.nombre || "Anfitrión"}</div>
-                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)" }}>Organizador del evento</div>
+                {ratingAnfitrion ? (
+                  <div style={{ fontSize: "12.5px", color: "#facc15", display: "flex", alignItems: "center", gap: "4px" }}>
+                    ★ {ratingAnfitrion.promedio.toFixed(1)} <span style={{ color: "rgba(255,255,255,0.3)" }}>({ratingAnfitrion.total} reseña{ratingAnfitrion.total > 1 ? "s" : ""})</span>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)" }}>Organizador del evento</div>
+                )}
               </div>
             </div>
 

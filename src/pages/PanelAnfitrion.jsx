@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
 function useIsMobile() {
@@ -39,7 +39,7 @@ export default function PanelAnfitrion() {
 
   useEffect(() => {
     const cargar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
       const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
@@ -402,6 +402,9 @@ export default function PanelAnfitrion() {
                             </span>
                           </div>
                           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                            <motion.button onClick={() => navigate(`/evento/${ev.id}`)} whileTap={{ scale: 0.95 }}
+                              style={{ flex: 1, background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "9px", color: "#a78bfa", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Ir a evento</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Asistentes</motion.button>
@@ -431,6 +434,9 @@ export default function PanelAnfitrion() {
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: "8px" }}>
+                            <motion.button onClick={() => navigate(`/evento/${ev.id}`)} whileTap={{ scale: 0.97 }}
+                              style={{ background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "9px", color: "#a78bfa", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Ir a evento</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ver asistentes</motion.button>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
 
 function useIsMobile() {
@@ -38,7 +38,7 @@ export default function CrearEvento() {
 
   useEffect(() => {
     const verificar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_access_token").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
@@ -97,7 +97,7 @@ export default function CrearEvento() {
     }
 
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user } } = await getUserSafe()
     if (!user) { setError("Debes iniciar sesión para crear un evento"); setLoading(false); return }
 
     const fechaCompleta = new Date(`${form.fecha}T${form.hora}:00`).toISOString()
@@ -268,7 +268,6 @@ export default function CrearEvento() {
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
               <div>
                 <label style={labelStyle}>Capacidad máxima *</label>
-                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
                 <input type="number" value={form.capacidad} onChange={e => handleChange("capacidad", e.target.value)} placeholder="Ej. 200" min="1" style={inputStyle} />
               </div>
               <div>

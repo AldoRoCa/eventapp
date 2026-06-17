@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
 export default function Admin() {
@@ -15,7 +15,7 @@ export default function Admin() {
 
   useEffect(() => {
     const verificar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       const { data: perfil } = await supabase.from("profiles").select("es_admin").eq("id", user.id).single()
       if (!perfil?.es_admin) { navigate("/"); return }

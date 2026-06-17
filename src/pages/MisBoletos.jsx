@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
 function useIsMobile() {
@@ -11,6 +11,21 @@ function useIsMobile() {
     return () => window.removeEventListener("resize", handler)
   }, [])
   return isMobile
+}
+
+function StarPicker({ value, onChange, label }) {
+  return (
+    <div style={{ marginBottom: "16px" }}>
+      <label style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>{label}</label>
+      <div style={{ display: "flex", gap: "4px" }}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button key={n} type="button" onClick={() => onChange(n)}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "2px", fontSize: "26px", lineHeight: 1, color: n <= value ? "#facc15" : "rgba(255,255,255,0.15)" }}
+          >★</button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function MisBoletos() {
@@ -24,11 +39,17 @@ export default function MisBoletos() {
   const [enviandoReporte, setEnviandoReporte] = useState(false)
   const [reportesEnviados, setReportesEnviados] = useState({}) // { [boleto_id]: true }
   const [mensaje, setMensaje] = useState("")
+  const [resenando, setResenando] = useState(null) // boleto_id del modal de reseña abierto
+  const [estrellasEvento, setEstrellasEvento] = useState(0)
+  const [estrellasAnfitrion, setEstrellasAnfitrion] = useState(0)
+  const [comentarioResena, setComentarioResena] = useState("")
+  const [enviandoResena, setEnviandoResena] = useState(false)
+  const [resenasGuardadas, setResenasGuardadas] = useState({}) // { [boleto_id]: { estrellas_evento, estrellas_anfitrion, comentario } }
   const navigate = useNavigate()
 
   useEffect(() => {
     const cargar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
       const { data } = await supabase
@@ -49,6 +70,16 @@ export default function MisBoletos() {
       const mapa = {}
       for (const r of reportes || []) mapa[r.boleto_id] = true
       setReportesEnviados(mapa)
+
+      // Cargar reseñas ya hechas por el usuario, para mostrar "editar"
+      // en vez de "dejar reseña", y poder pre-llenar el formulario.
+      const { data: resenas } = await supabase
+        .from("resenas")
+        .select("boleto_id, estrellas_evento, estrellas_anfitrion, comentario")
+        .eq("usuario_id", user.id)
+      const mapaResenas = {}
+      for (const r of resenas || []) mapaResenas[r.boleto_id] = r
+      setResenasGuardadas(mapaResenas)
 
       setLoading(false)
     }
@@ -88,6 +119,48 @@ export default function MisBoletos() {
       setMensaje("Error de conexión. Intenta de nuevo.")
     }
     setEnviandoReporte(false)
+  }
+
+  const abrirResena = (boletoId) => {
+    const existente = resenasGuardadas[boletoId]
+    setEstrellasEvento(existente?.estrellas_evento || 0)
+    setEstrellasAnfitrion(existente?.estrellas_anfitrion || 0)
+    setComentarioResena(existente?.comentario || "")
+    setResenando(boletoId)
+  }
+
+  const enviarResena = async () => {
+    if (!resenando || estrellasEvento === 0 || estrellasAnfitrion === 0) return
+    setEnviandoResena(true)
+    setMensaje("")
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guardar-resena`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          boleto_id: resenando,
+          estrellas_evento: estrellasEvento,
+          estrellas_anfitrion: estrellasAnfitrion,
+          comentario: comentarioResena.trim() || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje(json.error || "No se pudo guardar la reseña. Intenta de nuevo.")
+      } else {
+        setResenasGuardadas(prev => ({ ...prev, [resenando]: { estrellas_evento: estrellasEvento, estrellas_anfitrion: estrellasAnfitrion, comentario: comentarioResena.trim() || null } }))
+        setResenando(null)
+        setMensaje("¡Gracias por tu reseña!")
+        setTimeout(() => setMensaje(""), 4000)
+      }
+    } catch {
+      setMensaje("Error de conexión. Intenta de nuevo.")
+    }
+    setEnviandoResena(false)
   }
 
   if (loading) return (
@@ -213,6 +286,11 @@ export default function MisBoletos() {
                             {reportesEnviados[boleto.id] && (
                               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
                             )}
+                            {usado && boleto.estado === "activo" && (
+                              <button onClick={() => abrirResena(boleto.id)} style={{ fontSize: "12.5px", color: "#a78bfa", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>
+                                {resenasGuardadas[boleto.id] ? "Editar reseña" : "Dejar reseña"}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -269,6 +347,11 @@ export default function MisBoletos() {
                           {reportesEnviados[boleto.id] && (
                             <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
                           )}
+                          {usado && boleto.estado === "activo" && (
+                            <button onClick={() => abrirResena(boleto.id)} style={{ fontSize: "12.5px", color: "#a78bfa", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>
+                              {resenasGuardadas[boleto.id] ? "Editar reseña" : "Dejar reseña"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -308,9 +391,9 @@ export default function MisBoletos() {
               <select value={motivoReporte} onChange={e => setMotivoReporte(e.target.value)}
                 style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", colorScheme: "dark" }}
               >
-                <option value="no_ocurrio" style={{ background: "#111", color: "white" }}>El evento no ocurrió</option>
-                <option value="anfitrion_no_responde" style={{ background: "#111", color: "white" }}>El anfitrión no responde</option>
-                <option value="otro" style={{ background: "#111", color: "white" }}>Otro</option>
+                <option value="no_ocurrio">El evento no ocurrió</option>
+                <option value="anfitrion_no_responde">El anfitrión no responde</option>
+                <option value="otro">Otro</option>
               </select>
             </div>
 
@@ -332,6 +415,47 @@ export default function MisBoletos() {
                 style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: enviandoReporte ? "rgba(239,68,68,0.4)" : "#ef4444", color: "white", fontWeight: 600, fontSize: "14px", cursor: enviandoReporte ? "default" : "pointer", fontFamily: "inherit" }}
               >
                 {enviandoReporte ? "Enviando..." : "Enviar reporte"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* MODAL: dejar/editar reseña */}
+      {resenando && (
+        <div onClick={() => !enviandoResena && setResenando(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+        >
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#111114", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "18px", padding: "26px 24px", maxWidth: "420px", width: "100%" }}
+          >
+            <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>{resenasGuardadas[resenando] ? "Editar reseña" : "Dejar reseña"}</div>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginBottom: "18px", lineHeight: 1.5 }}>
+              Tu reseña es anónima — el anfitrión y otros usuarios no verán tu nombre.
+            </p>
+
+            <StarPicker label="¿Cómo calificarías el evento?" value={estrellasEvento} onChange={setEstrellasEvento} />
+            <StarPicker label="¿Cómo calificarías al anfitrión?" value={estrellasAnfitrion} onChange={setEstrellasAnfitrion} />
+
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>Comentario (opcional)</label>
+              <textarea value={comentarioResena} onChange={e => setComentarioResena(e.target.value.slice(0, 1000))} rows={4}
+                placeholder="Cuéntanos cómo estuvo..."
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => setResenando(null)} disabled={enviandoResena}
+                style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Cancelar
+              </button>
+              <button onClick={enviarResena} disabled={enviandoResena || estrellasEvento === 0 || estrellasAnfitrion === 0}
+                style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: (enviandoResena || estrellasEvento === 0 || estrellasAnfitrion === 0) ? "rgba(124,58,237,0.3)" : "#7c3aed", color: "white", fontWeight: 600, fontSize: "14px", cursor: (enviandoResena || estrellasEvento === 0 || estrellasAnfitrion === 0) ? "default" : "pointer", fontFamily: "inherit" }}
+              >
+                {enviandoResena ? "Guardando..." : "Guardar reseña"}
               </button>
             </div>
           </motion.div>

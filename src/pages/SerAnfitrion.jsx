@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { supabase } from "../supabase"
+import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
 function useIsMobile() {
@@ -27,7 +27,7 @@ export default function SerAnfitrion() {
 
   useEffect(() => {
     const cargar = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
       const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
