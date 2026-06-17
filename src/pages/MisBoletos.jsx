@@ -163,6 +163,28 @@ export default function MisBoletos() {
     setEnviandoResena(false)
   }
 
+  const borrarResena = async () => {
+    if (!resenando) return
+    if (!window.confirm("¿Borrar tu reseña? Esta acción no se puede deshacer.")) return
+    setEnviandoResena(true)
+    // RLS (auth.uid() = usuario_id) garantiza que solo se pueda borrar la
+    // propia reseña — no se necesita una edge function para esto.
+    const { error } = await supabase.from("resenas").delete().eq("boleto_id", resenando)
+    if (!error) {
+      setResenasGuardadas(prev => {
+        const copia = { ...prev }
+        delete copia[resenando]
+        return copia
+      })
+      setResenando(null)
+      setMensaje("Reseña eliminada.")
+      setTimeout(() => setMensaje(""), 3000)
+    } else {
+      setMensaje("No se pudo eliminar la reseña. Intenta de nuevo.")
+    }
+    setEnviandoResena(false)
+  }
+
   if (loading) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       Cargando tus boletos...
@@ -447,6 +469,13 @@ export default function MisBoletos() {
             </div>
 
             <div style={{ display: "flex", gap: "10px" }}>
+              {resenasGuardadas[resenando] && (
+                <button onClick={borrarResena} disabled={enviandoResena}
+                  style={{ padding: "11px 16px", borderRadius: "10px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.1)", color: "#f87171", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  Borrar
+                </button>
+              )}
               <button onClick={() => setResenando(null)} disabled={enviandoResena}
                 style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
               >

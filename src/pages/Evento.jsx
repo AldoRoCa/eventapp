@@ -30,6 +30,7 @@ export default function Evento() {
   const [boletosUsuario, setBoletosUsuario] = useState(0)
   const [fotoZoom, setFotoZoom] = useState(null)
   const [ratingAnfitrion, setRatingAnfitrion] = useState(null) // { promedio, total } o null si no hay reseñas
+  const [comentariosAnfitrion, setComentariosAnfitrion] = useState([])
   const precioTimerRef = useRef(null)
 
   useEffect(() => {
@@ -46,11 +47,13 @@ export default function Evento() {
       if (ev?.anfitrion_id) {
         const { data: resenas } = await supabase
           .from("resenas")
-          .select("estrellas_anfitrion")
+          .select("estrellas_anfitrion, comentario, created_at")
           .eq("anfitrion_id", ev.anfitrion_id)
+          .order("created_at", { ascending: false })
         if (resenas && resenas.length > 0) {
           const promedio = resenas.reduce((sum, r) => sum + r.estrellas_anfitrion, 0) / resenas.length
           setRatingAnfitrion({ promedio, total: resenas.length })
+          setComentariosAnfitrion(resenas.filter(r => r.comentario && r.comentario.trim().length > 0))
         }
       }
       const { count } = await supabase.from("boletos").select("*", { count: "exact", head: true }).eq("evento_id", id).eq("estado", "activo")
@@ -366,6 +369,24 @@ export default function Evento() {
               />
             </div>
           </div>
+
+          {comentariosAnfitrion.length > 0 && (
+            <div style={{ marginTop: "24px" }}>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.2px" }}>
+                Reseñas del anfitrión {ratingAnfitrion && <span style={{ color: "#facc15", fontSize: "13.5px", fontWeight: 600 }}>★ {ratingAnfitrion.promedio.toFixed(1)}</span>}
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {comentariosAnfitrion.map((r, i) => (
+                  <div key={i} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: "12px" }}>
+                    <div style={{ color: "#facc15", fontSize: "12px", marginBottom: "5px" }}>
+                      {"★".repeat(r.estrellas_anfitrion)}<span style={{ color: "rgba(255,255,255,0.12)" }}>{"★".repeat(5 - r.estrellas_anfitrion)}</span>
+                    </div>
+                    <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)", lineHeight: 1.6, margin: 0 }}>{r.comentario}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
       ) : (
@@ -430,6 +451,24 @@ export default function Evento() {
                 />
               </div>
             </div>
+
+            {comentariosAnfitrion.length > 0 && (
+              <div style={{ marginTop: "28px" }}>
+                <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.3px" }}>
+                  Reseñas del anfitrión {ratingAnfitrion && <span style={{ color: "#facc15", fontSize: "15px", fontWeight: 600 }}>★ {ratingAnfitrion.promedio.toFixed(1)}</span>}
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {comentariosAnfitrion.map((r, i) => (
+                    <div key={i} style={{ padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
+                      <div style={{ color: "#facc15", fontSize: "13px", marginBottom: "6px" }}>
+                        {"★".repeat(r.estrellas_anfitrion)}<span style={{ color: "rgba(255,255,255,0.12)" }}>{"★".repeat(5 - r.estrellas_anfitrion)}</span>
+                      </div>
+                      <p style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.65)", lineHeight: 1.6, margin: 0 }}>{r.comentario}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* COLUMNA DERECHA */}
