@@ -26,6 +26,9 @@ export default function Perfil() {
   const [editandoNombre, setEditandoNombre] = useState(false)
   const [nuevoNombre, setNuevoNombre] = useState("")
   const [guardandoNombre, setGuardandoNombre] = useState(false)
+  const [modalEliminar, setModalEliminar] = useState(false)
+  const [confirmacionTexto, setConfirmacionTexto] = useState("")
+  const [eliminando, setEliminando] = useState(false)
   const avatarRef = useRef(null)
 
   useEffect(() => {
@@ -74,6 +77,34 @@ export default function Perfil() {
     setGuardandoNombre(false)
     setMensaje("Nombre actualizado.")
     setTimeout(() => setMensaje(""), 3000)
+  }
+
+  const eliminarCuenta = async () => {
+    if (confirmacionTexto !== "ELIMINAR") return
+    setEliminando(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eliminar-cuenta`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje(json.error || "No se pudo eliminar la cuenta. Intenta de nuevo.")
+        setEliminando(false)
+        return
+      }
+      // La cuenta ya fue eliminada en el servidor — cerrar sesión local y
+      // sacar al usuario a la pantalla de inicio.
+      await supabase.auth.signOut()
+      navigate("/")
+    } catch {
+      setMensaje("Error de conexión. Intenta de nuevo.")
+      setEliminando(false)
+    }
   }
 
   if (loading) return (
@@ -256,6 +287,17 @@ export default function Perfil() {
             })}
           </div>
         )}
+
+        {/* ZONA DE PELIGRO */}
+        <div style={{ marginTop: "48px", padding: "20px", background: "rgba(239,68,68,0.04)", border: "1.5px solid rgba(239,68,68,0.15)", borderRadius: "16px" }}>
+          <div style={{ fontWeight: 700, fontSize: "14.5px", marginBottom: "4px", color: "#f87171" }}>Eliminar cuenta</div>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", lineHeight: 1.6, marginBottom: "14px" }}>
+            Esta acción es permanente. Si tienes eventos futuros con boletos vendidos, se reembolsarán automáticamente a los compradores antes de eliminar tu cuenta.
+          </p>
+          <button onClick={() => setModalEliminar(true)}
+            style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", color: "#f87171", padding: "9px 18px", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+          >Eliminar mi cuenta</button>
+        </div>
       </div>
 
       {/* MODAL AVATAR */}
@@ -273,6 +315,40 @@ export default function Perfil() {
               <button onClick={() => setModalAvatar(false)}
                 style={{ position: "absolute", top: "-12px", right: "-12px", width: "32px", height: "32px", borderRadius: "999px", background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.15)", color: "white", fontSize: "16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >×</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL ELIMINAR CUENTA */}
+      <AnimatePresence>
+        {modalEliminar && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => !eliminando && setModalEliminar(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(10px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+          >
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: "#111114", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "18px", padding: "26px 24px", maxWidth: "420px", width: "100%" }}
+            >
+              <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px", color: "#f87171" }}>¿Eliminar tu cuenta?</div>
+              <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", lineHeight: 1.6, marginBottom: "18px" }}>
+                Esta acción no se puede deshacer. Tus eventos futuros con boletos vendidos se cancelarán y reembolsarán automáticamente. Tus eventos ya pasados se conservan como historial.
+              </p>
+              <label style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: "6px" }}>
+                Escribe <strong style={{ color: "white" }}>ELIMINAR</strong> para confirmar
+              </label>
+              <input value={confirmacionTexto} onChange={e => setConfirmacionTexto(e.target.value)} disabled={eliminando}
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", marginBottom: "20px" }}
+              />
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button onClick={() => { setModalEliminar(false); setConfirmacionTexto("") }} disabled={eliminando}
+                  style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
+                >Cancelar</button>
+                <button onClick={eliminarCuenta} disabled={confirmacionTexto !== "ELIMINAR" || eliminando}
+                  style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: confirmacionTexto === "ELIMINAR" && !eliminando ? "#ef4444" : "rgba(239,68,68,0.25)", color: "white", fontWeight: 600, fontSize: "14px", cursor: confirmacionTexto === "ELIMINAR" && !eliminando ? "pointer" : "default", fontFamily: "inherit" }}
+                >{eliminando ? "Eliminando..." : "Eliminar cuenta"}</button>
+              </div>
             </motion.div>
           </motion.div>
         )}

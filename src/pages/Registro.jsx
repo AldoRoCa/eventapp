@@ -11,6 +11,7 @@ export default function Registro() {
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [error, setError] = useState("")
+  const [registrado, setRegistrado] = useState(false)
   const navigate = useNavigate()
 
   const handleAvatar = (e) => {
@@ -28,7 +29,28 @@ export default function Registro() {
     if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); setLoading(false); return }
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nombre } } })
     if (error) {
-      setError("Error al crear la cuenta. Intenta con otro correo.")
+      if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+        setError("Ya existe una cuenta con ese correo. Intenta iniciar sesión.")
+      } else if (error.message.includes("rate limit")) {
+        setError("Demasiados intentos. Espera unos minutos y vuelve a intentar.")
+      } else {
+        setError("Error al crear la cuenta. Verifica tu correo e intenta de nuevo.")
+      }
+    } else if (data.user && !data.session) {
+      // Supabase exige confirmar el correo antes de dar una sesión activa
+      // (signUp crea el usuario pero no lo deja entrar todavía). Mostramos
+      // un aviso claro en vez de intentar redirigir como si ya hubiera
+      // iniciado sesión.
+      if (avatarFile && data.user) {
+        const ext = avatarFile.name.split(".").pop()
+        const nombreArchivo = `${data.user.id}-${Date.now()}.${ext}`
+        const { error: uploadError } = await supabase.storage.from("avatars").upload(nombreArchivo, avatarFile)
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombreArchivo)
+          await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", data.user.id)
+        }
+      }
+      setRegistrado(true)
     } else {
       if (avatarFile && data.user) {
         const ext = avatarFile.name.split(".").pop()
@@ -66,6 +88,24 @@ export default function Registro() {
       >
         <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "200px", height: "2px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent)", borderRadius: "999px" }} />
 
+        {registrado ? (
+          <div style={{ textAlign: "center", padding: "12px 0" }}>
+            <div style={{ width: "64px", height: "64px", borderRadius: "999px", background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <svg width="28" height="28" fill="none" stroke="#a78bfa" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "white", marginBottom: "10px", letterSpacing: "-0.5px" }}>Revisa tu correo</h1>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", lineHeight: 1.6, marginBottom: "8px" }}>
+              Te enviamos un link de confirmación a<br /><strong style={{ color: "white" }}>{email}</strong>
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", lineHeight: 1.6, marginBottom: "28px" }}>
+              Da clic en el link para activar tu cuenta. Si no lo ves, revisa también tu carpeta de spam.
+            </p>
+            <Link to="/login" style={{ display: "block", width: "100%", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "rgba(255,255,255,0.7)", padding: "12px", fontWeight: 600, fontSize: "14px", textDecoration: "none", boxSizing: "border-box" }}>
+              Ir a iniciar sesión
+            </Link>
+          </div>
+        ) : (
+        <>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "28px", justifyContent: "center" }}>
           <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
             <svg width="18" height="18" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -133,6 +173,8 @@ export default function Registro() {
             Volver al inicio
           </Link>
         </div>
+        </>
+        )}
       </motion.div>
     </div>
   )
