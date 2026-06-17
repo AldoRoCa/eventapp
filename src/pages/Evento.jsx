@@ -87,6 +87,7 @@ export default function Evento() {
 
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
+    if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
     setComprando(true)
     if (evento.tipo_boleto === "solicitud") {
       if (evento.precio === 0) {
@@ -131,6 +132,10 @@ export default function Evento() {
 
   const pct = Math.round((asistentes / evento.capacidad) * 100)
   const almostFull = pct >= 85
+  // Mismo margen de 5 horas usado en PanelAnfitrion (editar) y MisBoletos
+  // (reportar/reseñar) — consistente en toda la app hasta que el sistema
+  // de check-in redefina cómo se determina el fin de un evento.
+  const finalizado = new Date(evento.fecha) < new Date(Date.now() - 5 * 60 * 60 * 1000)
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
@@ -221,11 +226,11 @@ export default function Evento() {
           </div>
         </div>
       ) : (
-        <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad}
-          className={asistentes >= evento.capacidad ? "" : "btn-3d"}
-          style={{ width: "100%", background: asistentes >= evento.capacidad ? "rgba(255,255,255,0.06)" : undefined, border: asistentes >= evento.capacidad ? "1px solid rgba(255,255,255,0.1)" : "none", borderRadius: "14px", color: asistentes >= evento.capacidad ? "rgba(255,255,255,0.35)" : "white", padding: "16px", fontWeight: 700, fontSize: "15px", cursor: comprando || asistentes >= evento.capacidad ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+        <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad || finalizado}
+          className={(asistentes >= evento.capacidad || finalizado) ? "" : "btn-3d"}
+          style={{ width: "100%", background: (asistentes >= evento.capacidad || finalizado) ? "rgba(255,255,255,0.06)" : undefined, border: (asistentes >= evento.capacidad || finalizado) ? "1px solid rgba(255,255,255,0.1)" : "none", borderRadius: "14px", color: (asistentes >= evento.capacidad || finalizado) ? "rgba(255,255,255,0.35)" : "white", padding: "16px", fontWeight: 700, fontSize: "15px", cursor: (comprando || asistentes >= evento.capacidad || finalizado) ? "not-allowed" : "pointer", fontFamily: "inherit" }}
         >
-          {comprando ? "Procesando..." : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
+          {comprando ? "Procesando..." : finalizado ? "Este evento ya finalizó" : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
         </motion.button>
       )}
 
