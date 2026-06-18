@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom"
 
 export default function Registro() {
   const [nombre, setNombre] = useState("")
+  const [nombreReal, setNombreReal] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -25,9 +26,10 @@ export default function Registro() {
   const handleRegistro = async () => {
     setLoading(true)
     setError("")
-    if (!nombre || !email || !password) { setError("Por favor llena todos los campos"); setLoading(false); return }
+    if (!nombre || !nombreReal || !email || !password) { setError("Por favor llena todos los campos"); setLoading(false); return }
+    if (nombreReal.trim().length < 3) { setError("Por favor ingresa tu nombre completo real"); setLoading(false); return }
     if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); setLoading(false); return }
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nombre } } })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nombre, nombre_real: nombreReal.trim() } } })
     if (error) {
       if (error.message.includes("already registered") || error.message.includes("User already registered")) {
         setError("Ya existe una cuenta con ese correo. Intenta iniciar sesión.")
@@ -123,8 +125,16 @@ export default function Registro() {
         )}
 
         <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Nombre</label>
-          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Nombre completo (real)</label>
+          <input type="text" value={nombreReal} onChange={e => setNombreReal(e.target.value)} placeholder="Como aparece en tu identificación" style={inputStyle} />
+          <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.3)", marginTop: "6px", lineHeight: 1.5 }}>
+            Se usará para el registro al comprar boletos. Si es incorrecto, el check-in en los eventos no se hará correctamente.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: "14px" }}>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Nombre de usuario</label>
+          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Como te verán otros usuarios" style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: "14px" }}>
