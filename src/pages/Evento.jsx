@@ -47,13 +47,30 @@ export default function Evento() {
       if (ev?.anfitrion_id) {
         const { data: resenas } = await supabase
           .from("resenas")
-          .select("estrellas_anfitrion, comentario, created_at")
+          .select("usuario_id, estrellas_anfitrion, comentario, created_at")
           .eq("anfitrion_id", ev.anfitrion_id)
           .order("created_at", { ascending: false })
         if (resenas && resenas.length > 0) {
           const promedio = resenas.reduce((sum, r) => sum + r.estrellas_anfitrion, 0) / resenas.length
           setRatingAnfitrion({ promedio, total: resenas.length })
-          setComentariosAnfitrion(resenas.filter(r => r.comentario && r.comentario.trim().length > 0))
+
+          const conComentario = resenas.filter(r => r.comentario && r.comentario.trim().length > 0)
+
+          // Se hace por separado de la consulta a "resenas" (en vez de un
+          // join anidado resenas->profiles) porque PostgREST no resuelve
+          // bien ese join cuando profiles tiene varias políticas RLS de
+          // SELECT activas — el join devolvía profiles=null en el
+          // cliente aunque los datos sí existieran en la base.
+          if (conComentario.length > 0) {
+            const idsUnicos = [...new Set(conComentario.map(r => r.usuario_id))]
+            const { data: perfiles } = await supabase
+              .from("profiles")
+              .select("id, nombre, avatar_url")
+              .in("id", idsUnicos)
+            const perfilesPorId = {}
+            for (const p of perfiles || []) perfilesPorId[p.id] = p
+            setComentariosAnfitrion(conComentario.map(r => ({ ...r, profiles: perfilesPorId[r.usuario_id] || null })))
+          }
         }
       }
       const { count } = await supabase.from("boletos").select("*", { count: "exact", head: true }).eq("evento_id", id).eq("estado", "activo")
@@ -378,6 +395,16 @@ export default function Evento() {
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {comentariosAnfitrion.map((r, i) => (
                   <div key={i} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      {r.profiles?.avatar_url ? (
+                        <img src={r.profiles.avatar_url} alt="" onClick={() => setFotoZoom(r.profiles.avatar_url)} style={{ width: "26px", height: "26px", borderRadius: "999px", objectFit: "cover", cursor: "pointer" }} />
+                      ) : (
+                        <div style={{ width: "26px", height: "26px", borderRadius: "999px", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#a78bfa" }}>
+                          {(r.profiles?.nombre || "?")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <span style={{ fontSize: "13px", fontWeight: 600 }}>{r.profiles?.nombre || "Usuario"}</span>
+                    </div>
                     <div style={{ color: "#facc15", fontSize: "12px", marginBottom: "5px" }}>
                       {"★".repeat(r.estrellas_anfitrion)}<span style={{ color: "rgba(255,255,255,0.12)" }}>{"★".repeat(5 - r.estrellas_anfitrion)}</span>
                     </div>
@@ -460,6 +487,16 @@ export default function Evento() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {comentariosAnfitrion.map((r, i) => (
                     <div key={i} style={{ padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "9px", marginBottom: "9px" }}>
+                        {r.profiles?.avatar_url ? (
+                          <img src={r.profiles.avatar_url} alt="" onClick={() => setFotoZoom(r.profiles.avatar_url)} style={{ width: "30px", height: "30px", borderRadius: "999px", objectFit: "cover", cursor: "pointer" }} />
+                        ) : (
+                          <div style={{ width: "30px", height: "30px", borderRadius: "999px", background: "rgba(124,58,237,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12.5px", fontWeight: 700, color: "#a78bfa" }}>
+                            {(r.profiles?.nombre || "?")[0].toUpperCase()}
+                          </div>
+                        )}
+                        <span style={{ fontSize: "13.5px", fontWeight: 600 }}>{r.profiles?.nombre || "Usuario"}</span>
+                      </div>
                       <div style={{ color: "#facc15", fontSize: "13px", marginBottom: "6px" }}>
                         {"★".repeat(r.estrellas_anfitrion)}<span style={{ color: "rgba(255,255,255,0.12)" }}>{"★".repeat(5 - r.estrellas_anfitrion)}</span>
                       </div>

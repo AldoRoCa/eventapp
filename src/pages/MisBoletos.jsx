@@ -454,7 +454,7 @@ export default function MisBoletos() {
           >
             <div style={{ fontWeight: 700, fontSize: "17px", marginBottom: "6px" }}>{resenasGuardadas[resenando] ? "Editar reseña" : "Dejar reseña"}</div>
             <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "13px", marginBottom: "18px", lineHeight: 1.5 }}>
-              Tu reseña es anónima — el anfitrión y otros usuarios no verán tu nombre.
+              Comparte tu experiencia con este evento y este anfitrión.
             </p>
 
             <StarPicker label="¿Cómo calificarías el evento?" value={estrellasEvento} onChange={setEstrellasEvento} />
@@ -467,6 +467,10 @@ export default function MisBoletos() {
                 style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", resize: "vertical" }}
               />
             </div>
+
+            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", lineHeight: 1.5, marginBottom: "18px" }}>
+              Tu nombre y foto de perfil serán visibles junto a esta reseña. Te pedimos expresarte con respeto, incluso si tu experiencia no fue buena.
+            </p>
 
             <div style={{ display: "flex", gap: "10px" }}>
               {resenasGuardadas[resenando] && (
