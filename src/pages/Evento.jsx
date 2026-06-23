@@ -26,6 +26,8 @@ export default function Evento() {
   const [estadoBoleto, setEstadoBoleto] = useState("activo")
   const [asistentes, setAsistentes] = useState(0)
   const [cantidad, setCantidad] = useState(1)
+  const [nombreRegistro, setNombreRegistro] = useState("")
+  const [editandoNombre, setEditandoNombre] = useState(false)
   const [precioMostrado, setPrecioMostrado] = useState(0)
   const [boletosUsuario, setBoletosUsuario] = useState(0)
   const [fotoZoom, setFotoZoom] = useState(null)
@@ -37,6 +39,10 @@ export default function Evento() {
     const cargar = async () => {
       const { data: { user } } = await getUserSafe()
       setUser(user)
+      if (user) {
+        const { data: perfil } = await supabase.from("profiles").select("nombre_real").eq("id", user.id).single()
+        if (perfil?.nombre_real) setNombreRegistro(perfil.nombre_real)
+      }
       const { data: ev } = await supabase
         .from("eventos")
         .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, created_at, profiles(nombre, avatar_url)")
@@ -108,15 +114,18 @@ export default function Evento() {
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
+    if (!nombreRegistro.trim()) { alert("Por favor ingresa el nombre a quien se registrará el boleto."); return }
     setComprando(true)
+    const nombreNormalizado = nombreRegistro.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     if (evento.tipo_boleto === "solicitud") {
       if (evento.precio === 0) {
-        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente" }))
+        const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
+        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado, codigo_grupo: codigo }))
         const { error } = await supabase.from("boletos").insert(inserts)
         if (!error) { setTieneBoleto(true); setExito(true); setEstadoBoleto("pendiente") }
         setComprando(false); return
       } else {
-        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
+        const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
         const { error: boletoError } = await supabase.from("boletos").insert(inserts)
         if (boletoError) { setComprando(false); return }
         const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
@@ -130,12 +139,13 @@ export default function Evento() {
       }
     }
     if (evento.precio === 0) {
-      const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "activo" }))
+      const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
+      const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "activo", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado, codigo_grupo: codigo }))
       const { error } = await supabase.from("boletos").insert(inserts)
       if (!error) { setTieneBoleto(true); setAsistentes(a => a + cantidad); setExito(true); setEstadoBoleto("activo") }
       setComprando(false); return
     }
-    const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago" }))
+    const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
     const { error: boletoError } = await supabase.from("boletos").insert(inserts)
     if (boletoError) { setComprando(false); return }
     const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
@@ -211,6 +221,31 @@ export default function Evento() {
               Ya tienes {boletosUsuario} boleto{boletosUsuario > 1 ? "s" : ""} para este evento
             </div>
           )}
+        </div>
+      )}
+
+      {/* NOMBRE DE REGISTRO (check-in) */}
+      {!tieneBoleto && user && (
+        <div style={{ marginBottom: "20px", padding: "14px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>
+            Boleto{cantidad > 1 ? "s" : ""} a nombre de
+          </div>
+          {editandoNombre ? (
+            <input value={nombreRegistro} onChange={e => setNombreRegistro(e.target.value)} placeholder="Nombre completo"
+              onBlur={() => setEditandoNombre(false)} autoFocus
+              style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(124,58,237,0.4)", borderRadius: "8px", padding: "9px 11px", color: "white", fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box" }}
+            />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+              <span style={{ fontSize: "14.5px", fontWeight: 600 }}>{nombreRegistro || "Sin nombre"}</span>
+              <button onClick={() => setEditandoNombre(true)} style={{ background: "none", border: "none", color: "#a78bfa", fontSize: "12.5px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
+                Cambiar
+              </button>
+            </div>
+          )}
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "6px", lineHeight: 1.4 }}>
+            Este nombre se usará para el check-in en la entrada. Si compras para alguien más, cámbialo por el nombre de esa persona.
+          </div>
         </div>
       )}
 
