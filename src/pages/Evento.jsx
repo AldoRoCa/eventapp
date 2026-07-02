@@ -115,6 +115,7 @@ export default function Evento() {
     if (!user) { navigate("/login"); return }
     if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
     if (!nombreRegistro.trim()) { alert("Por favor ingresa el nombre a quien se registrará el boleto."); return }
+    if (nombreRegistro.trim().length > 100) { alert("El nombre no puede tener más de 100 caracteres."); return }
     setComprando(true)
     const nombreNormalizado = nombreRegistro.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     if (evento.tipo_boleto === "solicitud") {
@@ -231,7 +232,7 @@ export default function Evento() {
             Boleto{cantidad > 1 ? "s" : ""} a nombre de
           </div>
           {editandoNombre ? (
-            <input value={nombreRegistro} onChange={e => setNombreRegistro(e.target.value)} placeholder="Nombre completo"
+            <input value={nombreRegistro} onChange={e => setNombreRegistro(e.target.value)} placeholder="Nombre completo" maxLength={100}
               onBlur={() => setEditandoNombre(false)} autoFocus
               style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(124,58,237,0.4)", borderRadius: "8px", padding: "9px 11px", color: "white", fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box" }}
             />

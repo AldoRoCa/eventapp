@@ -76,6 +76,30 @@ export default function PanelAnfitrion() {
     setLoadingSolicitudes(false)
   }
 
+  // Mientras el anfitrión esté viendo la pestaña de solicitudes o de
+  // asistentes, se refrescan solas cada 20s (sin mostrar "cargando") para
+  // que nuevas solicitudes/check-ins aparezcan sin tener que salir y
+  // volver a entrar a la pestaña.
+  useEffect(() => {
+    if (tab !== "solicitudes") return
+    const eventosIds = eventos.map(e => e.id)
+    if (eventosIds.length === 0) return
+    const intervalo = setInterval(async () => {
+      const { data } = await supabase.from("boletos").select("*, eventos(titulo, fecha), profiles(nombre, email, avatar_url)").in("evento_id", eventosIds).eq("estado", "pendiente")
+      setSolicitudes(data || [])
+    }, 20000)
+    return () => clearInterval(intervalo)
+  }, [tab, eventos])
+
+  useEffect(() => {
+    if (tab !== "asistentes" || !eventoSeleccionado) return
+    const intervalo = setInterval(async () => {
+      const { data } = await supabase.from("boletos").select("*, profiles(nombre, email, avatar_url)").eq("evento_id", eventoSeleccionado.id).eq("estado", "activo")
+      setAsistentes(data || [])
+    }, 20000)
+    return () => clearInterval(intervalo)
+  }, [tab, eventoSeleccionado])
+
   const aprobarSolicitud = async (boletoId) => {
     setProcesando(boletoId)
     const { data: { session } } = await supabase.auth.getSession()
