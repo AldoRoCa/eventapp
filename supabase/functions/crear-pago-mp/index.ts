@@ -37,20 +37,20 @@ serve(async (req) => {
       })
     }
 
-    const { data: anfitrionProfile, error: anfitrionError } = await supabase
-      .from("profiles")
+    const { data: anfitrionCredenciales, error: anfitrionError } = await supabase
+      .from("mp_credenciales")
       .select("mp_access_token")
       .eq("id", evento.anfitrion_id)
       .single()
 
-    if (anfitrionError || !anfitrionProfile?.mp_access_token) {
+    if (anfitrionError || !anfitrionCredenciales?.mp_access_token) {
       return new Response(JSON.stringify({ error: "El anfitrión no ha conectado su cuenta de Mercado Pago" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       })
     }
 
-    const anfitrionMpToken = anfitrionProfile.mp_access_token
+    const anfitrionMpToken = anfitrionCredenciales.mp_access_token
 
     // Rate limiting
     const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()

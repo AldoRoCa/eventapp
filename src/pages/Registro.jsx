@@ -40,17 +40,19 @@ export default function Registro() {
       }
     } else if (data.user && !data.session) {
       // Supabase exige confirmar el correo antes de dar una sesión activa
-      // (signUp crea el usuario pero no lo deja entrar todavía). Mostramos
-      // un aviso claro en vez de intentar redirigir como si ya hubiera
-      // iniciado sesión.
+      // (signUp crea el usuario pero no lo deja entrar todavía), así que
+      // subir la foto aquí fallaría (sin sesión, las reglas de seguridad
+      // bloquean la subida). En vez de eso, la guardamos temporalmente en
+      // este navegador; App.jsx la sube en cuanto el usuario confirme su
+      // correo e inicie sesión por primera vez.
       if (avatarFile && data.user) {
         const ext = avatarFile.name.split(".").pop()
-        const nombreArchivo = `${data.user.id}-${Date.now()}.${ext}`
-        const { error: uploadError } = await supabase.storage.from("avatars").upload(nombreArchivo, avatarFile)
-        if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombreArchivo)
-          await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", data.user.id)
-        }
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result.split(",")[1])
+          reader.readAsDataURL(avatarFile)
+        })
+        localStorage.setItem(`vela_avatar_pendiente_${data.user.id}`, JSON.stringify({ base64, ext }))
       }
       setRegistrado(true)
     } else {

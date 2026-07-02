@@ -82,13 +82,13 @@ serve(async (req) => {
       .eq("id", evento_id)
       .single()
 
-    const { data: anfitrionProfile } = await supabase
-      .from("profiles")
+    const { data: anfitrionCredenciales } = await supabase
+      .from("mp_credenciales")
       .select("mp_access_token")
       .eq("id", evento?.anfitrion_id)
       .single()
 
-    if (!anfitrionProfile?.mp_access_token) {
+    if (!anfitrionCredenciales?.mp_access_token) {
       return new Response(JSON.stringify({ error: "No se pudo verificar el pago" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -98,7 +98,7 @@ serve(async (req) => {
     // Verificar el pago directo con Mercado Pago — nunca confiar en el
     // estado que llega por la URL de retorno.
     const pagoRes = await fetch(`https://api.mercadopago.com/v1/payments/${payment_id}`, {
-      headers: { "Authorization": `Bearer ${anfitrionProfile.mp_access_token}` }
+      headers: { "Authorization": `Bearer ${anfitrionCredenciales.mp_access_token}` }
     })
     const pago = await pagoRes.json()
 

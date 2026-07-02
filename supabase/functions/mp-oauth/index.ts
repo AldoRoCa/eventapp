@@ -49,12 +49,17 @@ serve(async (req) => {
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
 
+    // mp_access_token es un secreto y vive en una tabla aparte
+    // (mp_credenciales) que solo el sistema puede leer/escribir — nunca
+    // se expone junto al resto del perfil, que sí es legible por otros
+    // usuarios de la app. mp_user_id no es secreto, se queda en profiles.
+    await supabase
+      .from("mp_credenciales")
+      .upsert({ id: usuario_id, mp_access_token: tokenData.access_token })
+
     await supabase
       .from("profiles")
-      .update({
-        mp_access_token: tokenData.access_token,
-        mp_user_id: String(tokenData.user_id),
-      })
+      .update({ mp_user_id: String(tokenData.user_id) })
       .eq("id", usuario_id)
 
     return Response.redirect(`${siteUrl}/panel?mp=conectado`, 302)

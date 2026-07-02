@@ -40,7 +40,7 @@ export default function CrearEvento() {
     const verificar = async () => {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
-      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_access_token").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_user_id").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       setVerificando(false)
@@ -88,6 +88,10 @@ export default function CrearEvento() {
     const precio = form.precio === "" ? 0 : parseInt(form.precio)
     if (!Number.isInteger(precio) || precio < 0 || precio > 50000) {
       setError("El precio debe ser un número entre 0 y 50,000")
+      return
+    }
+    if (precio > 0 && !perfil?.mp_user_id) {
+      setError("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
       return
     }
     const maxBoletos = form.max_boletos_por_persona === "" ? 5 : parseInt(form.max_boletos_por_persona)
@@ -259,7 +263,7 @@ export default function CrearEvento() {
               Boletos y acceso
             </h2>
 
-            {!perfil?.mp_access_token && (
+            {!perfil?.mp_user_id && (
               <div style={{ marginBottom: "16px", padding: "11px 14px", background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.2)", borderRadius: "10px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ color: "#fbbf24" }}>⚠️ Conecta Mercado Pago en tu panel para poder cobrar por tus eventos.</span>
               </div>
@@ -274,10 +278,10 @@ export default function CrearEvento() {
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
                 <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
                 <input type="number" value={form.precio}
-                  onChange={e => perfil?.mp_access_token ? handleChange("precio", e.target.value) : null}
-                  placeholder={perfil?.mp_access_token ? "0 = Gratis" : "Activa MP para cobrar"}
+                  onChange={e => perfil?.mp_user_id ? handleChange("precio", e.target.value) : null}
+                  placeholder={perfil?.mp_user_id ? "0 = Gratis" : "Activa MP para cobrar"}
                   min="0"
-                  style={{ ...inputStyle, opacity: perfil?.mp_access_token ? 1 : 0.5, cursor: perfil?.mp_access_token ? "text" : "not-allowed" }}
+                  style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed" }}
                 />
                 {form.precio > 0 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>

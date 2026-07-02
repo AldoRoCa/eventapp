@@ -233,6 +233,11 @@ export default function PanelAnfitrion() {
       setTimeout(() => setMensaje(""), 3000)
       return
     }
+    if (precio > 0 && !perfil?.mp_user_id) {
+      setMensaje("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
+      setTimeout(() => setMensaje(""), 4000)
+      return
+    }
     const maxBoletos = formEditar.max_boletos_por_persona === "" ? 5 : parseInt(formEditar.max_boletos_por_persona)
     if (!Number.isInteger(maxBoletos) || maxBoletos < 1 || maxBoletos > 20) {
       setMensaje("El máximo de boletos por persona debe ser un número entre 1 y 20")
@@ -378,7 +383,7 @@ export default function PanelAnfitrion() {
                 style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: isMobile ? "10px 16px" : "11px 22px", fontWeight: 600, fontSize: isMobile ? "13px" : "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 18px rgba(124,58,237,0.4)" }}
               >+ Crear evento</motion.button>
 
-              {perfil?.mp_access_token ? (
+              {perfil?.mp_user_id ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end", gap: "4px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "5px 11px" }}>
                     <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
@@ -656,9 +661,9 @@ export default function PanelAnfitrion() {
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Precio (MXN)</label>
                     <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
-                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!perfil?.mp_access_token}
-                      style={{ ...inputStyle, opacity: perfil?.mp_access_token ? 1 : 0.5, cursor: perfil?.mp_access_token ? "text" : "not-allowed" }} />
-                    {!perfil?.mp_access_token && (
+                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!perfil?.mp_user_id}
+                      style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed" }} />
+                    {!perfil?.mp_user_id && (
                       <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>Conecta Mercado Pago para poder cobrar por tus boletos.</div>
                     )}
                     {formEditar.precio > 0 && (

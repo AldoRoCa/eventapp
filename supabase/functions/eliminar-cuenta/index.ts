@@ -81,6 +81,8 @@ serve(async (req) => {
     // conservan como historial) y de boletos que ese usuario compró en
     // eventos de otros anfitriones. anfitrion_id/usuario_id en esas
     // tablas seguirían apuntando a un id válido, solo que ya "vacío".
+    await supabase.from("mp_credenciales").delete().eq("id", user.id)
+
     await supabase
       .from("profiles")
       .update({
@@ -92,7 +94,6 @@ serve(async (req) => {
         instagram: null,
         fecha_nacimiento: null,
         ine_url: null,
-        mp_access_token: null,
         mp_user_id: null,
         estado_anfitrion: "eliminado",
       })
