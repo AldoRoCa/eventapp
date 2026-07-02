@@ -10,25 +10,17 @@ export default function PagoExitoso() {
   useEffect(() => {
     const activarBoleto = async () => {
       const evento_id = searchParams.get("evento_id")
-      const usuario_id = searchParams.get("usuario_id")
-      const status = searchParams.get("collection_status")
       const payment_id = searchParams.get("collection_id")
 
-      if (usuario_id && evento_id && status === "approved") {
-        const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
-        await supabase
-          .from("boletos")
-          .update({ estado: "activo", mp_payment_id: payment_id || null, codigo_grupo: codigo })
-          .eq("usuario_id", usuario_id)
-          .eq("evento_id", evento_id)
-          .eq("estado", "pendiente_pago")
-      } else if (status !== "approved") {
-        await supabase
-          .from("boletos")
-          .delete()
-          .eq("usuario_id", usuario_id)
-          .eq("evento_id", evento_id)
-          .eq("estado", "pendiente_pago")
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session && evento_id && payment_id) {
+        // El estado real del pago se verifica del lado del servidor contra
+        // la API de Mercado Pago — nunca se confía en el query param de la URL.
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/confirmar-pago-mp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+          body: JSON.stringify({ evento_id, payment_id })
+        })
       }
       setTimeout(() => navigate("/mis-boletos"), 3000)
     }

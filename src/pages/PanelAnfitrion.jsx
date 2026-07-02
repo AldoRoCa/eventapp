@@ -24,6 +24,11 @@ export default function PanelAnfitrion() {
   const [solicitudes, setSolicitudes] = useState([])
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(false)
   const [procesando, setProcesando] = useState(null)
+  const [checkinEvento, setCheckinEvento] = useState(null)
+  const [checkinBusqueda, setCheckinBusqueda] = useState("")
+  const [checkinResultados, setCheckinResultados] = useState([])
+  const [checkinBuscando, setCheckinBuscando] = useState(false)
+  const [checkinMarcando, setCheckinMarcando] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [asistentes, setAsistentes] = useState([])
   const [loadingAsistentes, setLoadingAsistentes] = useState(false)
@@ -93,6 +98,54 @@ export default function PanelAnfitrion() {
     })
     setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
     setProcesando(null)
+  }
+
+  const buscarCheckin = async (q) => {
+    setCheckinBusqueda(q)
+    if (!q.trim() || !checkinEvento) { setCheckinResultados([]); return }
+    setCheckinBuscando(true)
+    const termino = q.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    const esCodigo = /^[A-Z2-9]{3,6}$/.test(q.trim().toUpperCase())
+    let query = supabase.from("boletos")
+      .select("id, nombre_registro, codigo_grupo, estado, checkin_en, created_at")
+      .eq("evento_id", checkinEvento.id)
+      .eq("estado", "activo")
+    if (esCodigo) {
+      query = query.eq("codigo_grupo", q.trim().toUpperCase())
+    } else {
+      query = query.ilike("nombre_registro_normalizado", `%${termino}%`)
+    }
+    const { data } = await query.order("nombre_registro_normalizado")
+    const grupos = {}
+    for (const b of data || []) {
+      const key = b.codigo_grupo || b.id
+      if (!grupos[key]) grupos[key] = { codigo: b.codigo_grupo, nombre: b.nombre_registro, boletos: [] }
+      grupos[key].boletos.push(b)
+    }
+    setCheckinResultados(Object.values(grupos))
+    setCheckinBuscando(false)
+  }
+
+  const marcarCheckin = async (boletoId) => {
+    setCheckinMarcando(boletoId)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/hacer-checkin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ boleto_id: boletoId })
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setCheckinResultados(prev => prev.map(g => ({
+        ...g, boletos: g.boletos.map(b => b.id === boletoId ? { ...b, checkin_en: data.checkin_en } : b)
+      })))
+      setMensaje("✓ Check-in registrado")
+      setTimeout(() => setMensaje(""), 2000)
+    } else {
+      setMensaje(data.error || "No se pudo registrar el check-in")
+      setTimeout(() => setMensaje(""), 3000)
+    }
+    setCheckinMarcando(null)
   }
 
   const cancelarEvento = async (eventoId) => {
@@ -405,6 +458,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => navigate(`/evento/${ev.id}`)} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "9px", color: "#a78bfa", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ir a evento</motion.button>
+                            <motion.button onClick={() => { setCheckinEvento(ev); setCheckinBusqueda(""); setCheckinResultados([]) }} whileTap={{ scale: 0.95 }}
+                              style={{ flex: 1, background: "rgba(16,185,129,0.08)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "9px", color: "#34d399", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Check-in</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Asistentes</motion.button>
@@ -437,6 +493,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => navigate(`/evento/${ev.id}`)} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "9px", color: "#a78bfa", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ir a evento</motion.button>
+                            <motion.button onClick={() => { setCheckinEvento(ev); setCheckinBusqueda(""); setCheckinResultados([]) }} whileTap={{ scale: 0.97 }}
+                              style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "9px", color: "#34d399", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Check-in</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ver asistentes</motion.button>
@@ -640,6 +699,88 @@ export default function PanelAnfitrion() {
             <div style={{ textAlign: "center", marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "15px" }}>{perfil.nombre}</div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* MODAL: panel de check-in */}
+      {checkinEvento && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", zIndex: 500, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "20px", overflowY: "auto" }}
+          onClick={() => setCheckinEvento(null)}
+        >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#0e0e11", border: "1.5px solid rgba(16,185,129,0.2)", borderRadius: "20px", padding: "28px 24px", width: "100%", maxWidth: "560px", marginTop: "60px" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "18px" }}>Check-in</div>
+                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{checkinEvento.titulo}</div>
+              </div>
+              <button onClick={() => setCheckinEvento(null)}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
+              >×</button>
+            </div>
+
+            <div style={{ position: "relative", marginBottom: "20px" }}>
+              <input value={checkinBusqueda} onChange={e => buscarCheckin(e.target.value)}
+                placeholder="Buscar por nombre o código (ej. AB3X7K)"
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "12px", padding: "12px 16px", color: "white", fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box" }}
+              />
+              {checkinBuscando && <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>Buscando...</div>}
+            </div>
+
+            {checkinResultados.length === 0 && checkinBusqueda.trim().length > 0 && !checkinBuscando && (
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>No se encontraron boletos con ese nombre o código</div>
+            )}
+            {checkinResultados.length === 0 && checkinBusqueda.trim().length === 0 && (
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.25)", fontSize: "13px" }}>Escribe un nombre o el código de 6 caracteres para buscar</div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {checkinResultados.map((grupo, gi) => (
+                <div key={gi} style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: "15px" }}>{grupo.nombre || "Sin nombre"}</div>
+                      {grupo.codigo && <div style={{ fontSize: "12px", color: "#34d399", fontFamily: "monospace", letterSpacing: "2px", marginTop: "2px" }}>{grupo.codigo}</div>}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+                      {grupo.boletos.filter(b => b.checkin_en).length}/{grupo.boletos.length} boletos
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {grupo.boletos.map((b, bi) => (
+                      <div key={b.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: b.checkin_en ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.02)", border: `1px solid ${b.checkin_en ? "rgba(16,185,129,0.25)" : "rgba(255,255,255,0.06)"}`, borderRadius: "10px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <div style={{ width: "28px", height: "28px", borderRadius: "999px", background: b.checkin_en ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: b.checkin_en ? "#34d399" : "rgba(255,255,255,0.4)" }}>
+                            {bi + 1}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: "13px", color: b.checkin_en ? "#34d399" : "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                              {b.checkin_en ? "✓ Check-in hecho" : "Pendiente de entrada"}
+                            </div>
+                            {b.checkin_en && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "1px" }}>{new Date(b.checkin_en).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</div>}
+                          </div>
+                        </div>
+                        {!b.checkin_en && (
+                          <motion.button whileTap={{ scale: 0.95 }} onClick={() => marcarCheckin(b.id)} disabled={checkinMarcando === b.id}
+                            style={{ background: "#059669", border: "none", borderRadius: "8px", color: "white", padding: "7px 14px", fontSize: "12.5px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: checkinMarcando === b.id ? 0.6 : 1 }}
+                          >{checkinMarcando === b.id ? "..." : "Marcar entrada"}</motion.button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: "20px", padding: "12px 14px", background: "rgba(250,204,21,0.06)", border: "1px solid rgba(250,204,21,0.15)", borderRadius: "10px" }}>
+              <div style={{ fontSize: "12px", color: "#fbbf24", fontWeight: 600, marginBottom: "3px" }}>💡 Recomendación</div>
+              <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                Se recomienda solicitar una identificación oficial que coincida con el nombre del registro, especialmente para eventos de edad restringida.
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
 
       {/* ZOOM FOTO ASISTENTE */}

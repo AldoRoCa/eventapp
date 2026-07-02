@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { QRCodeSVG } from "qrcode.react"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
@@ -45,6 +46,7 @@ export default function MisBoletos() {
   const [comentarioResena, setComentarioResena] = useState("")
   const [enviandoResena, setEnviandoResena] = useState(false)
   const [resenasGuardadas, setResenasGuardadas] = useState({}) // { [boleto_id]: { estrellas_evento, estrellas_anfitrion, comentario } }
+  const [qrExpandido, setQrExpandido] = useState(null) // boleto_id cuyo QR está visible
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function MisBoletos() {
       setUser(user)
       const { data } = await supabase
         .from("boletos")
-        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre)), mp_payment_id")
+        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre)), mp_payment_id, codigo_grupo, nombre_registro")
         .eq("usuario_id", user.id)
         .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
@@ -302,18 +304,42 @@ export default function MisBoletos() {
                             {boleto.mp_payment_id && (
                               <a href="https://www.mercadopago.com.mx/activities" target="_blank" rel="noopener noreferrer" style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.35)", textDecoration: "none", fontWeight: 500 }}>Comprobante →</a>
                             )}
-                            {usado && boleto.estado === "activo" && !reportesEnviados[boleto.id] && (
-                              <button onClick={() => setReportando(boleto.id)} style={{ fontSize: "12.5px", color: "#f87171", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>Reportar evento</button>
-                            )}
-                            {reportesEnviados[boleto.id] && (
-                              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
-                            )}
-                            {usado && boleto.estado === "activo" && (
-                              <button onClick={() => abrirResena(boleto.id)} style={{ fontSize: "12.5px", color: "#a78bfa", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>
-                                {resenasGuardadas[boleto.id] ? "Editar reseña" : "Dejar reseña"}
-                              </button>
+                          </div>
+                        </div>
+
+                        {/* CÓDIGO + QR de check-in */}
+                        {boleto.codigo_grupo && boleto.estado === "activo" && (
+                          <div style={{ marginTop: "14px", padding: "14px", background: "rgba(124,58,237,0.07)", border: "1.5px solid rgba(124,58,237,0.18)", borderRadius: "12px" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+                              <div>
+                                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "4px" }}>Código de entrada</div>
+                                <div style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "4px", fontFamily: "monospace", color: "#c4b5fd" }}>{boleto.codigo_grupo}</div>
+                                {boleto.nombre_registro && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "3px" }}>A nombre de: {boleto.nombre_registro}</div>}
+                              </div>
+                              <button onClick={() => setQrExpandido(qrExpandido === boleto.id ? null : boleto.id)}
+                                style={{ background: "rgba(124,58,237,0.15)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "10px", padding: "8px 12px", color: "#a78bfa", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                              >{qrExpandido === boleto.id ? "Ocultar QR" : "Ver QR"}</button>
+                            </div>
+                            {qrExpandido === boleto.id && (
+                              <div style={{ display: "flex", justifyContent: "center", padding: "16px", background: "white", borderRadius: "10px" }}>
+                                <QRCodeSVG value={boleto.codigo_grupo} size={180} />
+                              </div>
                             )}
                           </div>
+                        )}
+
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px", marginTop: "10px" }}>
+                          {usado && boleto.estado === "activo" && !reportesEnviados[boleto.id] && (
+                            <button onClick={() => setReportando(boleto.id)} style={{ fontSize: "12.5px", color: "#f87171", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>Reportar evento</button>
+                          )}
+                          {reportesEnviados[boleto.id] && (
+                            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>Reporte enviado</span>
+                          )}
+                          {usado && boleto.estado === "activo" && (
+                            <button onClick={() => abrirResena(boleto.id)} style={{ fontSize: "12.5px", color: "#a78bfa", background: "none", border: "none", cursor: "pointer", fontWeight: 600, padding: 0, fontFamily: "inherit" }}>
+                              {resenasGuardadas[boleto.id] ? "Editar reseña" : "Dejar reseña"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -375,6 +401,25 @@ export default function MisBoletos() {
                             </button>
                           )}
                         </div>
+
+                        {/* CÓDIGO + QR de check-in — versión desktop */}
+                        {boleto.codigo_grupo && boleto.estado === "activo" && (
+                          <div style={{ marginTop: "16px", padding: "16px", background: "rgba(124,58,237,0.07)", border: "1.5px solid rgba(124,58,237,0.18)", borderRadius: "12px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                            <div>
+                              <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: "6px" }}>Código de entrada</div>
+                              <div style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "5px", fontFamily: "monospace", color: "#c4b5fd" }}>{boleto.codigo_grupo}</div>
+                              {boleto.nombre_registro && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>A nombre de: {boleto.nombre_registro}</div>}
+                              <button onClick={() => setQrExpandido(qrExpandido === boleto.id ? null : boleto.id)}
+                                style={{ marginTop: "10px", background: "rgba(124,58,237,0.15)", border: "1.5px solid rgba(124,58,237,0.3)", borderRadius: "8px", padding: "6px 14px", color: "#a78bfa", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                              >{qrExpandido === boleto.id ? "Ocultar QR" : "Ver QR"}</button>
+                            </div>
+                            {qrExpandido === boleto.id && (
+                              <div style={{ background: "white", padding: "12px", borderRadius: "10px", flexShrink: 0 }}>
+                                <QRCodeSVG value={boleto.codigo_grupo} size={140} />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
