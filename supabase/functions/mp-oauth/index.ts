@@ -14,15 +14,55 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const code = url.searchParams.get("code")
-    const usuario_id = url.searchParams.get("state")
+    const state = url.searchParams.get("state")
 
-    if (!code || !usuario_id) {
+    if (!code || !state) {
       return new Response("Faltan parámetros", { status: 400 })
     }
 
     const clientId = Deno.env.get("MP_CLIENT_ID")!
     const clientSecret = Deno.env.get("MP_CLIENT_SECRET")!
     const siteUrl = Deno.env.get("SITE_URL")!
+
+    const supabaseState = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SERVICE_ROLE_KEY")!
+    )
+
+    // El "state" es un código de un solo uso generado por la app (ver
+    // PanelAnfitrion.jsx), no el id del usuario directo — así nadie puede
+    // falsificarlo para ligar su propio token al perfil de otro anfitrión.
+    const { data: estadoGuardado } = await supabaseState
+      .from("mp_oauth_state")
+      .delete()
+      .eq("state", state)
+      .select("usuario_id")
+      .single()
+
+    if (!estadoGuardado?.usuario_id) {
+      return new Response("Solicitud de conexión inválida o expirada", { status: 400 })
+    }
+
+    const usuario_id = estadoGuardado.usuario_id
+
+    // Rate limiting
+    const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count } = await supabaseState
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("identifier", usuario_id)
+      .eq("endpoint", "mp-oauth")
+      .gte("window_start", windowStart)
+
+    if ((count || 0) >= 10) {
+      return new Response("Demasiados intentos. Espera un momento.", { status: 429 })
+    }
+
+    await supabaseState.from("rate_limits").insert({
+      identifier: usuario_id,
+      endpoint: "mp-oauth",
+      window_start: new Date().toISOString(),
+    })
 
     // Intercambiar código por access token
     const tokenRes = await fetch("https://api.mercadopago.com/oauth/token", {
@@ -43,21 +83,15 @@ serve(async (req) => {
       return Response.redirect(`${siteUrl}/panel?mp=error`, 302)
     }
 
-    // Guardar token en el perfil del anfitrión
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SERVICE_ROLE_KEY")!
-    )
-
     // mp_access_token es un secreto y vive en una tabla aparte
     // (mp_credenciales) que solo el sistema puede leer/escribir — nunca
     // se expone junto al resto del perfil, que sí es legible por otros
     // usuarios de la app. mp_user_id no es secreto, se queda en profiles.
-    await supabase
+    await supabaseState
       .from("mp_credenciales")
       .upsert({ id: usuario_id, mp_access_token: tokenData.access_token })
 
-    await supabase
+    await supabaseState
       .from("profiles")
       .update({ mp_user_id: String(tokenData.user_id) })
       .eq("id", usuario_id)

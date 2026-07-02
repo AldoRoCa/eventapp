@@ -29,7 +29,29 @@ serve(async (req) => {
         status: 401,
       })
     }
- 
+
+    // Rate limiting
+    const windowStartLimit = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("identifier", user.id)
+      .eq("endpoint", "eliminar-cuenta")
+      .gte("window_start", windowStartLimit)
+
+    if ((count || 0) >= 5) {
+      return new Response(JSON.stringify({ error: "Demasiados intentos. Intenta más tarde." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      })
+    }
+
+    await supabase.from("rate_limits").insert({
+      identifier: user.id,
+      endpoint: "eliminar-cuenta",
+      window_start: new Date().toISOString(),
+    })
+
     const ahora = new Date().toISOString()
  
     // Eventos futuros del anfitrión (los pasados se conservan como

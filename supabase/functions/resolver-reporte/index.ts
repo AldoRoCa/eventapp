@@ -51,7 +51,29 @@ serve(async (req) => {
         status: 403,
       })
     }
- 
+
+    // Rate limiting
+    const windowStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from("rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("identifier", user.id)
+      .eq("endpoint", "resolver-reporte")
+      .gte("window_start", windowStart)
+
+    if ((count || 0) >= 50) {
+      return new Response(JSON.stringify({ error: "Demasiados intentos. Intenta más tarde." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      })
+    }
+
+    await supabase.from("rate_limits").insert({
+      identifier: user.id,
+      endpoint: "resolver-reporte",
+      window_start: new Date().toISOString(),
+    })
+
     const { data: reporte, error: reporteError } = await supabase
       .from("reportes_eventos")
       .select("*")

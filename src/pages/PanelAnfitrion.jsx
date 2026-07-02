@@ -290,10 +290,19 @@ export default function PanelAnfitrion() {
     setTimeout(() => setMensaje(""), 3000)
   }
 
-  const conectarMP = () => {
+  const conectarMP = async () => {
+    // El "state" de OAuth no puede ser el user.id directo: es un dato
+    // público (se ve en cualquier página de evento), así que cualquiera
+    // podría falsificarlo para que su propio token de Mercado Pago quede
+    // ligado al perfil de otro anfitrión. En vez de eso, generamos un
+    // código de un solo uso y lo guardamos ligado a este usuario; mp-oauth
+    // lo consulta para saber a quién pertenece de verdad.
+    const state = crypto.randomUUID()
+    const { error } = await supabase.from("mp_oauth_state").insert({ state, usuario_id: user.id })
+    if (error) { setMensaje("No se pudo iniciar la conexión con Mercado Pago. Intenta de nuevo."); setTimeout(() => setMensaje(""), 3000); return }
     const clientId = import.meta.env.VITE_MP_CLIENT_ID
     const redirectUri = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mp-oauth`
-    const url = `https://auth.mercadopago.com.mx/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${user.id}&redirect_uri=${encodeURIComponent(redirectUri)}`
+    const url = `https://auth.mercadopago.com.mx/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`
     window.location.href = url
   }
 
