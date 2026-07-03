@@ -13,6 +13,7 @@ export default function Registro() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [error, setError] = useState("")
   const [registrado, setRegistrado] = useState(false)
+  const [mayorEdad, setMayorEdad] = useState(false)
   const navigate = useNavigate()
 
   const handleAvatar = (e) => {
@@ -31,6 +32,7 @@ export default function Registro() {
     if (nombreReal.trim().length > 100) { setError("El nombre completo no puede tener más de 100 caracteres"); setLoading(false); return }
     if (nombre.trim().length > 50) { setError("El nombre de usuario no puede tener más de 50 caracteres"); setLoading(false); return }
     if (password.length < 6) { setError("La contraseña debe tener al menos 6 caracteres"); setLoading(false); return }
+    if (!mayorEdad) { setError("Debes confirmar que eres mayor de edad para crear una cuenta"); setLoading(false); return }
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nombre, nombre_real: nombreReal.trim() } } })
     if (error) {
       if (error.message.includes("already registered") || error.message.includes("User already registered")) {
@@ -171,9 +173,18 @@ export default function Registro() {
           </label>
         </div>
 
-        <motion.button onClick={handleRegistro} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={loading}
+        <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "20px", cursor: "pointer" }}>
+          <input type="checkbox" checked={mayorEdad} onChange={e => setMayorEdad(e.target.checked)}
+            style={{ marginTop: "3px", flexShrink: 0, cursor: "pointer" }}
+          />
+          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+            Confirmo que soy mayor de edad (18 años o más).
+          </span>
+        </label>
+
+        <motion.button onClick={handleRegistro} whileHover={{ opacity: mayorEdad ? 0.9 : 1 }} whileTap={{ scale: mayorEdad ? 0.97 : 1 }} disabled={loading || !mayorEdad}
           className="btn-3d"
-          style={{ width: "100%", border: "none", borderRadius: "12px", color: "white", padding: "13px", fontWeight: 700, fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? 0.7 : 1 }}
+          style={{ width: "100%", border: "none", borderRadius: "12px", color: "white", padding: "13px", fontWeight: 700, fontSize: "15px", cursor: (loading || !mayorEdad) ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: (loading || !mayorEdad) ? 0.7 : 1 }}
         >{loading ? "Creando cuenta..." : "Crear cuenta"}</motion.button>
 
         <p style={{ textAlign: "center", marginTop: "24px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>

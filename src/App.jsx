@@ -495,7 +495,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
             location: ev.ubicacion,
             attendees: ev.boletos?.filter(b => b.estado === "activo").length || 0,
             capacity: ev.capacidad,
-            price: ev.precio,
+            price: ev.precio === 0 ? 0 : Math.round(ev.precio * 1.10),
             type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
             img: ev.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80"
           })) : []).map((ev, i) => (

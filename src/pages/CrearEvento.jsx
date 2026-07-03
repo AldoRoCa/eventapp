@@ -298,9 +298,17 @@ export default function CrearEvento() {
                   onChange={e => perfil?.mp_user_id ? handleChange("precio", e.target.value) : null}
                   placeholder={perfil?.mp_user_id ? "0 = Gratis" : "Activa MP para cobrar"}
                   min="0"
-                  style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed" }}
+                  style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed", ...(form.precio > 0 && form.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }}
                 />
-                {form.precio > 0 && (
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", marginTop: "6px", lineHeight: 1.5 }}>
+                  Mínimo $5 MXN para eventos de pago (Mercado Pago no acepta tarjetas por debajo de ese monto). Usa $0 para un evento gratis.
+                </div>
+                {form.precio > 0 && form.precio < 5 && (
+                  <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "13px", color: "#f87171" }}>
+                    Un precio de ${form.precio} no es válido. Elige $0 (gratis) o un precio de $5 MXN o más.
+                  </div>
+                )}
+                {form.precio >= 5 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>
                     <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
                     <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(form.precio) * 1.10)} MXN</span>
