@@ -26,9 +26,21 @@ export default function UnirseCooperador() {
 
   useEffect(() => {
     const guardado = localStorage.getItem(`vela_cooperador_${codigo}`)
-    if (guardado) {
-      try { setSesion(JSON.parse(guardado)) } catch { /* ignora sesión corrupta */ }
-    }
+    if (!guardado) return
+    let sesionGuardada
+    try { sesionGuardada = JSON.parse(guardado) } catch { return }
+    // El anfitrión pudo haber quitado a este cooperador desde la última
+    // vez que abrió el link — se confirma con el servidor antes de dar
+    // por buena la sesión guardada, para no mostrar el check-in como si
+    // siguiera teniendo acceso cuando ya se lo quitaron.
+    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/buscar-checkin-cooperador`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
+      body: JSON.stringify({ cooperador_id: sesionGuardada.cooperador_id })
+    }).then(async (res) => {
+      if (res.ok) setSesion(sesionGuardada)
+      else localStorage.removeItem(`vela_cooperador_${codigo}`)
+    }).catch(() => {})
   }, [codigo])
 
   const unirse = async () => {

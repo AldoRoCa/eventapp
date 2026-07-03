@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const { cooperador_id, query } = await req.json()
 
-    if (!cooperador_id || !query || typeof query !== "string") {
+    if (!cooperador_id) {
       return new Response(JSON.stringify({ error: "Faltan datos" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -63,20 +63,27 @@ serve(async (req) => {
       window_start: new Date().toISOString(),
     })
 
-    const termino = query.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
-    const esCodigo = /^[A-Z2-9]{3,6}$/.test(query.trim().toUpperCase())
+    // Si no viene query, esto es solo un "ping" para confirmar que el
+    // cooperador_id sigue siendo válido (usado al abrir la pantalla, para
+    // saber si el anfitrión ya lo quitó de la lista) — no busca nada.
+    let data: unknown[] = []
+    if (typeof query === "string" && query.trim().length > 0) {
+      const termino = query.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+      const esCodigo = /^[A-Z2-9]{3,6}$/.test(query.trim().toUpperCase())
 
-    let filtro = supabase
-      .from("boletos")
-      .select("id, nombre_registro, codigo_grupo, estado, checkin_en, created_at")
-      .eq("evento_id", cooperador.evento_id)
-      .eq("estado", "activo")
+      let filtro = supabase
+        .from("boletos")
+        .select("id, nombre_registro, codigo_grupo, estado, checkin_en, created_at")
+        .eq("evento_id", cooperador.evento_id)
+        .eq("estado", "activo")
 
-    filtro = esCodigo
-      ? filtro.eq("codigo_grupo", query.trim().toUpperCase())
-      : filtro.ilike("nombre_registro_normalizado", `%${termino}%`)
+      filtro = esCodigo
+        ? filtro.eq("codigo_grupo", query.trim().toUpperCase())
+        : filtro.ilike("nombre_registro_normalizado", `%${termino}%`)
 
-    const { data } = await filtro.order("nombre_registro_normalizado")
+      const resultado = await filtro.order("nombre_registro_normalizado")
+      data = resultado.data || []
+    }
 
     const grupos: Record<string, { codigo: string | null; nombre: string; boletos: unknown[] }> = {}
     for (const b of data || []) {
