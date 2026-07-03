@@ -12,6 +12,7 @@ export default function Admin() {
   const [tab, setTab] = useState("solicitudes")
   const [anfitriones, setAnfitriones] = useState([])
   const [reportes, setReportes] = useState([])
+  const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
   useEffect(() => {
     const verificar = async () => {
@@ -35,6 +36,16 @@ export default function Admin() {
       .eq("estado_anfitrion", "pendiente")
       .order("created_at", { ascending: true })
     setSolicitudes(data || [])
+
+    // ine-docs es un bucket privado — se necesita una URL firmada temporal
+    // por cada identificación para poder mostrarla en este panel.
+    const urls = {}
+    for (const sol of data || []) {
+      if (!sol.ine_url) continue
+      const { data: firmada } = await supabase.storage.from("ine-docs").createSignedUrl(sol.ine_url, 300)
+      if (firmada?.signedUrl) urls[sol.id] = firmada.signedUrl
+    }
+    setIneUrls(urls)
   }
 
   const cargarAnfitriones = async () => {
@@ -221,10 +232,10 @@ export default function Admin() {
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Bio</div>
                         <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{sol.bio || "—"}</div>
                       </div>
-                      {sol.ine_url && (
+                      {ineUrls[sol.id] && (
                         <div style={{ gridColumn: "1/-1" }}>
                           <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Identificación oficial</div>
-                          <img src={sol.ine_url} alt="INE" style={{ maxWidth: "320px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)" }} />
+                          <img src={ineUrls[sol.id]} alt="INE" style={{ maxWidth: "320px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)" }} />
                         </div>
                       )}
                     </div>

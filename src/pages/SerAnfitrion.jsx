@@ -69,10 +69,12 @@ export default function SerAnfitrion() {
     const nombreArchivo = `${user.id}-${Date.now()}.${extension}`
     const { error: uploadError } = await supabase.storage.from("ine-docs").upload(nombreArchivo, ineFile)
     if (uploadError) { setError("Error al subir la imagen. Intenta de nuevo."); setEnviando(false); return }
-    const { data: { publicUrl } } = supabase.storage.from("ine-docs").getPublicUrl(nombreArchivo)
+    // El bucket ine-docs es privado (identificaciones oficiales), así que
+    // aquí se guarda solo el nombre del archivo, no una URL pública — el
+    // panel de admin genera una URL firmada temporal para poder verla.
     const { error: updateError } = await supabase.from("profiles").update({
       nombre: form.nombre, telefono: form.telefono, fecha_nacimiento: form.fecha_nacimiento,
-      bio: form.bio, instagram: form.instagram, ine_url: publicUrl,
+      bio: form.bio, instagram: form.instagram, ine_url: nombreArchivo,
       tipo: "anfitrion", estado_anfitrion: "pendiente",
     }).eq("id", user.id)
     if (updateError) { setError("Error al guardar tu información. Intenta de nuevo.") } else { setExito(true) }
