@@ -12,6 +12,7 @@ import MisBoletos from "./pages/MisBoletos"
 import Explorar from "./pages/Explorar"
 import SerAnfitrion from "./pages/SerAnfitrion"
 import PanelAnfitrion from "./pages/PanelAnfitrion"
+import UnirseCooperador from "./pages/UnirseCooperador"
 import Perfil from "./pages/Perfil"
 import Admin from "./pages/Admin"
 import PagoExitoso from "./pages/PagoExitoso"
@@ -666,6 +667,7 @@ export default function App() {
         <Route path="/explorar" element={<Explorar />} />
         <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
         <Route path="/panel" element={<PanelAnfitrion />} />
+        <Route path="/unirse-cooperador/:codigo" element={<UnirseCooperador />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/pago-exitoso" element={<PagoExitoso />} />

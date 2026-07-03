@@ -11,22 +11,45 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders })
   }
   try {
-    const { boleto_id } = await req.json()
+    const { boleto_id, cooperador_id } = await req.json()
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
 
-    // Identificar al usuario autenticado a partir de su token
-    const authHeader = req.headers.get("Authorization") ?? ""
-    const jwt = authHeader.replace("Bearer ", "")
-    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+    // Dos formas válidas de identificarse: el anfitrión con su sesión
+    // normal, o un cooperador sin cuenta que mandó su cooperador_id (solo
+    // válido mientras el anfitrión no lo haya quitado de la lista).
+    let identificadorRateLimit: string
+    let eventoIdAutorizado: string | null = null
 
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      })
+    if (cooperador_id) {
+      const { data: cooperador } = await supabase
+        .from("cooperadores_evento")
+        .select("evento_id")
+        .eq("id", cooperador_id)
+        .single()
+
+      if (!cooperador) {
+        return new Response(JSON.stringify({ error: "Ya no tienes acceso al check-in de este evento" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        })
+      }
+      identificadorRateLimit = cooperador_id
+      eventoIdAutorizado = cooperador.evento_id
+    } else {
+      const authHeader = req.headers.get("Authorization") ?? ""
+      const jwt = authHeader.replace("Bearer ", "")
+      const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "No autorizado" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+        })
+      }
+      identificadorRateLimit = user.id
     }
 
     // Rate limiting
@@ -34,7 +57,7 @@ serve(async (req) => {
     const { count } = await supabase
       .from("rate_limits")
       .select("*", { count: "exact", head: true })
-      .eq("identifier", user.id)
+      .eq("identifier", identificadorRateLimit)
       .eq("endpoint", "hacer-checkin")
       .gte("window_start", windowStart)
 
@@ -46,14 +69,14 @@ serve(async (req) => {
     }
 
     await supabase.from("rate_limits").insert({
-      identifier: user.id,
+      identifier: identificadorRateLimit,
       endpoint: "hacer-checkin",
       window_start: new Date().toISOString(),
     })
 
     const { data: boleto } = await supabase
       .from("boletos")
-      .select("id, estado, checkin_en, eventos(anfitrion_id)")
+      .select("id, estado, checkin_en, evento_id, eventos(anfitrion_id)")
       .eq("id", boleto_id)
       .single()
 
@@ -64,8 +87,14 @@ serve(async (req) => {
       })
     }
 
-    // Verificar que el usuario autenticado es el anfitrión del evento
-    if (boleto.eventos?.anfitrion_id !== user.id) {
+    // Verificar permiso: el anfitrión del evento, o un cooperador de ESE
+    // mismo evento (un cooperador de un evento no puede tocar boletos de
+    // otro evento aunque conozca su boleto_id).
+    const tienePermiso = eventoIdAutorizado
+      ? boleto.evento_id === eventoIdAutorizado
+      : boleto.eventos?.anfitrion_id === identificadorRateLimit
+
+    if (!tienePermiso) {
       return new Response(JSON.stringify({ error: "Sin permiso para hacer check-in de este boleto" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 403,

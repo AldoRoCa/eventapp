@@ -50,6 +50,11 @@ export default function PanelAnfitrion() {
   const canvasRef = useRef(null)
   const streamRef = useRef(null)
   const rafRef = useRef(null)
+  const [cooperadoresEvento, setCooperadoresEvento] = useState(null) // evento cuyo modal de cooperadores está abierto
+  const [cooperadoresLista, setCooperadoresLista] = useState([])
+  const [invitacionActiva, setInvitacionActiva] = useState(null)
+  const [cargandoCooperadores, setCargandoCooperadores] = useState(false)
+  const [generandoLink, setGenerandoLink] = useState(false)
 
   useEffect(() => {
     const cargar = async () => {
@@ -293,6 +298,41 @@ export default function PanelAnfitrion() {
     a.click()
     URL.revokeObjectURL(url)
     setExportando(false)
+  }
+
+  const abrirCooperadores = async (evento) => {
+    setCooperadoresEvento(evento)
+    setCargandoCooperadores(true)
+    const [{ data: invitaciones }, { data: cooperadores }] = await Promise.all([
+      supabase.from("invitaciones_cooperador").select("id, codigo").eq("evento_id", evento.id).eq("activa", true).order("created_at", { ascending: false }).limit(1),
+      supabase.from("cooperadores_evento").select("id, nombre, created_at").eq("evento_id", evento.id).order("created_at", { ascending: false }),
+    ])
+    setInvitacionActiva(invitaciones?.[0] || null)
+    setCooperadoresLista(cooperadores || [])
+    setCargandoCooperadores(false)
+  }
+
+  const generarLink = async () => {
+    if (!cooperadoresEvento) return
+    setGenerandoLink(true)
+    const codigo = crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()
+    const { data, error } = await supabase.from("invitaciones_cooperador")
+      .insert({ evento_id: cooperadoresEvento.id, codigo, created_by: user.id })
+      .select("id, codigo")
+      .single()
+    if (!error && data) setInvitacionActiva(data)
+    setGenerandoLink(false)
+  }
+
+  const revocarLink = async () => {
+    if (!invitacionActiva) return
+    await supabase.from("invitaciones_cooperador").update({ activa: false }).eq("id", invitacionActiva.id)
+    setInvitacionActiva(null)
+  }
+
+  const quitarCooperador = async (cooperadorId) => {
+    await supabase.from("cooperadores_evento").delete().eq("id", cooperadorId)
+    setCooperadoresLista(prev => prev.filter(c => c.id !== cooperadorId))
   }
 
   const cancelarEvento = async (eventoId) => {
@@ -636,6 +676,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => { setCheckinEvento(ev); setCheckinBusqueda(""); setCheckinResultados([]) }} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(16,185,129,0.08)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "9px", color: "#34d399", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Check-in</motion.button>
+                            <motion.button onClick={() => abrirCooperadores(ev)} whileTap={{ scale: 0.95 }}
+                              style={{ flex: 1, background: "rgba(96,165,250,0.08)", border: "1.5px solid rgba(96,165,250,0.25)", borderRadius: "9px", color: "#60a5fa", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Cooperadores</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.95 }}
                               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 10px", fontSize: "12.5px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Asistentes</motion.button>
@@ -671,6 +714,9 @@ export default function PanelAnfitrion() {
                             <motion.button onClick={() => { setCheckinEvento(ev); setCheckinBusqueda(""); setCheckinResultados([]) }} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(16,185,129,0.08)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "9px", color: "#34d399", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Check-in</motion.button>
+                            <motion.button onClick={() => abrirCooperadores(ev)} whileTap={{ scale: 0.97 }}
+                              style={{ background: "rgba(96,165,250,0.08)", border: "1.5px solid rgba(96,165,250,0.25)", borderRadius: "9px", color: "#60a5fa", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                            >Cooperadores</motion.button>
                             <motion.button onClick={() => verAsistentes(ev)} whileTap={{ scale: 0.97 }}
                               style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "9px", color: "rgba(255,255,255,0.7)", padding: "8px 14px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
                             >Ver asistentes</motion.button>
@@ -996,6 +1042,82 @@ export default function PanelAnfitrion() {
                 Se recomienda solicitar una identificación oficial que coincida con el nombre del registro, especialmente para eventos de edad restringida.
               </div>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* MODAL: cooperadores de check-in */}
+      {cooperadoresEvento && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", zIndex: 500, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "20px", overflowY: "auto" }}
+          onClick={() => setCooperadoresEvento(null)}
+        >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            onClick={e => e.stopPropagation()}
+            style={{ background: "#0e0e11", border: "1.5px solid rgba(96,165,250,0.2)", borderRadius: "20px", padding: "28px 24px", width: "100%", maxWidth: "560px", marginTop: "60px" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "18px" }}>Cooperadores</div>
+                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{cooperadoresEvento.titulo}</div>
+              </div>
+              <button onClick={() => setCooperadoresEvento(null)}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
+              >×</button>
+            </div>
+
+            <p style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: "18px" }}>
+              Comparte este link con quien quieras que te ayude a hacer check-in en la entrada. No necesita cuenta en VELA — solo escribe su nombre al abrirlo. Puedes quitarlo de la lista en cualquier momento.
+            </p>
+
+            {cargandoCooperadores ? (
+              <div style={{ textAlign: "center", padding: "24px", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>Cargando...</div>
+            ) : (
+              <>
+                <div style={{ padding: "14px", background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.18)", borderRadius: "12px", marginBottom: "20px" }}>
+                  {invitacionActiva ? (
+                    <>
+                      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Link activo</div>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <div style={{ flex: 1, fontSize: "12.5px", color: "#60a5fa", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {window.location.origin}/unirse-cooperador/{invitacionActiva.codigo}
+                        </div>
+                        <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/unirse-cooperador/${invitacionActiva.codigo}`)}
+                          style={{ background: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "7px", color: "#60a5fa", padding: "6px 12px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                        >Copiar</button>
+                      </div>
+                      <button onClick={revocarLink}
+                        style={{ marginTop: "10px", background: "none", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "7px", color: "#f87171", padding: "5px 11px", fontSize: "11.5px", cursor: "pointer", fontFamily: "inherit" }}
+                      >Revocar link</button>
+                    </>
+                  ) : (
+                    <motion.button onClick={generarLink} whileTap={{ scale: 0.97 }} disabled={generandoLink}
+                      style={{ width: "100%", background: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "9px", color: "#60a5fa", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                    >{generandoLink ? "Generando..." : "Generar link de invitación"}</motion.button>
+                  )}
+                </div>
+
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
+                  {cooperadoresLista.length}/20 cooperadores
+                </div>
+                {cooperadoresLista.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.25)", fontSize: "13px" }}>Todavía no tienes cooperadores en este evento</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {cooperadoresLista.map(c => (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
+                        <div>
+                          <div style={{ fontSize: "13.5px", fontWeight: 500 }}>{c.nombre}</div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>desde {new Date(c.created_at).toLocaleDateString("es-MX")}</div>
+                        </div>
+                        <button onClick={() => quitarCooperador(c.id)}
+                          style={{ background: "none", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "7px", color: "#f87171", padding: "5px 11px", fontSize: "11.5px", cursor: "pointer", fontFamily: "inherit" }}
+                        >Quitar</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </motion.div>
         </div>
       )}
