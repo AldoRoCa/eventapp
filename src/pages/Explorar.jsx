@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { eventoFinalizado } from "../eventoUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -55,10 +56,7 @@ export default function Explorar() {
   }, [categoria, orden])
 
   const eventosFiltrados = eventos.filter(ev => {
-    const ahora = new Date()
-    const inicioEvento = new Date(ev.fecha)
-    const limiteVisible = new Date(inicioEvento.getTime() + 5 * 60 * 60 * 1000)
-    if (ahora > limiteVisible) return false
+    if (eventoFinalizado(ev)) return false
     const textoOk = !busqueda || ev.titulo.toLowerCase().includes(busqueda.toLowerCase()) || ev.ubicacion?.toLowerCase().includes(busqueda.toLowerCase()) || ev.categoria?.toLowerCase().includes(busqueda.toLowerCase())
     const normalizar = str => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""
     const estadoOk = !estadoFiltro || normalizar(ev.estado_evento) === normalizar(estadoFiltro)

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
+import { eventoFinalizado } from "../eventoUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -45,7 +46,7 @@ export default function Evento() {
       }
       const { data: ev } = await supabase
         .from("eventos")
-        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, created_at, profiles(nombre, avatar_url)")
+        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, created_at, profiles(nombre, avatar_url)")
         .eq("id", id).single()
       setEvento(ev)
       setPrecioMostrado(ev?.precio || 0)
@@ -166,7 +167,7 @@ export default function Evento() {
   // Mismo margen de 5 horas usado en PanelAnfitrion (editar) y MisBoletos
   // (reportar/reseñar) — consistente en toda la app hasta que el sistema
   // de check-in redefina cómo se determina el fin de un evento.
-  const finalizado = new Date(evento.fecha) < new Date(Date.now() - 5 * 60 * 60 * 1000)
+  const finalizado = eventoFinalizado(evento)
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })

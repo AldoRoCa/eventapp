@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import jsQR from "jsqr"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
+import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -41,6 +43,13 @@ export default function PanelAnfitrion() {
   const [modalAvatar, setModalAvatar] = useState(false)
   const [fotoZoom, setFotoZoom] = useState(null)
   const avatarRef = useRef(null)
+  const [escaneando, setEscaneando] = useState(false)
+  const [errorEscaneo, setErrorEscaneo] = useState("")
+  const [exportando, setExportando] = useState(false)
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
+  const streamRef = useRef(null)
+  const rafRef = useRef(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -172,6 +181,104 @@ export default function PanelAnfitrion() {
     setCheckinMarcando(null)
   }
 
+  const detenerEscaneo = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = null
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    setEscaneando(false)
+  }
+
+  const iniciarEscaneo = async () => {
+    setErrorEscaneo("")
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      streamRef.current = stream
+      setEscaneando(true)
+      // El <video> se monta recién ahora que escaneando=true, así que hay
+      // que esperar al siguiente ciclo de render antes de asignarle el
+      // stream y arrancar el loop de lectura de frames.
+      setTimeout(() => {
+        if (!videoRef.current) return
+        videoRef.current.srcObject = stream
+        videoRef.current.play()
+        const tick = () => {
+          const video = videoRef.current
+          const canvas = canvasRef.current
+          if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+            rafRef.current = requestAnimationFrame(tick)
+            return
+          }
+          canvas.width = video.videoWidth
+          canvas.height = video.videoHeight
+          const ctx = canvas.getContext("2d")
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          const imagenData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const codigo = jsQR(imagenData.data, canvas.width, canvas.height)
+          if (codigo?.data) {
+            detenerEscaneo()
+            buscarCheckin(codigo.data)
+          } else {
+            rafRef.current = requestAnimationFrame(tick)
+          }
+        }
+        rafRef.current = requestAnimationFrame(tick)
+      }, 0)
+    } catch {
+      setErrorEscaneo("No se pudo acceder a la cámara. Revisa los permisos del navegador.")
+      setEscaneando(false)
+    }
+  }
+
+  // Si se cierra el modal de check-in con la cámara todavía prendida, hay
+  // que apagarla — si no, el navegador se queda usando la cámara en segundo
+  // plano indefinidamente.
+  useEffect(() => {
+    if (!checkinEvento) detenerEscaneo()
+  }, [checkinEvento])
+  useEffect(() => () => detenerEscaneo(), [])
+
+  const exportarCSV = async () => {
+    if (!checkinEvento) return
+    setExportando(true)
+    const { data } = await supabase.from("boletos")
+      .select("nombre_registro, codigo_grupo, estado, checkin_en, created_at")
+      .eq("evento_id", checkinEvento.id)
+      .in("estado", ["activo", "pendiente"])
+      .order("nombre_registro_normalizado")
+
+    const grupos = {}
+    for (const b of data || []) {
+      const key = b.codigo_grupo || `${b.nombre_registro}-${b.created_at}`
+      if (!grupos[key]) grupos[key] = { nombre: b.nombre_registro, codigo: b.codigo_grupo || "", estado: b.estado, boletos: 0, checkins: 0, checkinEn: null, creadoEn: b.created_at }
+      grupos[key].boletos++
+      if (b.checkin_en) { grupos[key].checkins++; if (!grupos[key].checkinEn) grupos[key].checkinEn = b.checkin_en }
+    }
+
+    const filas = Object.values(grupos)
+    const escapar = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`
+    const encabezado = ["Nombre", "Código", "Estado", "Boletos", "Check-ins hechos", "Hora de check-in", "Hora de compra/registro"]
+    const lineas = [encabezado.map(escapar).join(",")]
+    for (const f of filas) {
+      lineas.push([
+        f.nombre, f.codigo, f.estado === "pendiente" ? "Pendiente de aprobación" : "Activo",
+        f.boletos, f.checkins,
+        f.checkinEn ? new Date(f.checkinEn).toLocaleString("es-MX") : "Sin check-in",
+        f.creadoEn ? new Date(f.creadoEn).toLocaleString("es-MX") : "",
+      ].map(escapar).join(","))
+    }
+
+    const csv = "﻿" + lineas.join("\r\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `checkin-${checkinEvento.titulo.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    setExportando(false)
+  }
+
   const cancelarEvento = async (eventoId) => {
     if (!window.confirm("¿Estás seguro de cancelar este evento? Se procesarán los reembolsos automáticamente.")) return
     setCancelando(eventoId)
@@ -204,6 +311,8 @@ export default function PanelAnfitrion() {
       capacidad: evento.capacidad,
       precio: evento.precio,
       max_boletos_por_persona: evento.max_boletos_por_persona || 5,
+      duracion_horas: evento.duracion_horas || 5,
+      tiempo_registro_horas: evento.tiempo_registro_horas || "",
       // Extraídas ambas de la MISMA fecha ya convertida a hora local —
       // antes "fecha" se tomaba directo del string UTC sin convertir,
       // mientras "hora" sí se convertía, lo cual desalineaba la fecha un
@@ -218,8 +327,8 @@ export default function PanelAnfitrion() {
     const ubicacion = formEditar.ubicacion.trim()
 
     const eventoOriginal = eventos.find(e => e.id === editando)
-    if (eventoOriginal && new Date(eventoOriginal.fecha) < new Date(Date.now() - 5 * 60 * 60 * 1000)) {
-      setMensaje("Este evento ya finalizó (pasaron más de 5 horas desde su inicio) y no se puede editar.")
+    if (eventoOriginal && eventoFinalizado(eventoOriginal)) {
+      setMensaje("Este evento ya finalizó (pasó su duración) y no se puede editar.")
       setTimeout(() => setMensaje(""), 4000)
       setEditando(null)
       return
@@ -268,6 +377,18 @@ export default function PanelAnfitrion() {
       setTimeout(() => setMensaje(""), 3000)
       return
     }
+    const duracionHoras = parseFloat(formEditar.duracion_horas)
+    if (!Number.isFinite(duracionHoras) || duracionHoras <= 0 || duracionHoras > 24) {
+      setMensaje("La duración del evento debe ser un número entre 0 y 24 horas")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
+    const tiempoRegistroHoras = formEditar.tiempo_registro_horas === "" ? null : parseFloat(formEditar.tiempo_registro_horas)
+    if (tiempoRegistroHoras !== null && (!Number.isFinite(tiempoRegistroHoras) || tiempoRegistroHoras <= 0 || tiempoRegistroHoras > 24)) {
+      setMensaje("El tiempo de registro debe ser un número entre 0 y 24 horas")
+      setTimeout(() => setMensaje(""), 3000)
+      return
+    }
 
     setGuardando(true)
     const fechaCompleta = new Date(`${formEditar.fecha}T${formEditar.hora}:00`).toISOString()
@@ -275,11 +396,12 @@ export default function PanelAnfitrion() {
       titulo, descripcion: (formEditar.descripcion || "").trim(), ubicacion,
       estado_evento: formEditar.estado_evento || null, capacidad,
       precio, max_boletos_por_persona: maxBoletos,
+      duracion_horas: duracionHoras, tiempo_registro_horas: tiempoRegistroHoras,
       fecha: fechaCompleta,
     }).eq("id", editando).select()
 
     if (!error && data && data.length > 0) {
-      setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, titulo, ubicacion, capacidad, precio, max_boletos_por_persona: maxBoletos, fecha: fechaCompleta } : e))
+      setEventos(prev => prev.map(e => e.id === editando ? { ...e, ...formEditar, titulo, ubicacion, capacidad, precio, max_boletos_por_persona: maxBoletos, duracion_horas: duracionHoras, tiempo_registro_horas: tiempoRegistroHoras, fecha: fechaCompleta } : e))
       setEditando(null)
       setMensaje("Evento actualizado correctamente.")
       setTimeout(() => setMensaje(""), 3000)
@@ -473,8 +595,7 @@ export default function PanelAnfitrion() {
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {eventos.map(ev => {
                   const fecha = new Date(ev.fecha)
-                  const pasado = fecha < new Date()
-                  const finalizado = fecha < new Date(Date.now() - 5 * 60 * 60 * 1000)
+                  const finalizado = eventoFinalizado(ev)
                   return (
                     <motion.div key={ev.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px" }}
@@ -488,8 +609,8 @@ export default function PanelAnfitrion() {
                                 {fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {ev.ubicacion}
                               </div>
                             </div>
-                            <span style={{ background: pasado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${pasado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 600, color: pasado ? "rgba(255,255,255,0.4)" : "#a78bfa", flexShrink: 0 }}>
-                              {pasado ? "Finalizado" : "Activo"}
+                            <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : "#a78bfa", flexShrink: 0 }}>
+                              {finalizado ? "Finalizado" : "Activo"}
                             </span>
                           </div>
                           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -516,8 +637,8 @@ export default function PanelAnfitrion() {
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                               <span style={{ fontWeight: 600, fontSize: "15.5px" }}>{ev.titulo}</span>
-                              <span style={{ background: pasado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${pasado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "2px 10px", fontSize: "11px", fontWeight: 600, color: pasado ? "rgba(255,255,255,0.4)" : "#a78bfa" }}>
-                                {pasado ? "Finalizado" : "Activo"}
+                              <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "2px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : "#a78bfa" }}>
+                                {finalizado ? "Finalizado" : "Activo"}
                               </span>
                             </div>
                             <div style={{ display: "flex", gap: "20px", color: "rgba(255,255,255,0.4)", fontSize: "13px", flexWrap: "wrap" }}>
@@ -712,6 +833,18 @@ export default function PanelAnfitrion() {
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Límite de boletos por persona</label>
                   <input type="number" value={formEditar.max_boletos_por_persona} onChange={e => setFormEditar(f => ({ ...f, max_boletos_por_persona: e.target.value }))} min="1" max="20" style={inputStyle} />
                 </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Duración del evento (horas)</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Pasado este tiempo, el evento se marca como finalizado</div>
+                    <input type="number" value={formEditar.duracion_horas} onChange={e => setFormEditar(f => ({ ...f, duracion_horas: e.target.value }))} min="1" max="24" step="0.5" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Tiempo de registro/entrada (horas)</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Opcional — si lo dejas vacío, se usa la duración del evento</div>
+                    <input type="number" value={formEditar.tiempo_registro_horas} onChange={e => setFormEditar(f => ({ ...f, tiempo_registro_horas: e.target.value }))} placeholder="Igual que la duración" min="1" max="24" step="0.5" style={inputStyle} />
+                  </div>
+                </div>
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
                 <motion.button onClick={guardarEdicion} whileTap={{ scale: 0.97 }} disabled={guardando}
@@ -757,6 +890,36 @@ export default function PanelAnfitrion() {
                 style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
               >×</button>
             </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", padding: "10px 14px", background: registroFinalizado(checkinEvento) ? "rgba(245,158,11,0.08)" : "rgba(16,185,129,0.08)", border: `1px solid ${registroFinalizado(checkinEvento) ? "rgba(245,158,11,0.22)" : "rgba(16,185,129,0.22)"}`, borderRadius: "10px" }}>
+              <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: registroFinalizado(checkinEvento) ? "#f59e0b" : "#34d399", flexShrink: 0 }} />
+              <span style={{ fontSize: "12px", color: registroFinalizado(checkinEvento) ? "#fbbf24" : "#34d399" }}>
+                {registroFinalizado(checkinEvento)
+                  ? `Ventana de registro cerrada (${horasRegistro(checkinEvento)}h desde el inicio) — igual puedes seguir marcando entradas manualmente`
+                  : `Ventana de registro abierta — ${horasRegistro(checkinEvento)}h desde el inicio del evento`}
+              </span>
+            </div>
+
+            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+              <motion.button onClick={escaneando ? detenerEscaneo : iniciarEscaneo} whileTap={{ scale: 0.97 }}
+                style={{ flex: 1, background: escaneando ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.1)", border: `1.5px solid ${escaneando ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.25)"}`, borderRadius: "10px", color: escaneando ? "#f87171" : "#34d399", padding: "9px 12px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+              >{escaneando ? "Detener cámara" : "📷 Escanear QR"}</motion.button>
+              <motion.button onClick={exportarCSV} whileTap={{ scale: 0.97 }} disabled={exportando}
+                style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "rgba(255,255,255,0.7)", padding: "9px 12px", fontSize: "13px", fontWeight: 600, cursor: exportando ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: exportando ? 0.6 : 1 }}
+              >{exportando ? "Generando..." : "⬇ Exportar CSV"}</motion.button>
+            </div>
+
+            {errorEscaneo && (
+              <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "10px", color: "#f87171", fontSize: "12.5px" }}>{errorEscaneo}</div>
+            )}
+
+            {escaneando && (
+              <div style={{ position: "relative", marginBottom: "16px", borderRadius: "12px", overflow: "hidden", background: "black" }}>
+                <video ref={videoRef} playsInline muted style={{ width: "100%", display: "block", maxHeight: "320px", objectFit: "cover" }} />
+                <canvas ref={canvasRef} style={{ display: "none" }} />
+                <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 0 3px rgba(16,185,129,0.6)", pointerEvents: "none" }} />
+              </div>
+            )}
 
             <div style={{ position: "relative", marginBottom: "20px" }}>
               <input value={checkinBusqueda} onChange={e => buscarCheckin(e.target.value)}

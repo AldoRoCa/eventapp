@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { QRCodeSVG } from "qrcode.react"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
+import { eventoFinalizado } from "../eventoUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -56,7 +57,7 @@ export default function MisBoletos() {
       setUser(user)
       const { data } = await supabase
         .from("boletos")
-        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, profiles(nombre)), mp_payment_id, codigo_grupo, nombre_registro")
+        .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, duracion_horas, profiles(nombre)), mp_payment_id, codigo_grupo, nombre_registro")
         .eq("usuario_id", user.id)
         .in("estado", ["activo", "pendiente"])
         .order("created_at", { ascending: false })
@@ -246,8 +247,7 @@ export default function MisBoletos() {
             {boletos.map((boleto, i) => {
               const ev = boleto.eventos
               const fecha = ev?.fecha ? new Date(ev.fecha) : null
-              const ahora = new Date()
-              const usado = fecha && boleto.estado === "activo" && (ahora - fecha) > 5 * 60 * 60 * 1000
+              const usado = boleto.estado === "activo" && eventoFinalizado(ev)
               const fechaFormato = fecha ? fecha.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "Fecha no disponible"
               const horaFormato = fecha ? fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : ""
 

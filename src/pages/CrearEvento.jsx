@@ -34,6 +34,7 @@ export default function CrearEvento() {
     titulo: "", descripcion: "", categoria: "", fecha: "", hora: "",
     ubicacion: "", estado_evento: "", capacidad: "", precio: "",
     max_boletos_por_persona: "5", tipo_boleto: "instantaneo", imagen_url: "",
+    duracion_horas: "5", tiempo_registro_horas: "",
   })
 
   useEffect(() => {
@@ -99,6 +100,16 @@ export default function CrearEvento() {
       setError("El máximo de boletos por persona debe ser un número entre 1 y 20")
       return
     }
+    const duracionHoras = parseFloat(form.duracion_horas)
+    if (!Number.isFinite(duracionHoras) || duracionHoras <= 0 || duracionHoras > 24) {
+      setError("La duración del evento debe ser un número entre 0 y 24 horas")
+      return
+    }
+    const tiempoRegistroHoras = form.tiempo_registro_horas === "" ? null : parseFloat(form.tiempo_registro_horas)
+    if (tiempoRegistroHoras !== null && (!Number.isFinite(tiempoRegistroHoras) || tiempoRegistroHoras <= 0 || tiempoRegistroHoras > 24)) {
+      setError("El tiempo de registro debe ser un número entre 0 y 24 horas")
+      return
+    }
 
     setLoading(true)
     const { data: { user } } = await getUserSafe()
@@ -121,6 +132,7 @@ export default function CrearEvento() {
       fecha: fechaCompleta, ubicacion, estado_evento: form.estado_evento || null,
       capacidad, precio,
       max_boletos_por_persona: maxBoletos,
+      duracion_horas: duracionHoras, tiempo_registro_horas: tiempoRegistroHoras,
       tipo_boleto: form.tipo_boleto, imagen_url: imagenUrl, anfitrion_id: user.id,
     })
 
@@ -297,6 +309,19 @@ export default function CrearEvento() {
               <label style={labelStyle}>Límite de boletos por persona</label>
               <input type="number" value={form.max_boletos_por_persona} onChange={e => handleChange("max_boletos_por_persona", e.target.value)} placeholder="5" min="1" max="20" style={inputStyle} />
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>¿Cuántos boletos puede comprar una misma persona? Por defecto son 5.</p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <div>
+                <label style={labelStyle}>Duración del evento (horas)</label>
+                <input type="number" value={form.duracion_horas} onChange={e => handleChange("duracion_horas", e.target.value)} placeholder="5" min="1" max="24" step="0.5" style={inputStyle} />
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>Pasado este tiempo, el evento se marca como finalizado (máx. 24h).</p>
+              </div>
+              <div>
+                <label style={labelStyle}>Tiempo de registro/entrada (horas)</label>
+                <input type="number" value={form.tiempo_registro_horas} onChange={e => handleChange("tiempo_registro_horas", e.target.value)} placeholder="Igual que la duración" min="1" max="24" step="0.5" style={inputStyle} />
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>Opcional. Si lo dejas vacío, se usa la duración del evento.</p>
+              </div>
             </div>
 
             <div>
