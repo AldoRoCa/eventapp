@@ -12,7 +12,6 @@ serve(async (req) => {
   }
   try {
     const { boleto_id, accion } = await req.json()
-    const mpToken = Deno.env.get("MP_ACCESS_TOKEN")!
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SERVICE_ROLE_KEY")!
@@ -78,14 +77,29 @@ serve(async (req) => {
 
     } else if (accion === "rechazar") {
       if (boleto.mp_payment_id) {
-        await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}/refunds`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${mpToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({})
-        })
+        // El pago lo cobró la cuenta de Mercado Pago del anfitrión, así
+        // que el reembolso debe hacerse con su token OAuth — el token de
+        // la plataforma recibe 404 de MP en /refunds.
+        const { data: cred } = await supabase
+          .from("mp_credenciales")
+          .select("mp_access_token")
+          .eq("id", user.id)
+          .single()
+
+        if (!cred?.mp_access_token) {
+          return new Response(JSON.stringify({ error: "No se encontró tu cuenta de Mercado Pago conectada. No se puede rechazar sin reembolsar el boleto pagado." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          })
+        }
+
+        const ok = await reembolsarBoleto(supabase, boleto, cred.mp_access_token)
+        if (!ok) {
+          return new Response(JSON.stringify({ error: "Mercado Pago no pudo procesar el reembolso (¿saldo insuficiente en tu cuenta?). El boleto NO fue rechazado; intenta de nuevo." }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 502,
+          })
+        }
       }
       await supabase.from("boletos").update({ estado: "rechazado" }).eq("id", boleto_id)
     }
@@ -101,3 +115,46 @@ serve(async (req) => {
     })
   }
 })
+
+// Reembolsa la parte de un boleto rechazado. Un solo pago de MP puede
+// cubrir varios boletos comprados juntos; si quedan otros boletos vivos
+// en el mismo pago, se reembolsa solo el monto de este boleto (precio
+// unitario que pagó el comprador, con el 10% incluido). Si es el último,
+// se reembolsa lo que quede del pago completo.
+// deno-lint-ignore no-explicit-any
+async function reembolsarBoleto(supabase: any, boleto: any, token: string): Promise<boolean> {
+  try {
+    const consulta = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}`, {
+      headers: { "Authorization": `Bearer ${token}` },
+    })
+    const pago = await consulta.json()
+    if (consulta.ok && pago.status === "refunded") return true
+
+    const { count } = await supabase
+      .from("boletos")
+      .select("*", { count: "exact", head: true })
+      .eq("mp_payment_id", boleto.mp_payment_id)
+      .neq("estado", "rechazado")
+
+    const montoUnitario = Math.round((boleto.eventos?.precio || 0) * 1.10)
+    const body = (count || 1) > 1 && montoUnitario > 0 ? { amount: montoUnitario } : {}
+
+    const res = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}/refunds`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Idempotency-Key": crypto.randomUUID(),
+      },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const detalle = await res.json().catch(() => ({}))
+      console.log(`Reembolso rechazado por MP para pago ${boleto.mp_payment_id}:`, res.status, JSON.stringify(detalle))
+    }
+    return res.ok
+  } catch (e) {
+    console.log(`Error de red reembolsando pago ${boleto.mp_payment_id}:`, e.message)
+    return false
+  }
+}

@@ -131,12 +131,18 @@ export default function PanelAnfitrion() {
   const rechazarSolicitud = async (boletoId) => {
     setProcesando(boletoId)
     const { data: { session } } = await supabase.auth.getSession()
-    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gestionar-solicitud`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gestionar-solicitud`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
       body: JSON.stringify({ boleto_id: boletoId, accion: "rechazar" })
     })
-    setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
+    const data = await response.json()
+    if (data.ok) {
+      setSolicitudes(prev => prev.filter(s => s.id !== boletoId))
+    } else {
+      setMensaje(data.error || "No se pudo rechazar la solicitud. Intenta de nuevo.")
+      setTimeout(() => setMensaje(""), 8000)
+    }
     setProcesando(null)
   }
 
@@ -355,8 +361,8 @@ export default function PanelAnfitrion() {
       setMensaje(`Evento cancelado. ${data.reembolsados > 0 ? `Se procesaron ${data.reembolsados} reembolso${data.reembolsados > 1 ? "s" : ""}.` : ""}`)
       setTimeout(() => setMensaje(""), 5000)
     } else {
-      setMensaje("Error al cancelar el evento. Intenta de nuevo.")
-      setTimeout(() => setMensaje(""), 3000)
+      setMensaje(data.error || "Error al cancelar el evento. Intenta de nuevo.")
+      setTimeout(() => setMensaje(""), 8000)
     }
     setCancelando(null)
   }
