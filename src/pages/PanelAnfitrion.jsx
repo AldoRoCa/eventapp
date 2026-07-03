@@ -56,6 +56,7 @@ export default function PanelAnfitrion() {
   const [cargandoCooperadores, setCargandoCooperadores] = useState(false)
   const [generandoLink, setGenerandoLink] = useState(false)
   const [linkCopiado, setLinkCopiado] = useState(false)
+  const [aceptaResponsabilidadCooperador, setAceptaResponsabilidadCooperador] = useState(false)
 
   useEffect(() => {
     const cargar = async () => {
@@ -311,17 +312,20 @@ export default function PanelAnfitrion() {
     setInvitacionActiva(invitaciones?.[0] || null)
     setCooperadoresLista(cooperadores || [])
     setCargandoCooperadores(false)
+    setAceptaResponsabilidadCooperador(false)
   }
 
   const generarLink = async () => {
-    if (!cooperadoresEvento) return
+    if (!cooperadoresEvento || !aceptaResponsabilidadCooperador) return
     setGenerandoLink(true)
-    const codigo = crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()
-    const { data, error } = await supabase.from("invitaciones_cooperador")
-      .insert({ evento_id: cooperadoresEvento.id, codigo, created_by: user.id })
-      .select("id, codigo")
-      .single()
-    if (!error && data) setInvitacionActiva(data)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generar-link-cooperador`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+      body: JSON.stringify({ evento_id: cooperadoresEvento.id, acepta_responsabilidad: aceptaResponsabilidadCooperador }),
+    })
+    const data = await res.json()
+    if (res.ok && data.ok) setInvitacionActiva({ id: data.id, codigo: data.codigo })
     setGenerandoLink(false)
   }
 
@@ -1096,9 +1100,20 @@ export default function PanelAnfitrion() {
                       >Revocar link</button>
                     </>
                   ) : (
-                    <motion.button onClick={generarLink} whileTap={{ scale: 0.97 }} disabled={generandoLink}
-                      style={{ width: "100%", background: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "9px", color: "#60a5fa", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
-                    >{generandoLink ? "Generando..." : "Generar link de invitación"}</motion.button>
+                    <>
+                      <label style={{ display: "flex", alignItems: "flex-start", gap: "8px", marginBottom: "12px", cursor: "pointer" }}>
+                        <input type="checkbox" checked={aceptaResponsabilidadCooperador}
+                          onChange={e => setAceptaResponsabilidadCooperador(e.target.checked)}
+                          style={{ marginTop: "3px", flexShrink: 0, cursor: "pointer" }}
+                        />
+                        <span style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                          Entiendo que la persona con este link verá nombres y datos de check-in de mis asistentes sin tener cuenta en VELA, y soy responsable de a quién se lo comparto. Puedo revocarlo en cualquier momento.
+                        </span>
+                      </label>
+                      <motion.button onClick={generarLink} whileTap={{ scale: aceptaResponsabilidadCooperador ? 0.97 : 1 }} disabled={generandoLink || !aceptaResponsabilidadCooperador}
+                        style={{ width: "100%", background: aceptaResponsabilidadCooperador ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${aceptaResponsabilidadCooperador ? "rgba(96,165,250,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: "9px", color: aceptaResponsabilidadCooperador ? "#60a5fa" : "rgba(255,255,255,0.3)", padding: "10px", fontSize: "13px", fontWeight: 600, cursor: aceptaResponsabilidadCooperador ? "pointer" : "not-allowed", fontFamily: "inherit" }}
+                      >{generandoLink ? "Generando..." : "Generar link de invitación"}</motion.button>
+                    </>
                   )}
                 </div>
 
