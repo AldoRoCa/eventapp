@@ -427,6 +427,11 @@ export default function PanelAnfitrion() {
       setTimeout(() => setMensaje(""), 3000)
       return
     }
+    if (precio > 0 && precio < 5) {
+      setMensaje("El precio mínimo para eventos de pago es $5 MXN (Mercado Pago no acepta pagos con tarjeta menores a $5).")
+      setTimeout(() => setMensaje(""), 4000)
+      return
+    }
     if (precio > 0 && !perfil?.mp_user_id) {
       setMensaje("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
       setTimeout(() => setMensaje(""), 4000)

@@ -16,6 +16,17 @@ serve(async (req) => {
   try {
     const { evento_id, titulo, precio, usuario_id, cantidad } = await req.json()
 
+    // Mercado Pago México rechaza pagos con tarjeta menores a $5 MXN
+    // (min_allowed_amount de todos los medios de tarjeta). Un boleto más
+    // barato hace que el checkout rechace la tarjeta en tiempo real con
+    // "La operación no acepta este medio de pago".
+    if (typeof precio !== "number" || !Number.isFinite(precio) || precio < 5) {
+      return new Response(JSON.stringify({ error: "El monto mínimo por boleto es $5 MXN (límite de Mercado Pago para pagos con tarjeta)." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      })
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SERVICE_ROLE_KEY")!
@@ -74,9 +85,11 @@ serve(async (req) => {
       window_start: new Date().toISOString(),
     })
 
-    const mpToken = Deno.env.get("MP_ACCESS_TOKEN")!
     const siteUrl = Deno.env.get("SITE_URL")!
-    const comision = Math.round(precio * 0.10)
+    // marketplace_fee es un monto absoluto sobre toda la preferencia, así
+    // que la comisión se calcula sobre el total (precio × cantidad), no
+    // sobre un solo boleto.
+    const comision = Math.round(precio * (cantidad || 1) * 0.10)
 
     const preference = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -110,6 +123,8 @@ serve(async (req) => {
     const data = await preference.json()
 
     if (!data.init_point) {
+      // Respuesta cruda de MP para diagnóstico en los logs de la función
+      console.log("MP rechazó la preferencia:", JSON.stringify(data))
       return new Response(JSON.stringify({ error: "Error creando preferencia", detalle: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,

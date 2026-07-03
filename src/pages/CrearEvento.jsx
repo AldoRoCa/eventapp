@@ -91,6 +91,10 @@ export default function CrearEvento() {
       setError("El precio debe ser un número entre 0 y 50,000")
       return
     }
+    if (precio > 0 && precio < 5) {
+      setError("El precio mínimo para eventos de pago es $5 MXN (Mercado Pago no acepta pagos con tarjeta menores a $5). Usa $0 para eventos gratis.")
+      return
+    }
     if (precio > 0 && !perfil?.mp_user_id) {
       setError("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
       return

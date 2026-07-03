@@ -136,7 +136,7 @@ export default function Evento() {
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
         const data = await response.json()
         if (data.url) window.location.href = data.url
-        else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
+        else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
         return
       }
     }
@@ -156,7 +156,7 @@ export default function Evento() {
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
     const data = await response.json()
     if (data.url) window.location.href = data.url
-    else { alert("Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
+    else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
   }
 
   if (loading) return <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cargando evento...</div>
