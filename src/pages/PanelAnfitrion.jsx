@@ -195,40 +195,44 @@ export default function PanelAnfitrion() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       streamRef.current = stream
       setEscaneando(true)
-      // El <video> se monta recién ahora que escaneando=true, así que hay
-      // que esperar al siguiente ciclo de render antes de asignarle el
-      // stream y arrancar el loop de lectura de frames.
-      setTimeout(() => {
-        if (!videoRef.current) return
-        videoRef.current.srcObject = stream
-        videoRef.current.play()
-        const tick = () => {
-          const video = videoRef.current
-          const canvas = canvasRef.current
-          if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-            rafRef.current = requestAnimationFrame(tick)
-            return
-          }
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
-          const ctx = canvas.getContext("2d")
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          const imagenData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-          const codigo = jsQR(imagenData.data, canvas.width, canvas.height)
-          if (codigo?.data) {
-            detenerEscaneo()
-            buscarCheckin(codigo.data)
-          } else {
-            rafRef.current = requestAnimationFrame(tick)
-          }
-        }
-        rafRef.current = requestAnimationFrame(tick)
-      }, 0)
     } catch {
       setErrorEscaneo("No se pudo acceder a la cámara. Revisa los permisos del navegador.")
       setEscaneando(false)
     }
   }
+
+  // El <video> solo existe en el DOM una vez que escaneando=true, así que
+  // conectar el stream tiene que pasar en un efecto (que corre después de
+  // que React ya montó el elemento) y no justo al pedir la cámara — en
+  // celulares más lentos, un setTimeout(0) podía ganarle al render y
+  // dejar la cámara prendida pero con el video en negro.
+  useEffect(() => {
+    if (!escaneando || !videoRef.current || !streamRef.current) return
+    const video = videoRef.current
+    video.srcObject = streamRef.current
+    video.play()
+    const tick = () => {
+      const canvas = canvasRef.current
+      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext("2d")
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const imagenData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const codigo = jsQR(imagenData.data, canvas.width, canvas.height)
+      if (codigo?.data) {
+        detenerEscaneo()
+        buscarCheckin(codigo.data)
+      } else {
+        rafRef.current = requestAnimationFrame(tick)
+      }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [escaneando])
 
   // Si se cierra el modal de check-in con la cámara todavía prendida, hay
   // que apagarla — si no, el navegador se queda usando la cámara en segundo
