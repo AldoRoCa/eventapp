@@ -21,21 +21,25 @@ const secciones = [
     titulo: "4. Protección contra fraudes",
     contenido: [
       "VELA monitorea activamente las transacciones para detectar actividad fraudulenta.",
-      "Los boletos son únicos e intransferibles — cada boleto está vinculado a la cuenta del comprador.",
+      "Los boletos son únicos e intransferibles fuera de la plataforma. Cada boleto se registra a nombre de la persona que asistirá al evento (que puede ser distinta de quien realizó la compra) y queda ligado a la cuenta de quien lo compró para fines de soporte y reembolsos.",
       "No revendas boletos fuera de la plataforma — VELA no se hace responsable de transacciones externas.",
       "Si detectas actividad sospechosa, repórtala a panel.admin2026eventapp@gmail.com",
     ]
   },
   {
-    titulo: "5. Privacidad y datos personales",
+    titulo: "5. Cooperadores de check-in",
+    contenido: "Los anfitriones pueden invitar a colaboradores de confianza para ayudar con el registro de entrada (check-in) de sus eventos, mediante un enlace de invitación. Estas personas no requieren cuenta en VELA y su acceso se limita únicamente a buscar y marcar boletos como usados — no ven información de pagos ni pueden editar el evento. El anfitrión es responsable de decidir con quién comparte este enlace."
+  },
+  {
+    titulo: "6. Privacidad y datos personales",
     contenido: "El tratamiento de tus datos personales está regulado por nuestra Política de Privacidad, en cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) de México."
   },
   {
-    titulo: "6. Responsabilidad en eventos",
+    titulo: "7. Responsabilidad en eventos",
     contenido: "VELA actúa como intermediario entre anfitriones y asistentes. Aunque verificamos la identidad de los anfitriones, VELA no se hace responsable por incidentes que ocurran durante los eventos. Te recomendamos tomar precauciones básicas de seguridad personal al asistir a cualquier evento."
   },
   {
-    titulo: "7. Reporte de incidentes",
+    titulo: "8. Reporte de incidentes",
     contenido: "Si experimentas o presencias algún incidente de seguridad relacionado con VELA o con un evento organizado a través de nuestra plataforma, contáctanos de inmediato a panel.admin2026eventapp@gmail.com. Tomamos todos los reportes con seriedad."
   },
 ]
@@ -59,7 +63,7 @@ export default function PoliticasSeguridad() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Políticas de Seguridad</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 8 de junio de 2025</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 2 de julio de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>

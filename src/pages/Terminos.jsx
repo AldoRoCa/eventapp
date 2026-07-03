@@ -18,7 +18,15 @@ const secciones = [
     ]
   },
   {
-    titulo: "4. Uso de la plataforma",
+    titulo: "4. Cooperadores de check-in",
+    contenido: [
+      "Un anfitrión puede invitar a otras personas ('cooperadores') a ayudarle con el registro de entrada (check-in) de un evento, mediante un enlace de invitación. Los cooperadores no necesitan tener cuenta en VELA.",
+      "El acceso de un cooperador se limita exclusivamente a buscar y marcar la entrada de boletos del evento para el que fue invitado — no tiene acceso a información de pagos, ingresos, datos de contacto de los asistentes, ni puede editar el evento.",
+      "El anfitrión es el único responsable de elegir a quién comparte el enlace de invitación y de revocar el acceso cuando lo considere necesario. VELA no verifica la identidad de los cooperadores.",
+    ]
+  },
+  {
+    titulo: "5. Uso de la plataforma",
     contenido: [
       "Está prohibido usar VELA para:",
       "• Publicar eventos con contenido ilegal, fraudulento o engañoso.",
@@ -28,15 +36,15 @@ const secciones = [
     ]
   },
   {
-    titulo: "5. Compra de boletos",
+    titulo: "6. Compra de boletos",
     contenido: [
       "Las compras realizadas en VELA son procesadas de forma segura a través de Mercado Pago. Al comprar un boleto aceptas el precio y condiciones del evento publicadas por el anfitrión.",
       "VELA aplica una comisión de servicio del 10% sobre el precio del boleto, que se refleja en el total al momento del pago.",
-      "Los boletos no son reembolsables salvo en caso de cancelación del evento por parte del anfitrión.",
+      "Los boletos no son reembolsables salvo en caso de cancelación del evento por parte del anfitrión, o de que un reporte del evento sea resuelto a favor del asistente conforme a la sección 10 de estos Términos.",
     ]
   },
   {
-    titulo: "6. Responsabilidades del anfitrión",
+    titulo: "7. Responsabilidades del anfitrión",
     contenido: [
       "Los anfitriones son responsables de la organización, ejecución y cumplimiento legal de sus eventos.",
       "El anfitrión se compromete a no cancelar eventos de forma injustificada. En caso de cancelación, deberá reembolsar el valor íntegro de los boletos a los asistentes.",
@@ -44,32 +52,40 @@ const secciones = [
     ]
   },
   {
-    titulo: "7. Pagos y comisiones",
+    titulo: "8. Pagos y comisiones",
     contenido: [
       "VELA retiene el 10% del precio de cada boleto vendido como comisión de plataforma. El 90% restante es transferido al anfitrión a través de Mercado Pago.",
       "Los eventos gratuitos no generan comisión.",
     ]
   },
   {
-    titulo: "8. Propiedad intelectual",
+    titulo: "9. Propiedad intelectual",
     contenido: [
       "El nombre VELA, su logotipo, diseño y código fuente son propiedad exclusiva de sus creadores. Queda prohibida su reproducción o uso sin autorización expresa.",
       "Los usuarios conservan los derechos sobre el contenido que publican (imágenes de eventos, descripciones), pero otorgan a VELA una licencia para mostrarlo en la plataforma.",
     ]
   },
   {
-    titulo: "9. Limitación de responsabilidad",
+    titulo: "10. Reportes y resolución de disputas",
+    contenido: [
+      "Si un asistente considera que un evento no se realizó como se anunció, o que el anfitrión no respondió a sus solicitudes, puede reportarlo a través de la Plataforma una vez que el evento haya finalizado.",
+      "VELA revisará el reporte y, de considerarlo procedente, podrá cancelar el evento, reembolsar a los asistentes afectados, y suspender la cuenta del anfitrión involucrado.",
+      "La decisión de VELA sobre un reporte es definitiva dentro de la Plataforma, sin perjuicio de los derechos que la ley otorgue a las partes ante las autoridades competentes.",
+    ]
+  },
+  {
+    titulo: "11. Limitación de responsabilidad",
     contenido: [
       "VELA actúa como intermediario entre anfitriones y asistentes. No garantiza la calidad, seguridad ni realización de ningún evento.",
       "En ningún caso la responsabilidad de VELA excederá el monto pagado por el usuario en la transacción relacionada con el reclamo.",
     ]
   },
   {
-    titulo: "10. Modificaciones",
+    titulo: "12. Modificaciones",
     contenido: "VELA puede modificar estos Términos de Uso en cualquier momento. Los cambios entrarán en vigor al ser publicados en la Plataforma. El uso continuado de VELA implica la aceptación de los términos vigentes."
   },
   {
-    titulo: "11. Ley aplicable",
+    titulo: "13. Ley aplicable",
     contenido: "Estos Términos de Uso se rigen por las leyes de los Estados Unidos Mexicanos. Para cualquier controversia derivada de su interpretación o cumplimiento, las partes se someten a la jurisdicción de los tribunales competentes de la ciudad de Querétaro, Qro."
   },
 ]
@@ -95,7 +111,7 @@ export default function Terminos() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Términos de Uso</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 7 de junio de 2025</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 2 de julio de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>

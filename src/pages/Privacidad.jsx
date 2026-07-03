@@ -13,9 +13,11 @@ const secciones = [
       "• Fotografía de perfil (opcional).",
       "• Número de teléfono (opcional).",
       "• Fecha de nacimiento (para verificación de edad en el registro como anfitrión).",
-      "• Identificación oficial (INE/pasaporte) para el proceso de verificación de anfitriones.",
+      "• Identificación oficial (INE/pasaporte) para el proceso de verificación de anfitriones — se almacena en un espacio privado, no accesible públicamente.",
       "• Información de pago procesada por Mercado Pago — VELA no almacena datos de tarjetas.",
-      "• Historial de boletos y eventos.",
+      "• Historial de boletos y eventos, incluyendo el registro de check-in (hora de entrada a cada evento).",
+      "• Nombre de las personas que un anfitrión invita como cooperadores de check-in — no requieren cuenta en VELA para esto.",
+      "• Reseñas y calificaciones que publiques sobre eventos y anfitriones — se muestran públicamente junto con tu nombre y foto de perfil, no son anónimas.",
     ]
   },
   {
@@ -87,7 +89,7 @@ export default function Privacidad() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Política de Privacidad</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 7 de junio de 2025</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 2 de julio de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
