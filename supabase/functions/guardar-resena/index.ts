@@ -6,11 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-// Mismo margen que reportar-evento: solo se puede reseñar un evento que
-// ya pasó hace al menos 2 horas (evita reseñas de "no llegó a tiempo"
-// cuando el evento apenas va empezando un poco tarde).
-const MARGEN_HORAS = 2
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -72,7 +67,7 @@ serve(async (req) => {
     // pasó su margen de tolerancia.
     const { data: boleto, error: boletoError } = await supabase
       .from("boletos")
-      .select("id, usuario_id, estado, evento_id, eventos(id, fecha, anfitrion_id)")
+      .select("id, usuario_id, estado, evento_id, eventos(id, fecha, anfitrion_id, duracion_horas)")
       .eq("id", boleto_id)
       .single()
 
@@ -97,7 +92,7 @@ serve(async (req) => {
       })
     }
 
-    const evento = boleto.eventos as unknown as { id: string; fecha: string; anfitrion_id: string } | null
+    const evento = boleto.eventos as unknown as { id: string; fecha: string; anfitrion_id: string; duracion_horas: number | null } | null
 
     if (!evento) {
       return new Response(JSON.stringify({ error: "El evento ya no existe" }), {
@@ -106,7 +101,9 @@ serve(async (req) => {
       })
     }
 
-    const fechaLimite = new Date(evento.fecha).getTime() + MARGEN_HORAS * 60 * 60 * 1000
+    // Solo se puede reseñar un evento que ya finalizó (misma regla que
+    // usa el resto de la app: fecha + duración configurable del evento).
+    const fechaLimite = new Date(evento.fecha).getTime() + (evento.duracion_horas ?? 5) * 60 * 60 * 1000
     if (Date.now() < fechaLimite) {
       return new Response(JSON.stringify({ error: "Solo puedes reseñar un evento después de que haya pasado." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

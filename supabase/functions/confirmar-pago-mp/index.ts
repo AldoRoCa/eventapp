@@ -82,6 +82,13 @@ serve(async (req) => {
       .eq("id", evento_id)
       .single()
 
+    if (!evento) {
+      return new Response(JSON.stringify({ error: "El evento ya no existe" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      })
+    }
+
     const { data: anfitrionCredenciales } = await supabase
       .from("mp_credenciales")
       .select("mp_access_token")

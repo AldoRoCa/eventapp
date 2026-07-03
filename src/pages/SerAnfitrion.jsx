@@ -30,7 +30,7 @@ export default function SerAnfitrion() {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
-      const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("nombre, tipo").eq("id", user.id).single()
       if (perfil) {
         setForm(f => ({ ...f, nombre: perfil.nombre || "" }))
         if (perfil.tipo === "anfitrion") setExito(true)

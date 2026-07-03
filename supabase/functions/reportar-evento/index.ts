@@ -7,12 +7,7 @@ const corsHeaders = {
 }
  
 const MOTIVOS_VALIDOS = ["no_ocurrio", "anfitrion_no_responde", "otro"]
- 
-// Margen de tolerancia: un evento solo puede reportarse 2 horas después
-// de su fecha/hora programada, para evitar reportes prematuros (ej. el
-// evento simplemente empezó un poco tarde).
-const MARGEN_HORAS = 2
- 
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -72,7 +67,7 @@ serve(async (req) => {
     // activo, y traer los datos del evento/anfitrión para el snapshot.
     const { data: boleto, error: boletoError } = await supabase
       .from("boletos")
-      .select("id, usuario_id, estado, evento_id, eventos(id, titulo, fecha, anfitrion_id, profiles(nombre))")
+      .select("id, usuario_id, estado, evento_id, eventos(id, titulo, fecha, anfitrion_id, duracion_horas, profiles(nombre))")
       .eq("id", boleto_id)
       .single()
  
@@ -98,20 +93,20 @@ serve(async (req) => {
     }
  
     const evento = boleto.eventos as unknown as {
-      id: string; titulo: string; fecha: string; anfitrion_id: string
+      id: string; titulo: string; fecha: string; anfitrion_id: string; duracion_horas: number | null
       profiles: { nombre: string } | null
     } | null
- 
+
     if (!evento) {
       return new Response(JSON.stringify({ error: "El evento ya no existe" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
       })
     }
- 
-    // Prevenir reportes prematuros: el evento debe haber pasado hace al
-    // menos MARGEN_HORAS.
-    const fechaLimite = new Date(evento.fecha).getTime() + MARGEN_HORAS * 60 * 60 * 1000
+
+    // Prevenir reportes prematuros: el evento debe haber finalizado (misma
+    // regla que usa el resto de la app: fecha + duración configurable).
+    const fechaLimite = new Date(evento.fecha).getTime() + (evento.duracion_horas ?? 5) * 60 * 60 * 1000
     if (Date.now() < fechaLimite) {
       return new Response(JSON.stringify({ error: "Este evento todavía no puede reportarse — espera a que haya pasado su fecha y hora." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

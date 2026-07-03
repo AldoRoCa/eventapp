@@ -56,7 +56,7 @@ export default function PanelAnfitrion() {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
-      const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("id, nombre, avatar_url, tipo, estado_anfitrion, email, mp_user_id").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("created_at", { ascending: false })
@@ -162,6 +162,12 @@ export default function PanelAnfitrion() {
   const marcarCheckin = async (boletoId) => {
     setCheckinMarcando(boletoId)
     const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      setMensaje("Tu sesión expiró. Vuelve a iniciar sesión e intenta de nuevo.")
+      setTimeout(() => setMensaje(""), 4000)
+      setCheckinMarcando(null)
+      return
+    }
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/hacer-checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
@@ -211,12 +217,18 @@ export default function PanelAnfitrion() {
     const video = videoRef.current
     video.srcObject = streamRef.current
     video.play()
-    const tick = () => {
+    let ultimoIntento = 0
+    const tick = (ahora) => {
       const canvas = canvasRef.current
-      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      // Un código QR no cambia entre un frame y el siguiente — decodificar
+      // a la velocidad de refresco de la pantalla (hasta 120 veces por
+      // segundo en celulares) solo gasta batería sin ganar nada. Con ~8
+      // intentos por segundo es más que suficiente para sentirse instantáneo.
+      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA || ahora - ultimoIntento < 120) {
         rafRef.current = requestAnimationFrame(tick)
         return
       }
+      ultimoIntento = ahora
       canvas.width = video.videoWidth
       canvas.height = video.videoHeight
       const ctx = canvas.getContext("2d")

@@ -36,7 +36,7 @@ export default function Perfil() {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
-      const { data: perfil } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("id, nombre, avatar_url, tipo").eq("id", user.id).single()
       setPerfil(perfil)
       setNuevoNombre(perfil?.nombre || "")
       const { data: boletos } = await supabase
