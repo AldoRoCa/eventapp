@@ -55,6 +55,7 @@ export default function PanelAnfitrion() {
   const [invitacionActiva, setInvitacionActiva] = useState(null)
   const [cargandoCooperadores, setCargandoCooperadores] = useState(false)
   const [generandoLink, setGenerandoLink] = useState(false)
+  const [linkCopiado, setLinkCopiado] = useState(false)
 
   useEffect(() => {
     const cargar = async () => {
@@ -1081,9 +1082,14 @@ export default function PanelAnfitrion() {
                         <div style={{ flex: 1, fontSize: "12.5px", color: "#60a5fa", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {window.location.origin}/unirse-cooperador/{invitacionActiva.codigo}
                         </div>
-                        <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/unirse-cooperador/${invitacionActiva.codigo}`)}
-                          style={{ background: "rgba(96,165,250,0.15)", border: "1px solid rgba(96,165,250,0.3)", borderRadius: "7px", color: "#60a5fa", padding: "6px 12px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
-                        >Copiar</button>
+                        <motion.button onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/unirse-cooperador/${invitacionActiva.codigo}`)
+                            setLinkCopiado(true)
+                            setTimeout(() => setLinkCopiado(false), 1500)
+                          }}
+                          animate={linkCopiado ? { scale: [1, 1.12, 1] } : {}} transition={{ duration: 0.3 }}
+                          style={{ background: linkCopiado ? "rgba(16,185,129,0.18)" : "rgba(96,165,250,0.15)", border: `1px solid ${linkCopiado ? "rgba(16,185,129,0.4)" : "rgba(96,165,250,0.3)"}`, borderRadius: "7px", color: linkCopiado ? "#34d399" : "#60a5fa", padding: "6px 12px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, transition: "background 0.2s, border-color 0.2s, color 0.2s" }}
+                        >{linkCopiado ? "✓ Copiado" : "Copiar"}</motion.button>
                       </div>
                       <button onClick={revocarLink}
                         style={{ marginTop: "10px", background: "none", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "7px", color: "#f87171", padding: "5px 11px", fontSize: "11.5px", cursor: "pointer", fontFamily: "inherit" }}

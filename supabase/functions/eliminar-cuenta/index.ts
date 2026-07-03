@@ -105,6 +105,18 @@ serve(async (req) => {
     // tablas seguirían apuntando a un id válido, solo que ya "vacío".
     await supabase.from("mp_credenciales").delete().eq("id", user.id)
 
+    // Borrar los archivos reales del storage — antes solo se limpiaba el
+    // campo en profiles, pero la identificación oficial (dato sensible)
+    // se quedaba guardada indefinidamente en el bucket.
+    const { data: perfilActual } = await supabase.from("profiles").select("ine_url").eq("id", user.id).single()
+    if (perfilActual?.ine_url) {
+      await supabase.storage.from("ine-docs").remove([perfilActual.ine_url])
+    }
+    const { data: avatares } = await supabase.storage.from("avatars").list("", { search: `${user.id}-` })
+    if (avatares && avatares.length > 0) {
+      await supabase.storage.from("avatars").remove(avatares.map(a => a.name))
+    }
+
     await supabase
       .from("profiles")
       .update({
