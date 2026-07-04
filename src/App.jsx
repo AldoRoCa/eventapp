@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
 import { Routes, Route, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
@@ -74,8 +74,8 @@ function CategoryCard({ cat, activa, onClick }) {
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onTouchStart={() => setTouched(true)}
-      onTouchEnd={(e) => { e.preventDefault(); setTimeout(() => setTouched(false), 400); onClick() }}
-      onClick={(e) => { if (e.isTrusted) onClick() }}
+      onTouchEnd={() => setTimeout(() => setTouched(false), 400)}
+      onClick={onClick}
       whileTap={{ scale: 0.97 }}
       whileHover={{ y: -4, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 280, damping: 20 }}
@@ -204,6 +204,11 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
     // Reusar el resultado por 1 minuto: sin esto, cada vez que la pestaña
     // recupera el foco se repite la consulta completa a Supabase.
     staleTime: 60 * 1000,
+    // Al cambiar de categoría, mantener la lista anterior visible mientras
+    // llega la nueva en vez de mostrar "Cargando eventos..." — sin esto, la
+    // cuadrícula se encogía a un solo renglón por un instante y el navegador
+    // empujaba el scroll hacia arriba porque ya no cabía en el celular.
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       // boletos(count) + filtro en la relación: la base de datos cuenta los
       // asistentes activos por evento en vez de mandar todas las filas de
