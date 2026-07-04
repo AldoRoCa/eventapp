@@ -45,10 +45,12 @@ export default function Registro() {
     } else if (data.user && !data.session) {
       // Supabase exige confirmar el correo antes de dar una sesión activa
       // (signUp crea el usuario pero no lo deja entrar todavía), así que
-      // subir la foto aquí fallaría (sin sesión, las reglas de seguridad
-      // bloquean la subida). En vez de eso, la guardamos temporalmente en
-      // este navegador; App.jsx la sube en cuanto el usuario confirme su
-      // correo e inicie sesión por primera vez.
+      // subir la foto aquí fallaría del lado del cliente (sin sesión, las
+      // reglas de seguridad bloquean la subida). En vez de eso, se la
+      // mandamos a una Edge Function con service_role que la sube de una
+      // vez — no depende de que el usuario confirme su correo desde este
+      // mismo dispositivo/navegador (si revisa su correo en el celular
+      // pero se registró en la PC, la foto igual queda guardada).
       if (avatarFile && data.user) {
         const ext = avatarFile.name.split(".").pop()
         const base64 = await new Promise((resolve) => {
@@ -56,7 +58,11 @@ export default function Registro() {
           reader.onload = () => resolve(reader.result.split(",")[1])
           reader.readAsDataURL(avatarFile)
         })
-        localStorage.setItem(`vela_avatar_pendiente_${data.user.id}`, JSON.stringify({ base64, ext }))
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guardar-avatar-registro`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: data.user.id, base64, ext }),
+        }).catch(() => {})
       }
       setRegistrado(true)
     } else {

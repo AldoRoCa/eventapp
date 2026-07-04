@@ -590,31 +590,6 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
   )
 }
 
-// Si el usuario subió una foto de perfil al registrarse pero su cuenta
-// todavía no tenía sesión activa (falta confirmar el correo), la foto se
-// guarda temporalmente en localStorage (ver Registro.jsx). Aquí, en cuanto
-// haya una sesión real para ese mismo usuario, se sube y se limpia.
-async function subirAvatarPendiente(userId) {
-  const clave = `vela_avatar_pendiente_${userId}`
-  const pendiente = localStorage.getItem(clave)
-  if (!pendiente) return null
-  localStorage.removeItem(clave)
-  try {
-    const { base64, ext } = JSON.parse(pendiente)
-    const binario = atob(base64)
-    const bytes = new Uint8Array(binario.length)
-    for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i)
-    const nombreArchivo = `${userId}-${Date.now()}.${ext}`
-    const { error: uploadError } = await supabase.storage.from("avatars").upload(nombreArchivo, bytes)
-    if (uploadError) return null
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombreArchivo)
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId)
-    return publicUrl
-  } catch {
-    return null
-  }
-}
-
 export default function App() {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
@@ -624,18 +599,14 @@ export default function App() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        let { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
-        const avatarSubido = await subirAvatarPendiente(session.user.id)
-        if (avatarSubido) data = { ...data, avatar_url: avatarSubido }
+        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
         setPerfil(data)
       }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) {
-        let { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
-        const avatarSubido = await subirAvatarPendiente(session.user.id)
-        if (avatarSubido) data = { ...data, avatar_url: avatarSubido }
+        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
         setPerfil(data)
       } else {
         setPerfil(null)
