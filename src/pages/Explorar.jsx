@@ -41,9 +41,16 @@ export default function Explorar() {
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)
+      // boletos(count) + filtro en la relación: la base cuenta los asistentes
+      // activos en vez de mandar todas las filas de boletos al navegador.
+      // El filtro de fecha descarta en el servidor los eventos que ya no
+      // pueden estar vivos (duración máxima 24h) — antes se bajaban TODOS
+      // los eventos de la historia y se filtraban en el cliente.
       let query = supabase
         .from("eventos")
-        .select("*, profiles(nombre), boletos(id, estado)")
+        .select("*, profiles(nombre), boletos(count)")
+        .eq("boletos.estado", "activo")
+        .gte("fecha", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       if (categoria !== "Todas") query = query.eq("categoria", categoria)
       if (orden === "fecha") query = query.order("fecha", { ascending: true })
       if (orden === "precio_asc") query = query.order("precio", { ascending: true })
@@ -190,7 +197,7 @@ export default function Explorar() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? "14px" : "18px" }}>
             {eventosFiltrados.map((ev, i) => {
-              const asistentes = ev.boletos?.filter(b => b.estado === "activo").length || 0
+              const asistentes = ev.boletos?.[0]?.count || 0
               const fechaFormato = new Date(ev.fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
               return (
                 <motion.div key={ev.id}

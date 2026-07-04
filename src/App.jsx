@@ -202,10 +202,17 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
 
   const { data: eventos = [], isLoading: loadingEventos } = useQuery({
     queryKey: ["eventos", categoriaActiva, estadoHero, fechaHero],
+    // Reusar el resultado por 1 minuto: sin esto, cada vez que la pestaña
+    // recupera el foco se repite la consulta completa a Supabase.
+    staleTime: 60 * 1000,
     queryFn: async () => {
+      // boletos(count) + filtro en la relación: la base de datos cuenta los
+      // asistentes activos por evento en vez de mandar todas las filas de
+      // boletos al navegador (con eventos grandes eso crecía sin límite).
       let query = supabase
         .from("eventos")
-        .select("*, profiles(nombre), boletos(id, estado)")
+        .select("*, profiles(nombre), boletos(count)")
+        .eq("boletos.estado", "activo")
         .gte("fecha", new Date().toISOString())
         .order("fecha", { ascending: true })
 
@@ -493,7 +500,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
             category: ev.categoria,
             date: new Date(ev.fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
             location: ev.ubicacion,
-            attendees: ev.boletos?.filter(b => b.estado === "activo").length || 0,
+            attendees: ev.boletos?.[0]?.count || 0,
             capacity: ev.capacidad,
             price: ev.precio === 0 ? 0 : Math.round(ev.precio * 1.10),
             type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
