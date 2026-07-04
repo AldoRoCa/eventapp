@@ -468,7 +468,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
       <section style={{ padding: isMobile ? "40px 18px 48px" : "56px 64px 64px", maxWidth: "1360px", margin: "0 auto" }}>
         <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           style={{ fontSize: isMobile ? "1.4rem" : "1.7rem", fontWeight: 700, marginBottom: "20px", letterSpacing: "-0.3px" }}
-        >Explorar categorías {categoriaActiva && <span style={{ fontSize: "1rem", fontWeight: 500, color: "#a78bfa" }}>· {categoriaActiva}</span>}</motion.h2>
+        >Explorar categorías</motion.h2>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: "12px" }}>
           {categories.map((cat, i) => (
             <motion.div key={cat.name} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}>
