@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
-export default function AvatarModal({ src, nombre, size = 40, editable = false, onUpload }) {
+export default function AvatarModal({ src, nombre, size = 40 }) {
   const [modalAbierto, setModalAbierto] = useState(false)
 
   const inicial = nombre?.charAt(0)?.toUpperCase() || "U"

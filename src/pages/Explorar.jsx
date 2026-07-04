@@ -28,7 +28,13 @@ export default function Explorar() {
   const [fechaFiltro, setFechaFiltro] = useState("")
   const [estadoFiltro, setEstadoFiltro] = useState("")
 
-  useEffect(() => {
+  // Aplicar los filtros que vengan en la URL (ej. un link desde la home con
+  // ?q=...) como ajuste de estado durante el render en vez de en un efecto
+  // — evita el parpadeo de un frame sin filtros antes de que el efecto
+  // corriera, y solo se re-aplica cuando location.search realmente cambia.
+  const [urlAplicada, setUrlAplicada] = useState(null)
+  if (location.search !== urlAplicada) {
+    setUrlAplicada(location.search)
     const params = new URLSearchParams(location.search)
     const q = params.get("q")
     const estado = params.get("estado")
@@ -36,20 +42,19 @@ export default function Explorar() {
     if (q) setBusqueda(q)
     if (estado) setEstadoFiltro(estado)
     if (fecha) setFechaFiltro(fecha)
-  }, [location.search])
+  }
 
   useEffect(() => {
     const cargar = async () => {
       setLoading(true)
-      // boletos(count) + filtro en la relación: la base cuenta los asistentes
-      // activos en vez de mandar todas las filas de boletos al navegador.
-      // El filtro de fecha descarta en el servidor los eventos que ya no
+      // Las tarjetas de Explorar no muestran número de asistentes, así que
+      // no hace falta pedir boletos aquí (a diferencia de la Home). El
+      // filtro de fecha descarta en el servidor los eventos que ya no
       // pueden estar vivos (duración máxima 24h) — antes se bajaban TODOS
       // los eventos de la historia y se filtraban en el cliente.
       let query = supabase
         .from("eventos")
-        .select("*, profiles(nombre), boletos(count)")
-        .eq("boletos.estado", "activo")
+        .select("*, profiles(nombre)")
         .gte("fecha", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       if (categoria !== "Todas") query = query.eq("categoria", categoria)
       if (orden === "fecha") query = query.order("fecha", { ascending: true })
@@ -197,7 +202,6 @@ export default function Explorar() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? "14px" : "18px" }}>
             {eventosFiltrados.map((ev, i) => {
-              const asistentes = ev.boletos?.[0]?.count || 0
               const fechaFormato = new Date(ev.fecha).toLocaleDateString("es-MX", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
               return (
                 <motion.div key={ev.id}

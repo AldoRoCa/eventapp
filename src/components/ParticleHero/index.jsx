@@ -68,13 +68,11 @@ export default function ParticleHero({ children, background = 'transparent' }) {
 
   // Slower / shorter scroll-driven morph on mobile keeps the section from
   // feeling like it takes "forever" to scroll past on a small screen,
-  // while still giving the animation room to breathe on desktop.
-  const [scrollDistance, setScrollDistance] = useState(() =>
-    typeof window !== 'undefined' ? window.innerHeight * (isMobile ? 1.0 : 1.3) : 800
-  );
-  useEffect(() => {
-    setScrollDistance(window.innerHeight * (isMobile ? 1.0 : 1.3));
-  }, [isMobile]);
+  // while still giving the animation room to breathe on desktop. Derived
+  // directly from isMobile on every render instead of mirrored into its
+  // own state via an effect — same value, one render instead of two
+  // whenever isMobile changes.
+  const scrollDistance = typeof window !== 'undefined' ? window.innerHeight * (isMobile ? 1.0 : 1.3) : 800;
 
   const { progressRef, reducedMotion } = useScrollAnimation(containerRef, { scrollDistance });
 

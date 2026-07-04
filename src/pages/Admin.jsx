@@ -14,20 +14,6 @@ export default function Admin() {
   const [reportes, setReportes] = useState([])
   const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
-  useEffect(() => {
-    const verificar = async () => {
-      const { data: { user } } = await getUserSafe()
-      if (!user) { navigate("/login"); return }
-      const { data: perfil } = await supabase.from("profiles").select("es_admin").eq("id", user.id).single()
-      if (!perfil?.es_admin) { navigate("/"); return }
-      await cargarSolicitudes()
-      await cargarAnfitriones()
-      await cargarReportes()
-      setLoading(false)
-    }
-    verificar()
-  }, [])
-
   const cargarSolicitudes = async () => {
     const { data } = await supabase
       .from("profiles")
@@ -66,6 +52,20 @@ export default function Admin() {
       .order("created_at", { ascending: true })
     setReportes(data || [])
   }
+
+  useEffect(() => {
+    const verificar = async () => {
+      const { data: { user } } = await getUserSafe()
+      if (!user) { navigate("/login"); return }
+      const { data: perfil } = await supabase.from("profiles").select("es_admin").eq("id", user.id).single()
+      if (!perfil?.es_admin) { navigate("/"); return }
+      await cargarSolicitudes()
+      await cargarAnfitriones()
+      await cargarReportes()
+      setLoading(false)
+    }
+    verificar()
+  }, [navigate])
 
   const resolverReporte = async (reporte, accion) => {
     const confirmText = accion === "aprobar"

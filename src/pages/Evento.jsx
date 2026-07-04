@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
@@ -29,12 +29,10 @@ export default function Evento() {
   const [cantidad, setCantidad] = useState(1)
   const [nombreRegistro, setNombreRegistro] = useState("")
   const [editandoNombre, setEditandoNombre] = useState(false)
-  const [precioMostrado, setPrecioMostrado] = useState(0)
   const [boletosUsuario, setBoletosUsuario] = useState(0)
   const [fotoZoom, setFotoZoom] = useState(null)
   const [ratingAnfitrion, setRatingAnfitrion] = useState(null) // { promedio, total } o null si no hay reseñas
   const [comentariosAnfitrion, setComentariosAnfitrion] = useState([])
-  const precioTimerRef = useRef(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -49,7 +47,6 @@ export default function Evento() {
         .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, created_at, profiles(nombre, avatar_url)")
         .eq("id", id).single()
       setEvento(ev)
-      setPrecioMostrado(ev?.precio || 0)
 
       if (ev?.anfitrion_id) {
         const { data: resenas } = await supabase
@@ -108,8 +105,6 @@ export default function Evento() {
   const cambiarCantidad = (nueva) => {
     if (nueva < 1 || nueva > maxComprable) return
     setCantidad(nueva)
-    if (precioTimerRef.current) clearTimeout(precioTimerRef.current)
-    precioTimerRef.current = setTimeout(() => setPrecioMostrado((evento?.precio || 0) * nueva), 1000)
   }
 
   const handleComprar = async () => {
@@ -180,7 +175,11 @@ export default function Evento() {
     { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, label: "Asistentes", value: `${asistentes} / ${evento.capacidad}`, color: "#fbbf24", glow: "#d97706" },
   ]
 
-  const BloqueCompra = () => (
+  // Elemento JSX precalculado (no un componente definido dentro del
+  // render): se usa dos veces en el árbol (layout móvil y escritorio) sin
+  // que React lo desmonte/remonte, porque no es un tipo de componente
+  // nuevo en cada render — es el mismo valor reutilizado.
+  const bloqueCompra = (
     <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(255,255,255,0.02) 100%)", border: "1.5px solid rgba(124,58,237,0.2)", borderRadius: "22px", padding: isMobile ? "22px 18px" : "28px", position: "relative", overflow: "hidden", boxShadow: "0 0 40px rgba(124,58,237,0.08), inset 0 1px 0 rgba(255,255,255,0.06)" }}>
       {/* Línea superior brillante */}
       <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "160px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.6), transparent)" }} />
@@ -364,7 +363,7 @@ export default function Evento() {
 
           {/* BLOQUE COMPRA ARRIBA */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={{ marginBottom: "32px" }}>
-            <BloqueCompra />
+            {bloqueCompra}
           </motion.div>
 
           {/* ANFITRIÓN */}
@@ -549,7 +548,7 @@ export default function Evento() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
             style={{ position: "sticky", top: "88px" }}
           >
-            <BloqueCompra />
+            {bloqueCompra}
           </motion.div>
         </div>
       )}

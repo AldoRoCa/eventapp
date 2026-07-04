@@ -34,7 +34,6 @@ export default function MisBoletos() {
   const isMobile = useIsMobile()
   const [boletos, setBoletos] = useState([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState(null)
   const [reportando, setReportando] = useState(null) // boleto_id del modal abierto
   const [motivoReporte, setMotivoReporte] = useState("no_ocurrio")
   const [descripcionReporte, setDescripcionReporte] = useState("")
@@ -54,7 +53,6 @@ export default function MisBoletos() {
     const cargar = async () => {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
-      setUser(user)
       const { data } = await supabase
         .from("boletos")
         .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, duracion_horas, profiles(nombre)), mp_payment_id, codigo_grupo, nombre_registro")
@@ -87,7 +85,7 @@ export default function MisBoletos() {
       setLoading(false)
     }
     cargar()
-  }, [])
+  }, [navigate])
 
   const enviarReporte = async () => {
     if (!reportando) return

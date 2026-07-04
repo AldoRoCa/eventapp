@@ -35,7 +35,7 @@ export default function PagoExitoso() {
       setTimeout(() => navigate("/mis-boletos"), resultado === "pendiente" ? 5000 : 3000)
     }
     activarBoleto()
-  }, [])
+  }, [navigate, searchParams])
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "white" }}>

@@ -47,7 +47,7 @@ export default function CrearEvento() {
       setVerificando(false)
     }
     verificar()
-  }, [])
+  }, [navigate])
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 

@@ -1,8 +1,8 @@
-import { useState, useEffect, lazy, Suspense } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 
-import { Routes, Route, useNavigate, Link } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import { Routes, Route, useNavigate } from "react-router-dom"
+import { motion } from "framer-motion"
 import { supabase } from "./supabase"
 import Login from "./pages/Login"
 import Registro from "./pages/Registro"
@@ -68,7 +68,7 @@ const BadgeIcon = ({ type }) => {
 function CategoryCard({ cat, activa, onClick }) {
   const [hovered, setHovered] = useState(false)
   const [touched, setTouched] = useState(false)
-  const active = hovered || touched
+  const active = hovered || touched || activa
   return (
     <motion.div
       onHoverStart={() => setHovered(true)}
@@ -188,7 +188,6 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
   const [fechaHero, setFechaHero] = useState("")
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [esAnfitrion, setEsAnfitrion] = useState(false)
-  const [menuAbierto, setMenuAbierto] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -262,8 +261,6 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
     { label: "Contratos protegidos", color: "#60a5fa", border: "#2563eb", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
     { label: "Verificación de anfitriones", color: "#34d399", border: "#059669", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
   ]
-
-  const px = isMobile ? "18px" : "64px"
 
   return (
     <div style={{ minHeight: "100vh", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: "hidden" }}>

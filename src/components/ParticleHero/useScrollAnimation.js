@@ -37,19 +37,21 @@ gsap.registerPlugin(ScrollTrigger);
  */
 export function useScrollAnimation(containerRef, { scrollDistance }) {
   const progressRef = useRef(0);
-  const [isComplete, setIsComplete] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // Leídos una sola vez al montar (mismo patrón que useIsMobileViewport en
+  // index.jsx) en vez de vía setState dentro de un efecto — matchMedia no
+  // cambia de valor sin recargar la página, así que no necesita un
+  // listener de 'change'. isComplete arranca en true directamente cuando
+  // hay preferencia de movimiento reducido, sin pasar por el efecto.
+  const [reducedMotion] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const [isComplete, setIsComplete] = useState(() => reducedMotion);
 
   useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const prefersReduced = mql.matches;
-    setReducedMotion(prefersReduced);
-
-    if (prefersReduced) {
+    if (reducedMotion) {
       // Skip the scroll-jacked morph entirely. Land directly on the
-      // formed bolt and reveal the hero content right away.
+      // formed bolt; isComplete ya arrancó en true (arriba).
       progressRef.current = 1;
-      setIsComplete(true);
       return;
     }
 
@@ -85,7 +87,7 @@ export function useScrollAnimation(containerRef, { scrollDistance }) {
     return () => {
       trigger.kill();
     };
-  }, [containerRef, scrollDistance]);
+  }, [containerRef, scrollDistance, reducedMotion]);
 
   return { progressRef, isComplete, reducedMotion };
 }
