@@ -122,6 +122,12 @@ export default function Evento() {
         if (!error) { setTieneBoleto(true); setExito(true); setEstadoBoleto("pendiente") }
         setComprando(false); return
       } else {
+        // Limpiar intentos de compra abandonados de este mismo evento antes
+        // de crear los nuevos: si quedaba un "pendiente_pago" de un intento
+        // previo (pago que nunca se confirmó), confirmar-pago-mp activa TODOS
+        // los boletos pendientes de pago de este usuario+evento de un jalón —
+        // dejar viejos sueltos hacía que un solo pago activara boletos de más.
+        await supabase.from("boletos").delete().eq("evento_id", id).eq("usuario_id", user.id).eq("estado", "pendiente_pago")
         const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
         const { error: boletoError } = await supabase.from("boletos").insert(inserts)
         if (boletoError) { setComprando(false); return }
@@ -142,6 +148,9 @@ export default function Evento() {
       if (!error) { setTieneBoleto(true); setAsistentes(a => a + cantidad); setExito(true); setEstadoBoleto("activo") }
       setComprando(false); return
     }
+    // Misma limpieza de intentos abandonados que en el flujo de solicitud
+    // con pago — evita que un solo pago confirmado active boletos de más.
+    await supabase.from("boletos").delete().eq("evento_id", id).eq("usuario_id", user.id).eq("estado", "pendiente_pago")
     const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
     const { error: boletoError } = await supabase.from("boletos").insert(inserts)
     if (boletoError) { setComprando(false); return }
