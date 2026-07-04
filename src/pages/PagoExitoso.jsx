@@ -6,12 +6,13 @@ import { supabase } from "../supabase"
 export default function PagoExitoso() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [estado, setEstado] = useState("verificando") // verificando | confirmado | error
+  const [estado, setEstado] = useState("verificando") // verificando | confirmado | pendiente | error
 
   useEffect(() => {
     const activarBoleto = async () => {
       const evento_id = searchParams.get("evento_id")
       const payment_id = searchParams.get("collection_id")
+      let resultado = "error"
 
       const { data: { session } } = await supabase.auth.getSession()
       if (session && evento_id && payment_id) {
@@ -23,14 +24,15 @@ export default function PagoExitoso() {
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
             body: JSON.stringify({ evento_id, payment_id })
           })
-          setEstado(res.ok ? "confirmado" : "error")
+          const data = await res.json().catch(() => ({}))
+          if (res.ok) resultado = data.estado === "pendiente" ? "pendiente" : "confirmado"
         } catch {
-          setEstado("error")
+          resultado = "error"
         }
-      } else {
-        setEstado("error")
       }
-      setTimeout(() => navigate("/mis-boletos"), 3000)
+      setEstado(resultado)
+      // El mensaje de solicitud pendiente es más largo; dar tiempo de leerlo
+      setTimeout(() => navigate("/mis-boletos"), resultado === "pendiente" ? 5000 : 3000)
     }
     activarBoleto()
   }, [])
@@ -43,6 +45,12 @@ export default function PagoExitoso() {
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>⚠</div>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>No pudimos confirmar tu pago</h1>
             <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", marginBottom: "8px" }}>Si el cargo se realizó, tu boleto se activará en unos minutos. Si no aparece en Mis Boletos, contáctanos.</p>
+          </>
+        ) : estado === "pendiente" ? (
+          <>
+            <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>⏳</div>
+            <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>¡Pago recibido!</h1>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", marginBottom: "8px" }}>Este evento es por solicitud: el anfitrión debe aprobar tu boleto. Si lo rechaza, se te reembolsará automáticamente.</p>
           </>
         ) : (
           <>

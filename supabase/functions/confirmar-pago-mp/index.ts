@@ -78,7 +78,7 @@ serve(async (req) => {
     // Token de Mercado Pago del anfitrión, para consultar el pago con su cuenta
     const { data: evento } = await supabase
       .from("eventos")
-      .select("anfitrion_id")
+      .select("anfitrion_id, tipo_boleto")
       .eq("id", evento_id)
       .single()
 
@@ -125,9 +125,14 @@ serve(async (req) => {
 
     const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
 
+    // En eventos de solicitud, pagar no activa el boleto: queda pendiente
+    // de que el anfitrión lo apruebe (gestionar-solicitud). Si lo rechaza,
+    // el pago se reembolsa automáticamente.
+    const nuevoEstado = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
+
     const { error: updateError } = await supabase
       .from("boletos")
-      .update({ estado: "activo", mp_payment_id: String(payment_id), codigo_grupo: codigo })
+      .update({ estado: nuevoEstado, mp_payment_id: String(payment_id), codigo_grupo: codigo })
       .eq("usuario_id", user.id)
       .eq("evento_id", evento_id)
       .eq("estado", "pendiente_pago")
@@ -139,7 +144,7 @@ serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, estado: nuevoEstado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     })

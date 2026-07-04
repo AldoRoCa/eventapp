@@ -778,6 +778,9 @@ export default function PanelAnfitrion() {
                       <div>
                         <div style={{ fontWeight: 600, fontSize: "14px" }}>{sol.profiles?.nombre || "Usuario"}</div>
                         <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>{sol.eventos?.titulo} · {sol.profiles?.email}</div>
+                        {sol.mp_payment_id && (
+                          <div style={{ color: "#f59e0b", fontSize: "11.5px", marginTop: "3px" }}>💳 Boleto pagado — si lo rechazas, se reembolsa automáticamente</div>
+                        )}
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "8px", width: isMobile ? "100%" : "auto" }}>
