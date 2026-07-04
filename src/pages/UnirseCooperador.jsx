@@ -146,6 +146,11 @@ export default function UnirseCooperador() {
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    // buscar/detenerEscaneo se recrean en cada render (no son useCallback);
+    // incluirlas reiniciaría este efecto en cada render y rompería el ciclo
+    // de captura de frames — debe re-arrancar solo cuando cambia si se está
+    // escaneando, no cuando cambian las funciones.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escaneando])
 
   useEffect(() => () => detenerEscaneo(), [])

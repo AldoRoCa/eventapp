@@ -71,7 +71,7 @@ export default function PanelAnfitrion() {
       setLoading(false)
     }
     cargar()
-  }, [])
+  }, [navigate])
 
   const verAsistentes = async (evento) => {
     setEventoSeleccionado(evento)
@@ -257,12 +257,20 @@ export default function PanelAnfitrion() {
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    // buscarCheckin/detenerEscaneo se recrean en cada render (no son
+    // useCallback); incluirlas reiniciaría este efecto en cada render y
+    // rompería el ciclo de captura de frames — el efecto debe re-arrancar
+    // solo cuando cambia si se está escaneando, no cuando cambian funciones.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [escaneando])
 
   // Si se cierra el modal de check-in con la cámara todavía prendida, hay
   // que apagarla — si no, el navegador se queda usando la cámara en segundo
-  // plano indefinidamente.
+  // plano indefinidamente. Es sincronización intencional con un sistema
+  // externo (la cámara), no estado derivado, así que el setState dentro
+  // del efecto es el patrón correcto aquí.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!checkinEvento) detenerEscaneo()
   }, [checkinEvento])
   useEffect(() => () => detenerEscaneo(), [])

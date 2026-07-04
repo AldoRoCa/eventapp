@@ -49,7 +49,7 @@ export default function Perfil() {
       setLoading(false)
     }
     cargar()
-  }, [])
+  }, [navigate])
 
   const subirAvatar = async (e) => {
     const file = e.target.files[0]
@@ -254,7 +254,7 @@ export default function Perfil() {
                           {fecha ? `${fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" })} · ${fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}` : ""}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <div style={{ fontWeight: 700, fontSize: "16px" }}>{ev?.precio === 0 ? "Gratis" : `$${ev?.precio}`}</div>
+                          <div style={{ fontWeight: 700, fontSize: "16px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
                           <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "12.5px", color: "#a78bfa", textDecoration: "none", fontWeight: 600 }}>Ver →</Link>
                         </div>
                       </div>
@@ -274,7 +274,7 @@ export default function Perfil() {
                         </div>
                       </div>
                       <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "18px" }}>{ev?.precio === 0 ? "Gratis" : `$${ev?.precio}`}</div>
+                        <div style={{ fontWeight: 700, fontSize: "18px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
                         <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>
                           Ver evento
                           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

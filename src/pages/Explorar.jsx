@@ -236,7 +236,7 @@ export default function Explorar() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div>
-                        <span style={{ fontWeight: 700, fontSize: "19px", letterSpacing: "-0.5px" }}>{ev.precio === 0 ? "Gratis" : `$${ev.precio}`}</span>
+                        <span style={{ fontWeight: 700, fontSize: "19px", letterSpacing: "-0.5px" }}>{ev.precio === 0 ? "Gratis" : `$${Math.round(ev.precio * 1.10)}`}</span>
                         {ev.precio > 0 && <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>MXN</span>}
                       </div>
                       <motion.span whileHover={{ x: 2 }} style={{ fontSize: "13px", color: "#a78bfa", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>

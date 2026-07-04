@@ -38,7 +38,7 @@ export default function SerAnfitrion() {
       setLoading(false)
     }
     cargar()
-  }, [])
+  }, [navigate])
 
   const handleChange = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
