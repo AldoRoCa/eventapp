@@ -113,6 +113,12 @@ serve(async (req) => {
           pending: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&collection_status=pending`,
         },
         auto_return: "approved",
+        // Si el pago queda "in_process" (común con débito — el banco pide
+        // reintento diferido) y se resuelve minutos/horas después, el
+        // comprador ya no está en pago-exitoso para que confirmar-pago-mp
+        // lo active. MP llama esta URL cada vez que el pago cambia de
+        // estado, y mp-webhook hace la misma verificación/activación.
+        notification_url: `${siteUrl}/functions/v1/mp-webhook?evento_id=${evento_id}`,
         metadata: {
           evento_id,
           usuario_id,
