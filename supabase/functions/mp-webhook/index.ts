@@ -17,7 +17,43 @@ const corsHeaders = {
 // "hay un cambio en el pago X", así que siempre se vuelve a consultar el
 // pago real contra la API de MP (con el token del anfitrión del evento,
 // el único con autoridad sobre ese pago) antes de activar nada — mismo
-// principio que confirmar-pago-mp.
+// principio que confirmar-pago-mp. La firma HMAC (abajo) es una capa
+// adicional para rechazar notificaciones falsas antes de gastar esa
+// llamada a la API; si MP_WEBHOOK_SECRET no está configurado, se omite
+// sin bloquear nada (compatibilidad hacia atrás mientras se configura).
+async function firmaValida(req: Request, dataId: string | null): Promise<boolean> {
+  const secret = Deno.env.get("MP_WEBHOOK_SECRET")
+  if (!secret) return true
+
+  const xSignature = req.headers.get("x-signature")
+  const xRequestId = req.headers.get("x-request-id")
+  if (!xSignature || !xRequestId || !dataId) return false
+
+  const partes: Record<string, string> = {}
+  for (const parte of xSignature.split(",")) {
+    const [clave, valor] = parte.split("=")
+    if (clave && valor) partes[clave.trim()] = valor.trim()
+  }
+  const ts = partes["ts"]
+  const v1 = partes["v1"]
+  if (!ts || !v1) return false
+
+  const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${ts};`
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  )
+  const firmaBuffer = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest))
+  const calculada = Array.from(new Uint8Array(firmaBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+
+  return calculada === v1
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -28,8 +64,19 @@ serve(async (req) => {
     const evento_id = url.searchParams.get("evento_id")
 
     // El id del pago puede venir en el body (webhooks v2: POST JSON) o en
-    // query params (IPN clásico: topic=payment&id=... / data.id=...).
-    let paymentId = url.searchParams.get("data.id") || url.searchParams.get("id")
+    // query params (IPN clásico: topic=payment&id=... / data.id=...). La
+    // firma solo se valida contra el id de la query (así lo especifica MP),
+    // no contra el del body.
+    const dataIdQuery = url.searchParams.get("data.id") || url.searchParams.get("id")
+
+    if (!(await firmaValida(req, dataIdQuery))) {
+      return new Response(JSON.stringify({ error: "Firma inválida" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      })
+    }
+
+    let paymentId = dataIdQuery
     let tipo = url.searchParams.get("type") || url.searchParams.get("topic")
     if (!paymentId && req.method === "POST") {
       const body = await req.json().catch(() => null)
