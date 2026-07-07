@@ -105,3 +105,15 @@ min-height: 100vh;
   background: #333;
   border-radius: 999px;
 }
+
+/* Anillo de texto 3D del hero (HeroHolograma) */
+@keyframes velaRingSpin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+.vela-ring-spin {
+  animation: velaRingSpin 17s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vela-ring-spin { animation: none; }
+}
