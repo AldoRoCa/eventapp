@@ -44,6 +44,17 @@ function useEscalaHero() {
     fontSize: lerp(9.5, 13.5, t),
     letraAncho: lerp(10, 16, t),
     perspectiva: lerp(720, 1100, t),
+    // La franja superior del video está desvanecida por fadeSuperior —
+    // invisible, pero sigue ocupando alto. En pantallas angostas eso se ve
+    // como un hueco entre la barra de navegación y el holograma; este
+    // margen negativo lo compensa (en escritorio no hace falta). Calibrado
+    // para que la luz visible arranque unos px debajo de la barra fija —
+    // subirlo más la mete DEBAJO de la barra y reaparece el corte duro.
+    margenSuperior: lerp(-28, 0, t),
+    // El anillo va más arriba en pantallas angostas: con el radio chico,
+    // a la altura de escritorio (64%) las letras pasan encima de la base
+    // del holograma en vez de rodear el rayo.
+    anilloTop: lerp(54, 64, t),
   }
 }
 
@@ -73,7 +84,7 @@ export default function HeroHolograma() {
   const [reducedMotion] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   )
-  const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva } = useEscalaHero()
+  const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva, margenSuperior, anilloTop } = useEscalaHero()
 
   if (reducedMotion) {
     return (
@@ -90,7 +101,7 @@ export default function HeroHolograma() {
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", maxWidth: "920px", height: `${contenedorAlto}px`, margin: "0 auto" }}>
+    <div style={{ position: "relative", width: "100%", maxWidth: "920px", height: `${contenedorAlto}px`, margin: `${margenSuperior}px auto 0` }}>
       {/* La frase real para lectores de pantalla y buscadores — el anillo
           giratorio es visual, letra por letra, y no se puede leer como texto */}
       <h1 style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap", border: 0 }}>
@@ -106,7 +117,7 @@ export default function HeroHolograma() {
         <source src="/hero-bolt.webm" type="video/webm" />
       </video>
 
-      <div style={{ position: "absolute", left: "50%", top: "64%", transform: "translate(-50%, -50%)", perspective: `${perspectiva}px`, pointerEvents: "none", zIndex: 3 }} aria-hidden="true">
+      <div style={{ position: "absolute", left: "50%", top: `${anilloTop}%`, transform: "translate(-50%, -50%)", perspective: `${perspectiva}px`, pointerEvents: "none", zIndex: 3 }} aria-hidden="true">
         <div style={{ transform: "rotateX(8deg)", transformStyle: "preserve-3d" }}>
           <div className="vela-ring-spin" style={{ position: "relative", width: 0, height: 0, transformStyle: "preserve-3d" }}>
             {letrasDelAnillo(FRASE, 3, radio, fontSize, letraAncho)}
