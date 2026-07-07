@@ -59,6 +59,13 @@ function useEscalaHero() {
     // como un hueco entre la barra de navegación y el holograma; este
     // margen negativo lo compensa (en escritorio no hace falta).
     margenSuperior: lerp(-72, 0, t),
+    // Lo mismo por abajo: la luz visible termina en el ~87% del cuadro
+    // (medido muestreando píxeles) — el último ~13% es franja oscura sin
+    // contenido, y dejaba un hueco grande entre el holograma y lo que
+    // sigue (las insignias). Este margen lo cierra dejando un respiro de
+    // ~15-20px; crece con el tamaño del video porque la franja muerta es
+    // proporcional al alto del cuadro.
+    margenInferior: lerp(-42, -60, t),
     // El anillo va más arriba en pantallas angostas: con el radio chico,
     // a la altura de escritorio (64%) las letras pasan encima de la base
     // del holograma en vez de rodear el rayo.
@@ -92,7 +99,7 @@ export default function HeroHolograma() {
   const [reducedMotion] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   )
-  const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva, margenSuperior, anilloTop } = useEscalaHero()
+  const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva, margenSuperior, margenInferior, anilloTop } = useEscalaHero()
   const videoRef = useRef(null)
   // false hasta que el video esté REPRODUCIÉNDOSE de verdad (evento
   // "playing"). Mientras tanto el <video> queda con opacity 0 y en su
@@ -145,7 +152,7 @@ export default function HeroHolograma() {
   }
 
   return (
-    <div style={{ position: "relative", width: "100%", maxWidth: "920px", height: `${contenedorAlto}px`, margin: `${margenSuperior}px auto 0` }}>
+    <div style={{ position: "relative", width: "100%", maxWidth: "920px", height: `${contenedorAlto}px`, margin: `${margenSuperior}px auto ${margenInferior}px` }}>
       {/* La frase real para lectores de pantalla y buscadores — el anillo
           giratorio es visual, letra por letra, y no se puede leer como texto */}
       <h1 style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap", border: 0 }}>
