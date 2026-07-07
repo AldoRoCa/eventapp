@@ -872,7 +872,7 @@ export default function PanelAnfitrion() {
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Descripción</label>
                   <textarea value={formEditar.descripcion} onChange={e => setFormEditar(f => ({ ...f, descripcion: e.target.value }))} rows={3} style={{ ...inputStyle, resize: "vertical" }} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Fecha</label>
                     <input type="date" value={formEditar.fecha} onChange={e => setFormEditar(f => ({ ...f, fecha: e.target.value }))} style={{ ...inputStyle, colorScheme: "dark" }} />
@@ -895,7 +895,7 @@ export default function PanelAnfitrion() {
                     ))}
                   </select>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Capacidad</label>
                     <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
@@ -930,7 +930,7 @@ export default function PanelAnfitrion() {
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Límite de boletos por persona</label>
                   <input type="number" value={formEditar.max_boletos_por_persona} onChange={e => setFormEditar(f => ({ ...f, max_boletos_por_persona: e.target.value }))} min="1" max="20" style={inputStyle} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Duración del evento (horas)</label>
                     <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Pasado este tiempo, el evento se marca como finalizado</div>

@@ -3,8 +3,19 @@ import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener("resize", handler)
+    return () => window.removeEventListener("resize", handler)
+  }, [])
+  return isMobile
+}
+
 export default function Admin() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [loading, setLoading] = useState(true)
   const [solicitudes, setSolicitudes] = useState([])
   const [procesando, setProcesando] = useState(null)
@@ -141,21 +152,21 @@ export default function Admin() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
 
-      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)" }}>
+      <nav style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "rgba(8,8,8,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: isMobile ? "0 14px" : "0 64px", height: "68px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "12px", minWidth: 0 }}>
+          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 18px rgba(124,58,237,0.5)", flexShrink: 0 }}>
             <svg width="19" height="19" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
           </div>
-          <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
-          <span style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "999px", padding: "3px 10px", fontSize: "12px", fontWeight: 600, color: "#f87171" }}>Admin</span>
+          {!isMobile && <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>}
+          <span style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "999px", padding: "3px 10px", fontSize: "12px", fontWeight: 600, color: "#f87171", whiteSpace: "nowrap" }}>Admin</span>
         </div>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap", flexShrink: 0 }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          Salir del panel
+          {isMobile ? "Salir" : "Salir del panel"}
         </Link>
       </nav>
 
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "48px 64px" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: isMobile ? "28px 16px" : "48px 64px" }}>
 
         <div style={{ marginBottom: "36px" }}>
           <h1 style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "6px" }}>Panel de administración</h1>
@@ -170,14 +181,14 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
-        <div style={{ display: "flex", gap: "4px", marginBottom: "28px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "4px", width: "fit-content" }}>
+        <div style={{ display: "flex", gap: "4px", marginBottom: "28px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "4px", width: isMobile ? "100%" : "fit-content", flexWrap: "wrap" }}>
           {[
-            { id: "solicitudes", label: `Solicitudes pendientes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` },
-            { id: "anfitriones", label: `Anfitriones aprobados (${anfitriones.length})` },
-            { id: "reportes", label: `Reportes de eventos ${reportes.length > 0 ? `(${reportes.length})` : ""}` },
+            { id: "solicitudes", label: isMobile ? `Solicitudes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` : `Solicitudes pendientes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` },
+            { id: "anfitriones", label: isMobile ? `Anfitriones (${anfitriones.length})` : `Anfitriones aprobados (${anfitriones.length})` },
+            { id: "reportes", label: isMobile ? `Reportes ${reportes.length > 0 ? `(${reportes.length})` : ""}` : `Reportes de eventos ${reportes.length > 0 ? `(${reportes.length})` : ""}` },
           ].map(t => (
             <motion.button key={t.id} onClick={() => setTab(t.id)} whileTap={{ scale: 0.97 }}
-              style={{ padding: "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s" }}
+              style={{ padding: isMobile ? "8px 12px" : "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: isMobile ? "12.5px" : "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s", flex: isMobile ? "1" : "none", whiteSpace: "nowrap" }}
             >{t.label}</motion.button>
           ))}
         </div>
@@ -196,7 +207,7 @@ export default function Admin() {
                   <motion.div key={sol.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                     style={{ background: "#0f0f11", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "24px" }}
                   >
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                         <div style={{ width: "48px", height: "48px", borderRadius: "999px", overflow: "hidden", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "18px", flexShrink: 0 }}>
                           {sol.avatar_url ? <img src={sol.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : sol.nombre?.charAt(0) || "U"}
@@ -215,7 +226,7 @@ export default function Admin() {
                         >✕ Rechazar</motion.button>
                       </div>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginTop: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "12px", marginTop: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
                       <div>
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Teléfono</div>
                         <div style={{ fontSize: "13.5px" }}>{sol.telefono || "—"}</div>
@@ -235,7 +246,7 @@ export default function Admin() {
                       {ineUrls[sol.id] && (
                         <div style={{ gridColumn: "1/-1" }}>
                           <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Identificación oficial</div>
-                          <img src={ineUrls[sol.id]} alt="INE" style={{ maxWidth: "320px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)" }} />
+                          <img src={ineUrls[sol.id]} alt="INE" style={{ maxWidth: "320px", width: "100%", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)" }} />
                         </div>
                       )}
                     </div>
