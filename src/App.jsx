@@ -357,7 +357,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
           esta sección su propio fondo creaba bandas horizontales visibles */}
       <section style={{ position: "relative", overflow: "hidden" }}>
         <div style={{ position: "relative", width: "100%", maxWidth: "1000px", margin: "0 auto", textAlign: "center", padding: isMobile ? "0 18px 44px" : "0 24px 60px" }}>
-        <HeroHolograma isMobile={isMobile} />
+        <HeroHolograma />
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
           style={{ color: "rgba(255,255,255,0.55)", fontSize: isMobile ? "0.95rem" : "1rem", margin: isMobile ? "14px 0 22px" : "0 0 26px", lineHeight: 1.7, fontWeight: 400 }}
         >Fiestas, conciertos, talleres y más — todo verificado.</motion.p>
@@ -365,19 +365,19 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
         {/* Barra de búsqueda */}
         {isMobile ? (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px", borderRadius: "20px", background: "rgba(19,17,26,0.92)", border: "1px solid rgba(255,255,255,0.09)", boxShadow: "0 20px 50px -22px rgba(0,0,0,0.8)" }}
           >
             {/* Input */}
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "0 16px", background: "rgba(255,255,255,0.05)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <svg width="17" height="17" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input value={busquedaHero} onChange={e => setBusquedaHero(e.target.value)} onKeyDown={e => e.key === "Enter" && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)} placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "14px 0", fontFamily: "inherit" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "0 14px", background: "rgba(255,255,255,0.045)", borderRadius: "12px" }}>
+              <svg width="16" height="16" fill="none" stroke="rgba(231,228,245,0.45)" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input value={busquedaHero} onChange={e => setBusquedaHero(e.target.value)} onKeyDown={e => e.key === "Enter" && navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)} placeholder="Buscar eventos..." style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "white", fontSize: "15px", padding: "13px 0", fontFamily: "inherit" }} />
             </div>
             {/* Filtros en fila */}
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
-                <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.045)", borderRadius: "12px", overflow: "hidden" }}>
+                <svg width="14" height="14" fill="none" stroke="#8b6bff" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <select value={estadoHero} onChange={e => setEstadoHero(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: estadoHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: estadoHero ? "white" : "rgba(231,228,245,0.85)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "11px 0" }}
                 >
                   <option value="" style={{ background: "#111" }}>Todo México</option>
                   {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
@@ -385,10 +385,10 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
                   ))}
                 </select>
               </div>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.04)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden" }}>
-                <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", background: "rgba(255,255,255,0.045)", borderRadius: "12px", overflow: "hidden" }}>
+                <svg width="14" height="14" fill="none" stroke="#8b6bff" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>
                 <select value={fechaHero} onChange={e => setFechaHero(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "12px 0" }}
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: fechaHero ? "white" : "rgba(231,228,245,0.85)", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit", padding: "11px 0" }}
                 >
                   <option value="" style={{ background: "#111" }}>Fecha</option>
                   <option value="hoy" style={{ background: "#111" }}>Hoy</option>
@@ -399,8 +399,8 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
               </div>
             </div>
             {/* Botón buscar */}
-            <motion.button whileTap={{ scale: 0.97 }} className="btn-3d"
-              style={{ width: "100%", padding: "14px", fontSize: "15px" }}
+            <motion.button whileTap={{ scale: 0.97 }}
+              style={{ width: "100%", border: "none", padding: "13px", borderRadius: "12px", background: "linear-gradient(140deg, #8b6bff, #6d3ff0)", color: "white", fontSize: "15px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 8px 22px -8px rgba(124,92,255,0.8)" }}
               onClick={() => navigate(`/explorar?q=${encodeURIComponent(busquedaHero)}&estado=${encodeURIComponent(estadoHero)}&fecha=${encodeURIComponent(fechaHero)}`)}
             >Buscar</motion.button>
           </motion.div>
