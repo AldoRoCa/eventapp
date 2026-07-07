@@ -94,19 +94,21 @@ export default function HeroHolograma() {
   )
   const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva, margenSuperior, anilloTop } = useEscalaHero()
   const videoRef = useRef(null)
+  // false hasta que el video esté REPRODUCIÉNDOSE de verdad (evento
+  // "playing"). Mientras tanto el <video> queda con opacity 0 y en su
+  // lugar se ve un <img> con el poster: una imagen no puede mostrar
+  // botón de play jamás, en ningún navegador. Intentos anteriores de
+  // ocultar el botón nativo de iOS con CSS de -webkit-media-controls NO
+  // funcionaron (iOS moderno cierra el shadow DOM del video y esas
+  // reglas ya no le llegan) — NO volver a intentar por esa vía.
+  const [reproduciendo, setReproduciendo] = useState(false)
 
   // El modo de ahorro de datos/batería de muchos celulares bloquea el
-  // autoplay aunque el <video> tenga muted+playsInline — el navegador lo
-  // deja pausado y (en iOS) pinta su botón de "play" nativo encima, que
-  // hacía que se percibiera como un video de verdad en vez de un
-  // elemento decorativo. El botón se oculta por CSS (clase
-  // .vela-hero-video en index.css — los pseudo-elementos -webkit- no se
-  // pueden escribir inline), y aquí se fuerza .play() por código con
-  // reintentos PERSISTENTES: en cada toque/clic en cualquier parte de la
-  // página y al volver de segundo plano, hasta que el video de verdad
-  // arranque (un intento único no bastaba: iOS en ahorro de energía
-  // rechaza el primer play() y sin más reintentos el video quedaba
-  // pausado para siempre).
+  // autoplay aunque el <video> tenga muted+playsInline — iOS en ahorro
+  // de energía rechaza incluso el play() forzado hasta que haya un
+  // gesto real del usuario. Reintentos PERSISTENTES: en cada toque/clic
+  // en cualquier parte de la página y al volver de segundo plano, hasta
+  // que el video de verdad arranque.
   useEffect(() => {
     if (reducedMotion) return
     const video = videoRef.current
@@ -150,12 +152,24 @@ export default function HeroHolograma() {
         {FRASE}
       </h1>
 
+      {/* Mientras el video no esté reproduciéndose (autoplay bloqueado por
+          ahorro de energía, etc.), lo que se ve es esta imagen — idéntica
+          al primer cuadro del video y sin ninguna interfaz de reproducción
+          posible. El video vive debajo con opacity 0 y toma su lugar en
+          cuanto dispara "playing". SIN atributo poster en el <video>: es
+          sobre el poster donde iOS pinta su botón de play nativo. */}
+      {!reproduciendo && (
+        <img
+          src="/hero-bolt-poster.jpg" alt="" aria-hidden="true"
+          style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -52%)", height: `${videoAlto}px`, width: "auto", mixBlendMode: "screen", pointerEvents: "none", ...fadeSuperior }}
+        />
+      )}
       <video
-        ref={videoRef} className="vela-hero-video"
+        ref={videoRef}
         autoPlay muted loop playsInline aria-hidden="true"
         disablePictureInPicture disableRemotePlayback controls={false} tabIndex={-1}
-        poster="/hero-bolt-poster.jpg"
-        style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -52%)", height: `${videoAlto}px`, width: "auto", mixBlendMode: "screen", pointerEvents: "none", ...fadeSuperior }}
+        onPlaying={() => setReproduciendo(true)}
+        style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -52%)", height: `${videoAlto}px`, width: "auto", mixBlendMode: "screen", pointerEvents: "none", opacity: reproduciendo ? 1 : 0, ...fadeSuperior }}
       >
         <source src="/hero-bolt.mp4" type="video/mp4" />
         <source src="/hero-bolt.webm" type="video/webm" />

@@ -117,20 +117,3 @@ min-height: 100vh;
 @media (prefers-reduced-motion: reduce) {
   .vela-ring-spin { animation: none; }
 }
-
-/* Video decorativo del hero: si el navegador bloquea el autoplay (modo de
-   ahorro de energía en iOS, etc.), Safari pinta su botón de "play" nativo
-   encima del video pausado — estas reglas lo ocultan por completo para que
-   solo se vea el poster limpio mientras el JS reintenta reproducir. Los
-   pseudo-elementos -webkit- no se pueden poner en estilos inline, por eso
-   viven aquí como clase. */
-.vela-hero-video::-webkit-media-controls,
-.vela-hero-video::-webkit-media-controls-start-playback-button,
-.vela-hero-video::-webkit-media-controls-overlay-play-button,
-.vela-hero-video::-webkit-media-controls-panel,
-.vela-hero-video::-webkit-media-controls-play-button {
-  display: none !important;
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  opacity: 0 !important;
-}
