@@ -134,7 +134,7 @@ export default function Evento() {
         const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
         if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
         const { data: { session } } = await supabase.auth.getSession()
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: evento.precio, usuario_id: user.id, cantidad }) })
         const data = await response.json()
         if (data.url) window.location.href = data.url
         else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
@@ -157,7 +157,7 @@ export default function Evento() {
     const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
     if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
     const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: Math.round(evento.precio * 1.10), usuario_id: user.id, cantidad }) })
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: evento.precio, usuario_id: user.id, cantidad }) })
     const data = await response.json()
     if (data.url) window.location.href = data.url
     else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }

@@ -14,13 +14,29 @@ serve(async (req) => {
   }
 
   try {
+    // "precio" es el precio original del anfitrión (sin comisión), la
+    // misma cifra que se ve en el panel de anfitrión — no el precio ya
+    // inflado que paga el comprador. El +10% se calcula aquí, en un solo
+    // lugar, para que el precio que ve el comprador y la comisión que se
+    // le cobra a Mercado Pago salgan siempre de la misma cuenta.
     const { evento_id, titulo, precio, usuario_id, cantidad } = await req.json()
+
+    if (typeof precio !== "number" || !Number.isFinite(precio) || precio <= 0) {
+      return new Response(JSON.stringify({ error: "Precio inválido" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      })
+    }
+
+    const precioConComision = Math.round(precio * 1.10)
 
     // Mercado Pago México rechaza pagos con tarjeta menores a $5 MXN
     // (min_allowed_amount de todos los medios de tarjeta). Un boleto más
     // barato hace que el checkout rechace la tarjeta en tiempo real con
-    // "La operación no acepta este medio de pago".
-    if (typeof precio !== "number" || !Number.isFinite(precio) || precio < 5) {
+    // "La operación no acepta este medio de pago". El mínimo aplica sobre
+    // lo que realmente se le cobra a la tarjeta (con comisión incluida),
+    // no sobre el precio original del anfitrión.
+    if (precioConComision < 5) {
       return new Response(JSON.stringify({ error: "El monto mínimo por boleto es $5 MXN (límite de Mercado Pago para pagos con tarjeta)." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -86,10 +102,13 @@ serve(async (req) => {
     })
 
     const siteUrl = Deno.env.get("SITE_URL")!
-    // marketplace_fee es un monto absoluto sobre toda la preferencia, así
-    // que la comisión se calcula sobre el total (precio × cantidad), no
-    // sobre un solo boleto.
-    const comision = Math.round(precio * (cantidad || 1) * 0.10)
+    // marketplace_fee es un monto absoluto sobre toda la preferencia. Debe
+    // ser exactamente el extra que el comprador paga sobre el precio del
+    // anfitrión (precioConComision - precio, por cantidad de boletos) —
+    // así el anfitrión recibe su precio completo (menos el cargo propio,
+    // inevitable, de Mercado Pago) y la plataforma se queda con el 10%
+    // real, no con un 10% calculado sobre un precio que ya tenía 10% de más.
+    const comision = Math.round((precioConComision - precio) * (cantidad || 1))
 
     const preference = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -102,7 +121,7 @@ serve(async (req) => {
         items: [{
           title: titulo,
           quantity: cantidad || 1,
-          unit_price: precio,
+          unit_price: precioConComision,
           currency_id: "MXN",
         }],
         marketplace: Deno.env.get("MP_CLIENT_ID")!,
