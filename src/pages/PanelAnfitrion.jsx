@@ -4,6 +4,7 @@ import jsQR from "jsqr"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
+import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -894,6 +895,10 @@ export default function PanelAnfitrion() {
                       <option key={e} value={e} style={{ background: "#111" }}>{e}</option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Vista previa del mapa</label>
+                  <MiniMapaUbicacion ubicacion={formEditar.ubicacion} estado={formEditar.estado_evento} height={isMobile ? "150px" : "180px"} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { eventoFinalizado } from "../eventoUtils"
+import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -419,6 +420,12 @@ export default function Evento() {
             ))}
           </div>
 
+          {/* MINI MAPA */}
+          <div style={{ marginBottom: "24px" }}>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.2px" }}>Cómo llegar</h2>
+            <MiniMapaUbicacion ubicacion={evento.ubicacion} estado={evento.estado_evento} height="200px" />
+          </div>
+
           {/* BARRA CAPACIDAD */}
           <div style={{ padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
@@ -509,6 +516,12 @@ export default function Evento() {
                   </div>
                 </motion.div>
               ))}
+            </div>
+
+            {/* MINI MAPA */}
+            <div style={{ marginBottom: "28px" }}>
+              <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.3px" }}>Cómo llegar</h2>
+              <MiniMapaUbicacion ubicacion={evento.ubicacion} estado={evento.estado_evento} height="240px" />
             </div>
 
             {/* BARRA CAPACIDAD */}

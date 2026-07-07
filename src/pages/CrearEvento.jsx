@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
+import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -268,6 +269,10 @@ export default function CrearEvento() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div style={{ marginTop: "14px" }}>
+              <label style={labelStyle}>Vista previa del mapa</label>
+              <MiniMapaUbicacion ubicacion={form.ubicacion} estado={form.estado_evento} height={isMobile ? "160px" : "200px"} />
             </div>
           </div>
 
