@@ -96,27 +96,36 @@ export default function HeroHolograma() {
   const videoRef = useRef(null)
 
   // El modo de ahorro de datos/batería de muchos celulares bloquea el
-  // autoplay aunque el <video> tenga muted+playsInline, y el navegador
-  // lo deja pausado mostrando su propio botón de "play" nativo — se ve
-  // como un video de verdad en vez de un elemento decorativo de la
-  // página. Forzamos .play() por código (más confiable que solo el
-  // atributo autoPlay) y, si aun así el navegador lo bloquea, un
-  // segundo intento en la primera interacción del usuario en cualquier
-  // parte de la página lo arranca sin que se note un "toque a play".
+  // autoplay aunque el <video> tenga muted+playsInline — el navegador lo
+  // deja pausado y (en iOS) pinta su botón de "play" nativo encima, que
+  // hacía que se percibiera como un video de verdad en vez de un
+  // elemento decorativo. El botón se oculta por CSS (clase
+  // .vela-hero-video en index.css — los pseudo-elementos -webkit- no se
+  // pueden escribir inline), y aquí se fuerza .play() por código con
+  // reintentos PERSISTENTES: en cada toque/clic en cualquier parte de la
+  // página y al volver de segundo plano, hasta que el video de verdad
+  // arranque (un intento único no bastaba: iOS en ahorro de energía
+  // rechaza el primer play() y sin más reintentos el video quedaba
+  // pausado para siempre).
   useEffect(() => {
     if (reducedMotion) return
     const video = videoRef.current
     if (!video) return
     video.muted = true
-    const intentar = () => video.play().catch(() => {})
-    intentar()
-    const reintentar = () => { intentar(); }
-    document.addEventListener("touchstart", reintentar, { once: true, passive: true })
-    document.addEventListener("click", reintentar, { once: true })
-    return () => {
+    let arrancado = false
+    const limpiar = () => {
       document.removeEventListener("touchstart", reintentar)
       document.removeEventListener("click", reintentar)
+      document.removeEventListener("visibilitychange", alVolver)
     }
+    const intentar = () => video.play().then(() => { arrancado = true; limpiar() }).catch(() => {})
+    const reintentar = () => { if (!arrancado) intentar() }
+    const alVolver = () => { if (!document.hidden && !arrancado) intentar() }
+    intentar()
+    document.addEventListener("touchstart", reintentar, { passive: true })
+    document.addEventListener("click", reintentar)
+    document.addEventListener("visibilitychange", alVolver)
+    return limpiar
   }, [reducedMotion])
 
   if (reducedMotion) {
@@ -142,7 +151,7 @@ export default function HeroHolograma() {
       </h1>
 
       <video
-        ref={videoRef}
+        ref={videoRef} className="vela-hero-video"
         autoPlay muted loop playsInline aria-hidden="true"
         disablePictureInPicture disableRemotePlayback controls={false} tabIndex={-1}
         poster="/hero-bolt-poster.jpg"
