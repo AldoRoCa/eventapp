@@ -161,11 +161,11 @@ function HowItWorksCard({ step }) {
   )
 }
 
-function FeatureBadge({ label, color, border, icon }) {
+function FeatureBadge({ label, color, border, icon, compact }) {
   const [hovered, setHovered] = useState(false)
   return (
     <motion.div onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)} whileHover={{ scale: 1.06, y: -2 }} whileTap={{ scale: 0.97 }}
-      style={{ display: "flex", alignItems: "center", gap: "8px", border: `1px solid ${hovered ? border : border + "70"}`, borderRadius: "999px", padding: "9px 20px", fontSize: "13.5px", fontWeight: 500, color: hovered ? "white" : color, background: hovered ? `${border}28` : `#0e0e10`, backgroundImage: hovered ? "none" : `linear-gradient(${border}1a, ${border}1a)`, cursor: "default", transition: "all 0.2s", boxShadow: hovered ? `0 0 16px ${border}35` : "none" }}
+      style={{ display: "flex", alignItems: "center", gap: compact ? "6px" : "8px", border: `1px solid ${hovered ? border : border + "70"}`, borderRadius: "999px", padding: compact ? "6px 13px" : "9px 20px", fontSize: compact ? "11.5px" : "13.5px", fontWeight: 500, color: hovered ? "white" : color, background: hovered ? `${border}28` : `#0e0e10`, backgroundImage: hovered ? "none" : `linear-gradient(${border}1a, ${border}1a)`, cursor: "default", transition: "all 0.2s", boxShadow: hovered ? `0 0 16px ${border}35` : "none", whiteSpace: "nowrap" }}
     >
       <span style={{ color: hovered ? "white" : color, display: "flex" }}>{icon}</span>
       {label}
@@ -246,6 +246,12 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
     { color: "#a78bfa", glow: "#7c3aed", bg: "rgba(124,58,237,0.1)", bgHover: "rgba(124,58,237,0.22)", border: "rgba(124,58,237,0.2)", borderHover: "rgba(124,58,237,0.55)", title: "Encuentra tu evento", desc: "Explora eventos verificados. Filtra por categoría, fecha o ubicación.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> },
     { color: "#60a5fa", glow: "#2563eb", bg: "rgba(37,99,235,0.1)", bgHover: "rgba(37,99,235,0.22)", border: "rgba(37,99,235,0.2)", borderHover: "rgba(37,99,235,0.55)", title: "Compra tu boleto", desc: "Compra segura con reembolso garantizado. Boletos instantáneos o por solicitud.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
     { color: "#34d399", glow: "#059669", bg: "rgba(5,150,105,0.1)", bgHover: "rgba(5,150,105,0.22)", border: "rgba(5,150,105,0.2)", borderHover: "rgba(5,150,105,0.55)", title: "Vive la experiencia", desc: "Presenta tu boleto digital y disfruta. Simple, rápido y seguro.", svg: <svg width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+  ]
+
+  const heroBadges = [
+    { label: isMobile ? "Pagos seguros" : "Pagos 100% seguros", color: "#60a5fa", border: "#2563eb", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
+    { label: "Reembolso garantizado", color: "#34d399", border: "#059669", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { label: "Anfitriones verificados", color: "#a78bfa", border: "#7c3aed", icon: <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
   ]
 
   const ctaBadges = [
@@ -358,6 +364,11 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
       <section style={{ position: "relative", overflow: "hidden" }}>
         <div style={{ position: "relative", width: "100%", maxWidth: "1000px", margin: "0 auto", textAlign: "center", padding: isMobile ? "0 18px 44px" : "0 24px 60px" }}>
         <HeroHolograma />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
+          style={{ display: "flex", justifyContent: "center", gap: "10px", margin: isMobile ? "18px 0 4px" : "8px 0 4px", flexWrap: "wrap" }}
+        >
+          {heroBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} compact={isMobile} />)}
+        </motion.div>
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
           style={{ color: "rgba(255,255,255,0.55)", fontSize: isMobile ? "0.95rem" : "1rem", margin: isMobile ? "14px 0 22px" : "0 0 26px", lineHeight: 1.7, fontWeight: 400 }}
         >Fiestas, conciertos, talleres y más — todo verificado.</motion.p>
