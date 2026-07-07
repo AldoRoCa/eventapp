@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 // La frase que gira alrededor del holograma (y el h1 de la página).
 // Cambiarla aquí actualiza el anillo y el texto estático a la vez.
@@ -93,6 +93,31 @@ export default function HeroHolograma() {
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   )
   const { contenedorAlto, videoAlto, radio, fontSize, letraAncho, perspectiva, margenSuperior, anilloTop } = useEscalaHero()
+  const videoRef = useRef(null)
+
+  // El modo de ahorro de datos/batería de muchos celulares bloquea el
+  // autoplay aunque el <video> tenga muted+playsInline, y el navegador
+  // lo deja pausado mostrando su propio botón de "play" nativo — se ve
+  // como un video de verdad en vez de un elemento decorativo de la
+  // página. Forzamos .play() por código (más confiable que solo el
+  // atributo autoPlay) y, si aun así el navegador lo bloquea, un
+  // segundo intento en la primera interacción del usuario en cualquier
+  // parte de la página lo arranca sin que se note un "toque a play".
+  useEffect(() => {
+    if (reducedMotion) return
+    const video = videoRef.current
+    if (!video) return
+    video.muted = true
+    const intentar = () => video.play().catch(() => {})
+    intentar()
+    const reintentar = () => { intentar(); }
+    document.addEventListener("touchstart", reintentar, { once: true, passive: true })
+    document.addEventListener("click", reintentar, { once: true })
+    return () => {
+      document.removeEventListener("touchstart", reintentar)
+      document.removeEventListener("click", reintentar)
+    }
+  }, [reducedMotion])
 
   if (reducedMotion) {
     return (
@@ -117,7 +142,9 @@ export default function HeroHolograma() {
       </h1>
 
       <video
+        ref={videoRef}
         autoPlay muted loop playsInline aria-hidden="true"
+        disablePictureInPicture disableRemotePlayback controls={false} tabIndex={-1}
         poster="/hero-bolt-poster.jpg"
         style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -52%)", height: `${videoAlto}px`, width: "auto", mixBlendMode: "screen", pointerEvents: "none", ...fadeSuperior }}
       >
