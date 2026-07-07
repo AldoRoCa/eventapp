@@ -365,7 +365,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
         <div style={{ position: "relative", width: "100%", maxWidth: "1000px", margin: "0 auto", textAlign: "center", padding: isMobile ? "0 18px 44px" : "0 24px 60px" }}>
         <HeroHolograma />
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}
-          style={{ display: "flex", justifyContent: "center", gap: "10px", margin: isMobile ? "18px 0 4px" : "8px 0 4px", flexWrap: "wrap" }}
+          style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: "center", justifyContent: "center", gap: isMobile ? "8px" : "10px", margin: isMobile ? "18px 0 4px" : "8px 0 4px" }}
         >
           {heroBadges.map(b => <FeatureBadge key={b.label} label={b.label} color={b.color} border={b.border} icon={b.icon} compact={isMobile} />)}
         </motion.div>
