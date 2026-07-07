@@ -8,17 +8,27 @@ const FRASE = "vive lo que pasa cerca de ti"
 // de video/poster (ffmpeg: máscara de cono con borde difuso multiplicada
 // sobre cada cuadro — fuera del cono el pixel es negro absoluto). Con
 // mix-blend-mode "screen" el negro no aporta nada, así que solo se pega a
-// la página el área donde de verdad hay luz, con orillas suaves. Un
-// clip-path de CSS (intento anterior) dejaba orillas duras visibles.
+// la página el área donde de verdad hay luz, con orillas suaves.
 //
-// El horneado deja un remanente tenue (no negro puro) justo en la franja
-// superior del cuadro — los rayos de luz llegan hasta la orilla del video
-// sin alcanzar a desvanecerse del todo, y se ve como un corte recto justo
-// debajo de la barra de navegación. Este degradado de máscara CSS
-// (visible solo en el ~15% superior) lo desvanece sin tocar el resto.
+// El horneado deja un remanente tenue (no negro puro) en el ~15% superior
+// del cuadro — los rayos llegan hasta la orilla sin desvanecerse del todo
+// ahí, y se veía como un corte/hueco junto a la barra de navegación.
+//
+// Dos intentos fallidos que NO repetir:
+// 1) Separar la máscara (en un DIV contenedor) del mix-blend-mode (en el
+//    <video> hijo): metió un rectángulo visible incluso en Chrome —
+//    mask-image, igual que overflow:hidden, aísla el mix-blend-mode de
+//    sus descendientes a su propio grupo de mezcla en vez de dejarlo
+//    mezclarse con el fondo real de la página (no es un tema de un solo
+//    navegador, pasa en cualquiera).
+// 2) Recortar con un contenedor "overflow:hidden" alrededor del video:
+//    mismo problema que (1), por la misma razón.
+//
+// La combinación que sí funciona sin rectángulo: mask-image Y
+// mix-blend-mode en el MISMO elemento (el <video>/<img>).
 const fadeSuperior = {
-  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)",
-  maskImage: "linear-gradient(to bottom, transparent 0%, black 15%, black 100%)",
+  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
+  maskImage: "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
   WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat",
   WebkitMaskSize: "100% 100%", maskSize: "100% 100%",
 }
@@ -47,10 +57,8 @@ function useEscalaHero() {
     // La franja superior del video está desvanecida por fadeSuperior —
     // invisible, pero sigue ocupando alto. En pantallas angostas eso se ve
     // como un hueco entre la barra de navegación y el holograma; este
-    // margen negativo lo compensa (en escritorio no hace falta). Calibrado
-    // para que la luz visible arranque unos px debajo de la barra fija —
-    // subirlo más la mete DEBAJO de la barra y reaparece el corte duro.
-    margenSuperior: lerp(-28, 0, t),
+    // margen negativo lo compensa (en escritorio no hace falta).
+    margenSuperior: lerp(-72, 0, t),
     // El anillo va más arriba en pantallas angostas: con el radio chico,
     // a la altura de escritorio (64%) las letras pasan encima de la base
     // del holograma en vez de rodear el rayo.
