@@ -886,6 +886,9 @@ export default function PanelAnfitrion() {
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Ubicación</label>
                   <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
+                  <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "6px", lineHeight: 1.4 }}>
+                    ⚠️ Escribe la ubicación tal como aparece en Google Maps — así el mapa de abajo apunta al lugar correcto. Si es una casa u otro lugar sin nombre, usa la dirección completa o una referencia conocida cercana.
+                  </p>
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Estado</label>
