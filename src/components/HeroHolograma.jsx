@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 
-// La frase que gira alrededor del holograma (y el h1 de la página).
-// Cambiarla aquí actualiza el anillo y el texto estático a la vez.
-const FRASE = "vive lo que pasa cerca de ti"
+// Las frases que rotan en el anillo alrededor del holograma. Cambiarlas
+// aquí actualiza el anillo y el h1 (sr-only / modo sin movimiento) a la vez.
+const FRASES = ["Vive, no solo existas", "Just let it happen", "Sal, conecta, vive el momento"]
 
 // El recorte con la silueta del cono de luz está HORNEADO en los archivos
 // de video/poster (ffmpeg: máscara de cono con borde difuso multiplicada
@@ -110,6 +110,25 @@ export default function HeroHolograma() {
   // reglas ya no le llegan) — NO volver a intentar por esa vía.
   const [reproduciendo, setReproduciendo] = useState(false)
 
+  // Rotación entre frases del anillo: se desvanece, cambia de texto, y
+  // vuelve a aparecer — evita el salto brusco de que el anillo cambie de
+  // cantidad de letras de golpe. Desactivada si el usuario prefiere menos
+  // movimiento (misma bandera que ya oculta el video).
+  const [fraseIndex, setFraseIndex] = useState(0)
+  const [fraseFadeOut, setFraseFadeOut] = useState(false)
+  useEffect(() => {
+    if (reducedMotion) return
+    const intervalo = setInterval(() => {
+      setFraseFadeOut(true)
+      setTimeout(() => {
+        setFraseIndex(i => (i + 1) % FRASES.length)
+        setFraseFadeOut(false)
+      }, 400)
+    }, 5000)
+    return () => clearInterval(intervalo)
+  }, [reducedMotion])
+  const frase = FRASES[fraseIndex]
+
   // El modo de ahorro de datos/batería de muchos celulares bloquea el
   // autoplay aunque el <video> tenga muted+playsInline — iOS en ahorro
   // de energía rechaza incluso el play() forzado hasta que haya un
@@ -145,7 +164,7 @@ export default function HeroHolograma() {
           style={{ height: "300px", width: "auto", maxWidth: "100%", objectFit: "contain", mixBlendMode: "screen", ...fadeSuperior }}
         />
         <h1 style={{ fontSize: "1.9rem", fontWeight: 700, lineHeight: 1.15, letterSpacing: "-0.5px", margin: "-6px 0 0", background: "linear-gradient(135deg, #c3b2ff 0%, #8fb4ff 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-          {FRASE}
+          {FRASES[0]}
         </h1>
       </div>
     )
@@ -156,7 +175,7 @@ export default function HeroHolograma() {
       {/* La frase real para lectores de pantalla y buscadores — el anillo
           giratorio es visual, letra por letra, y no se puede leer como texto */}
       <h1 style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap", border: 0 }}>
-        {FRASE}
+        {FRASES.join(" — ")}
       </h1>
 
       {/* Mientras el video no esté reproduciéndose (autoplay bloqueado por
@@ -182,10 +201,10 @@ export default function HeroHolograma() {
         <source src="/hero-bolt.webm" type="video/webm" />
       </video>
 
-      <div style={{ position: "absolute", left: "50%", top: `${anilloTop}%`, transform: "translate(-50%, -50%)", perspective: `${perspectiva}px`, pointerEvents: "none", zIndex: 3 }} aria-hidden="true">
+      <div style={{ position: "absolute", left: "50%", top: `${anilloTop}%`, transform: "translate(-50%, -50%)", perspective: `${perspectiva}px`, pointerEvents: "none", zIndex: 3, opacity: fraseFadeOut ? 0 : 1, transition: "opacity 0.4s ease" }} aria-hidden="true">
         <div style={{ transform: "rotateX(8deg)", transformStyle: "preserve-3d" }}>
           <div className="vela-ring-spin" style={{ position: "relative", width: 0, height: 0, transformStyle: "preserve-3d" }}>
-            {letrasDelAnillo(FRASE, 3, radio, fontSize, letraAncho)}
+            {letrasDelAnillo(frase, 3, radio, fontSize, letraAncho)}
           </div>
         </div>
       </div>
