@@ -108,6 +108,17 @@ export default function Evento() {
     setCantidad(nueva)
   }
 
+  // El aforo y el límite por persona ahora se validan de forma atómica en la
+  // base (trigger trg_verificar_aforo). El conteo del cliente es solo UX: si
+  // dos personas compran los últimos lugares a la vez, una recibe este error
+  // aunque su botón todavía se viera disponible.
+  const mensajeErrorBoleto = (error) => {
+    const m = error?.message || ""
+    if (m.includes("AFORO_LLENO")) return "Este evento acaba de llenarse — ya no hay lugares disponibles."
+    if (m.includes("LIMITE_PERSONA")) return "Alcanzaste el máximo de boletos por persona para este evento."
+    return "No se pudo completar tu registro. Intenta de nuevo."
+  }
+
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
@@ -121,6 +132,7 @@ export default function Evento() {
         const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado, codigo_grupo: codigo }))
         const { error } = await supabase.from("boletos").insert(inserts)
         if (!error) { setTieneBoleto(true); setExito(true); setEstadoBoleto("pendiente") }
+        else alert(mensajeErrorBoleto(error))
         setComprando(false); return
       } else {
         // Limpiar intentos de compra abandonados de este mismo evento antes
@@ -131,7 +143,7 @@ export default function Evento() {
         await supabase.from("boletos").delete().eq("evento_id", id).eq("usuario_id", user.id).eq("estado", "pendiente_pago")
         const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
         const { error: boletoError } = await supabase.from("boletos").insert(inserts)
-        if (boletoError) { setComprando(false); return }
+        if (boletoError) { alert(mensajeErrorBoleto(boletoError)); setComprando(false); return }
         const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
         if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
         const { data: { session } } = await supabase.auth.getSession()
@@ -147,6 +159,7 @@ export default function Evento() {
       const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "activo", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado, codigo_grupo: codigo }))
       const { error } = await supabase.from("boletos").insert(inserts)
       if (!error) { setTieneBoleto(true); setAsistentes(a => a + cantidad); setExito(true); setEstadoBoleto("activo") }
+      else alert(mensajeErrorBoleto(error))
       setComprando(false); return
     }
     // Misma limpieza de intentos abandonados que en el flujo de solicitud
@@ -154,7 +167,7 @@ export default function Evento() {
     await supabase.from("boletos").delete().eq("evento_id", id).eq("usuario_id", user.id).eq("estado", "pendiente_pago")
     const inserts = Array.from({ length: cantidad }, () => ({ evento_id: id, usuario_id: user.id, estado: "pendiente_pago", nombre_registro: nombreRegistro.trim(), nombre_registro_normalizado: nombreNormalizado }))
     const { error: boletoError } = await supabase.from("boletos").insert(inserts)
-    if (boletoError) { setComprando(false); return }
+    if (boletoError) { alert(mensajeErrorBoleto(boletoError)); setComprando(false); return }
     const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
     if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
     const { data: { session } } = await supabase.auth.getSession()
