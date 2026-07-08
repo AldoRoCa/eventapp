@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
+import DesgloseGanancias from "../components/DesgloseGanancias"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -325,6 +326,8 @@ export default function CrearEvento() {
                 )}
               </div>
             </div>
+
+            <DesgloseGanancias precio={form.precio} capacidad={form.capacidad} isMobile={isMobile} style={{ marginBottom: "16px" }} />
 
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Límite de boletos por persona</label>

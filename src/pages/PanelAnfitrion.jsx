@@ -5,6 +5,7 @@ import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
+import DesgloseGanancias from "../components/DesgloseGanancias"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -934,6 +935,7 @@ export default function PanelAnfitrion() {
                     )}
                   </div>
                 </div>
+                <DesgloseGanancias precio={formEditar.precio} capacidad={formEditar.capacidad} isMobile={isMobile} />
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Límite de boletos por persona</label>
                   <input type="number" value={formEditar.max_boletos_por_persona} onChange={e => setFormEditar(f => ({ ...f, max_boletos_por_persona: e.target.value }))} min="1" max="20" style={inputStyle} />
