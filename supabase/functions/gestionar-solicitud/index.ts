@@ -158,11 +158,11 @@ async function reembolsarBoleto(supabase: any, boleto: any, token: string): Prom
     })
     if (!res.ok) {
       const detalle = await res.json().catch(() => ({}))
-      console.log(`Reembolso rechazado por MP para pago ${boleto.mp_payment_id}:`, res.status, JSON.stringify(detalle))
+      console.error(`[ALERTA-REEMBOLSO] Reembolso rechazado por MP para pago ${boleto.mp_payment_id}:`, res.status, JSON.stringify(detalle))
     }
     return res.ok
   } catch (e) {
-    console.log(`Error de red reembolsando pago ${boleto.mp_payment_id}:`, e.message)
+    console.error(`[ALERTA-REEMBOLSO] Error de red reembolsando pago ${boleto.mp_payment_id}:`, e.message)
     return false
   }
 }

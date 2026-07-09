@@ -145,7 +145,7 @@ serve(async (req) => {
           // No borrar nada ni resolver el reporte: los boletos y sus
           // mp_payment_id se conservan para reintentar (los pagos ya
           // reembolsados se detectan y no se cobran doble).
-          console.log("Reembolsos fallidos en resolver-reporte:", JSON.stringify({ reporte_id, evento_id: reporte.evento_id, fallidos }))
+          console.error("[ALERTA-REEMBOLSO] Reembolsos fallidos en resolver-reporte:", JSON.stringify({ reporte_id, evento_id: reporte.evento_id, fallidos }))
           // Persistir el fallo para el panel de admin (best-effort).
           await supabase.from("fallos_reembolso").insert({
             contexto: "resolver-reporte",
@@ -209,11 +209,11 @@ async function reembolsarPago(paymentId: string, token: string): Promise<boolean
     })
     if (!res.ok) {
       const detalle = await res.json().catch(() => ({}))
-      console.log(`Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
+      console.error(`[ALERTA-REEMBOLSO] Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
     }
     return res.ok
   } catch (e) {
-    console.log(`Error de red reembolsando pago ${paymentId}:`, e.message)
+    console.error(`[ALERTA-REEMBOLSO] Error de red reembolsando pago ${paymentId}:`, e.message)
     return false
   }
 }

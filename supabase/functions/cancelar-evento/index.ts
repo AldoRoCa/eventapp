@@ -108,7 +108,7 @@ serve(async (req) => {
         // No borrar nada: los boletos y sus mp_payment_id se conservan
         // para poder reintentar la cancelación (los pagos ya reembolsados
         // se detectan y no se cobran doble).
-        console.log("Reembolsos fallidos en cancelar-evento:", JSON.stringify({ evento_id, fallidos }))
+        console.error("[ALERTA-REEMBOLSO] Reembolsos fallidos en cancelar-evento:", JSON.stringify({ evento_id, fallidos }))
         // Persistir el fallo para que el admin lo vea en su panel (no se
         // pierde en los logs). Best-effort: si el insert fallara, no cambia
         // el resultado de la operación.
@@ -166,11 +166,11 @@ async function reembolsarPago(paymentId: string, token: string): Promise<boolean
     })
     if (!res.ok) {
       const detalle = await res.json().catch(() => ({}))
-      console.log(`Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
+      console.error(`[ALERTA-REEMBOLSO] Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
     }
     return res.ok
   } catch (e) {
-    console.log(`Error de red reembolsando pago ${paymentId}:`, e.message)
+    console.error(`[ALERTA-REEMBOLSO] Error de red reembolsando pago ${paymentId}:`, e.message)
     return false
   }
 }

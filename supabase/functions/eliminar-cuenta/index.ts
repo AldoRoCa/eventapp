@@ -124,7 +124,7 @@ serve(async (req) => {
         // No borrar ni anonimizar nada: los boletos y sus mp_payment_id se
         // conservan para reintentar la baja (los pagos ya reembolsados se
         // detectan con un GET previo y no se cobran doble).
-        console.log("Reembolsos fallidos en eliminar-cuenta:", JSON.stringify({ user_id: user.id, fallidos }))
+        console.error("[ALERTA-REEMBOLSO] Reembolsos fallidos en eliminar-cuenta:", JSON.stringify({ user_id: user.id, fallidos }))
         // Persistir el fallo para el panel de admin (best-effort).
         await supabase.from("fallos_reembolso").insert({
           contexto: "eliminar-cuenta",
@@ -225,11 +225,11 @@ async function reembolsarPago(paymentId: string, token: string): Promise<boolean
     })
     if (!res.ok) {
       const detalle = await res.json().catch(() => ({}))
-      console.log(`Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
+      console.error(`[ALERTA-REEMBOLSO] Reembolso rechazado por MP para pago ${paymentId}:`, res.status, JSON.stringify(detalle))
     }
     return res.ok
   } catch (e) {
-    console.log(`Error de red reembolsando pago ${paymentId}:`, e.message)
+    console.error(`[ALERTA-REEMBOLSO] Error de red reembolsando pago ${paymentId}:`, e.message)
     return false
   }
 }
