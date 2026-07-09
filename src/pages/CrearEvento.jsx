@@ -4,6 +4,7 @@ import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 import DesgloseGanancias from "../components/DesgloseGanancias"
+import { comprimirImagen } from "../imagenUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -53,12 +54,15 @@ export default function CrearEvento() {
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
-  const handleImagen = (e) => {
+  const handleImagen = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     if (file.size > 8 * 1024 * 1024) { setError("La imagen no puede pesar más de 8MB"); return }
-    setImagenFile(file)
-    setImagenPreview(URL.createObjectURL(file))
+    // Comprimir/redimensionar antes de guardar: hace que la vista previa de
+    // WhatsApp funcione (límite ~300KB) y baja mucho el egress de Supabase.
+    const comprimida = await comprimirImagen(file)
+    setImagenFile(comprimida)
+    setImagenPreview(URL.createObjectURL(comprimida))
   }
 
   const handleSubmit = async () => {
