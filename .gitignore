@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Archivos de estado local del CLI de Supabase (no son secretos, pero son
+# ruido: cada deploy los toca y ensucian los commits)
+supabase/.temp/
