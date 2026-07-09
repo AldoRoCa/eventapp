@@ -1,55 +1,36 @@
+# Configuración de Edge Functions.
+#
+# Solo se listan aquí las funciones PÚBLICAS (verify_jwt = false): las que
+# llama un sistema externo o un usuario sin sesión, donde el gateway de
+# Supabase NO debe exigir un JWT. La seguridad real la hace cada función
+# internamente (verifica firma, dueño, cooperador válido, etc.).
+#
+# El resto de las funciones NO se listan y usan el default verify_jwt = true
+# (requieren un JWT válido de usuario autenticado):
+#   crear-pago-mp, confirmar-pago-mp, gestionar-solicitud, cancelar-evento,
+#   eliminar-cuenta, guardar-resena, reportar-evento, resolver-reporte,
+#   generar-link-cooperador, hacer-checkin.
+#
+# Nota: hacer-checkin también lo llaman cooperadores sin cuenta (mandan la
+# publishable key, que pasa el gateway), por eso puede quedarse en true.
 
-[functions.crear-preferencia]
-enabled = true
+# mp-webhook: lo llama Mercado Pago servidor-a-servidor, sin auth de Supabase.
+[functions.mp-webhook]
 verify_jwt = false
-import_map = "./functions/crear-preferencia/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/crear-preferencia/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/crear-preferencia/*.html" ]
 
-[functions.webhook-pago]
-enabled = true
-verify_jwt = false
-import_map = "./functions/webhook-pago/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/webhook-pago/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/webhook-pago/*.html" ]
-
+# mp-oauth: Mercado Pago redirige el navegador aquí con ?code&state, sin JWT.
 [functions.mp-oauth]
-enabled = true
 verify_jwt = false
-import_map = "./functions/mp-oauth/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/mp-oauth/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/mp-oauth/*.html" ]
 
-[functions.crear-pago-stripe]
-enabled = true
+# unirse-cooperador: lo usa una persona sin cuenta desde el link de invitación.
+[functions.unirse-cooperador]
 verify_jwt = false
-import_map = "./functions/crear-pago-stripe/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/crear-pago-stripe/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/crear-pago-stripe/*.html" ]
 
-[functions.stripe-connect-onboarding]
-enabled = true
+# buscar-checkin-cooperador: búsqueda de check-in de un cooperador sin cuenta.
+[functions.buscar-checkin-cooperador]
 verify_jwt = false
-import_map = "./functions/stripe-connect-onboarding/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/stripe-connect-onboarding/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/stripe-connect-onboarding/*.html" ]
+
+# guardar-avatar-registro: se llama justo tras signUp, antes de confirmar
+# el correo — todavía no existe ninguna sesión/JWT.
+[functions.guardar-avatar-registro]
+verify_jwt = false

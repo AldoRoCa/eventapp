@@ -19,11 +19,15 @@ const corsHeaders = {
 // el único con autoridad sobre ese pago) antes de activar nada — mismo
 // principio que confirmar-pago-mp. La firma HMAC (abajo) es una capa
 // adicional para rechazar notificaciones falsas antes de gastar esa
-// llamada a la API; si MP_WEBHOOK_SECRET no está configurado, se omite
-// sin bloquear nada (compatibilidad hacia atrás mientras se configura).
+// llamada a la API. Si MP_WEBHOOK_SECRET no está configurado, la firma NO
+// se puede verificar y la notificación se rechaza (fail-closed).
 async function firmaValida(req: Request, dataId: string | null): Promise<boolean> {
   const secret = Deno.env.get("MP_WEBHOOK_SECRET")
-  if (!secret) return true
+  // Fail-closed: sin el secreto no se puede verificar la firma, así que se
+  // RECHAZA la notificación en vez de dejarla pasar. Antes devolvía true
+  // (fail-open), lo que dejaba procesar notificaciones sin verificar si
+  // alguien olvidaba configurar MP_WEBHOOK_SECRET.
+  if (!secret) return false
 
   const xSignature = req.headers.get("x-signature")
   const xRequestId = req.headers.get("x-request-id")
