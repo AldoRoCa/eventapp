@@ -11,10 +11,16 @@ function useIsMobile() {
   return isMobile
 }
 
+const CORREO = "velaeventapp@gmail.com"
+
 const secciones = [
   {
     titulo: "1. Responsable del tratamiento de datos",
-    contenido: "VELA es responsable del tratamiento de tus datos personales. Para cualquier consulta relacionada con esta política, puedes contactarnos a través del correo electrónico disponible en la aplicación."
+    contenido: [
+      "VELA es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP).",
+      "Ubicación: Centro, Santiago de Querétaro, Querétaro, México.",
+      `Medio oficial para oír y recibir notificaciones y para ejercer tus derechos: ${CORREO}.`,
+    ]
   },
   {
     titulo: "2. Datos personales que recopilamos",
@@ -24,7 +30,7 @@ const secciones = [
       "• Fotografía de perfil (opcional).",
       "• Número de teléfono (opcional).",
       "• Fecha de nacimiento (para verificación de edad en el registro como anfitrión).",
-      "• Identificación oficial (INE/pasaporte) para el proceso de verificación de anfitriones — se almacena en un espacio privado, no accesible públicamente.",
+      "• Identificación oficial (INE, pasaporte, cédula profesional o cartilla militar) para el proceso de verificación de anfitriones. Este es un DATO PERSONAL SENSIBLE (permite identificarte de forma inequívoca) y se almacena en un espacio privado, no accesible públicamente.",
       "• Información de pago procesada por Mercado Pago — VELA no almacena datos de tarjetas.",
       "• Historial de boletos y eventos, incluyendo el registro de check-in (hora de entrada a cada evento).",
       "• Nombre de las personas que un anfitrión invita como cooperadores de check-in — no requieren cuenta en VELA para esto.",
@@ -32,50 +38,70 @@ const secciones = [
     ]
   },
   {
-    titulo: "3. Finalidad del tratamiento",
+    titulo: "3. Datos personales sensibles y consentimiento expreso",
+    contenido: [
+      "Tu identificación oficial (INE/pasaporte) es un dato personal sensible. Por ello, la LFPDPPP exige tu consentimiento EXPRESO para tratarlo.",
+      "Por eso, al registrarte como anfitrión debes marcar de forma explícita una casilla en la que aceptas este Aviso de Privacidad y autorizas el tratamiento de tu identificación oficial. Si no otorgas ese consentimiento, no es posible subir tu identificación ni completar el registro como anfitrión.",
+      "Tu identificación oficial se usa ÚNICA Y EXCLUSIVAMENTE para verificar tu identidad como anfitrión. No se comparte públicamente, no se usa con fines publicitarios y no se transfiere a terceros salvo requerimiento de una autoridad competente conforme a la ley.",
+    ]
+  },
+  {
+    titulo: "4. Finalidad del tratamiento",
     contenido: [
       "Utilizamos tus datos personales para:",
       "• Crear y gestionar tu cuenta en la Plataforma.",
       "• Procesar la compra y emisión de boletos.",
-      "• Verificar la identidad de los anfitriones.",
+      "• Verificar la identidad de los anfitriones (finalidad para la que se usa la identificación oficial).",
       "• Enviar notificaciones relacionadas con tus eventos y boletos.",
       "• Mejorar la experiencia de usuario y el funcionamiento de la Plataforma.",
       "• Cumplir con obligaciones legales aplicables en México.",
     ]
   },
   {
-    titulo: "4. Transferencia de datos",
+    titulo: "5. Transferencia de datos",
     contenido: [
       "Tus datos personales pueden ser compartidos con:",
       "• Mercado Pago, para el procesamiento seguro de pagos.",
       "• Supabase Inc., como proveedor de infraestructura de base de datos.",
       "• Autoridades competentes cuando la ley mexicana lo requiera.",
-      "No vendemos ni compartimos tus datos con terceros con fines publicitarios.",
+      "Estas transferencias son las necesarias para operar la Plataforma y cumplir con la ley, por lo que no requieren tu consentimiento adicional conforme al artículo 37 de la LFPDPPP. No vendemos ni compartimos tus datos con terceros con fines publicitarios.",
     ]
   },
   {
-    titulo: "5. Derechos ARCO",
-    contenido: "Conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos personales (derechos ARCO). Para ejercer estos derechos, contáctanos a través del correo disponible en la aplicación. Atenderemos tu solicitud en un plazo máximo de 20 días hábiles."
+    titulo: "6. Derechos ARCO",
+    contenido: `Conforme a la LFPDPPP, tienes derecho a Acceder, Rectificar, Cancelar u Oponerte al tratamiento de tus datos personales (derechos ARCO). Para ejercer estos derechos, escríbenos a ${CORREO} indicando tu nombre, el derecho que deseas ejercer y una descripción clara de tu solicitud. Atenderemos tu solicitud en un plazo máximo de 20 días hábiles.`
   },
   {
-    titulo: "6. Uso de cookies y tecnologías similares",
+    titulo: "7. Revocación del consentimiento y limitación del uso",
+    contenido: [
+      `Puedes revocar en cualquier momento el consentimiento que otorgaste para el tratamiento de tus datos personales, incluida tu identificación oficial. Para ello, escríbenos a ${CORREO}.`,
+      "Ten en cuenta que la revocación del consentimiento para tratar tu identificación oficial implica que ya no podrás mantener tu cuenta de anfitrión verificada, pues ese dato es indispensable para la verificación de identidad.",
+      "También puedes solicitar que limitemos el uso o la divulgación de tus datos personales a través del mismo correo.",
+    ]
+  },
+  {
+    titulo: "8. Uso de cookies y tecnologías similares",
     contenido: "VELA utiliza cookies y tecnologías de almacenamiento local únicamente para mantener tu sesión activa y mejorar el funcionamiento de la aplicación. No utilizamos cookies de rastreo publicitario."
   },
   {
-    titulo: "7. Seguridad de los datos",
-    contenido: "Implementamos medidas técnicas y administrativas para proteger tus datos personales contra acceso no autorizado, pérdida o alteración. Toda la comunicación entre tu dispositivo y nuestros servidores se realiza mediante cifrado SSL/TLS."
+    titulo: "9. Seguridad de los datos",
+    contenido: "Implementamos medidas técnicas y administrativas para proteger tus datos personales contra acceso no autorizado, pérdida o alteración. Toda la comunicación entre tu dispositivo y nuestros servidores se realiza mediante cifrado SSL/TLS. Tu identificación oficial se guarda en un espacio de almacenamiento privado, accesible únicamente para el proceso de verificación."
   },
   {
-    titulo: "8. Retención de datos",
-    contenido: "Conservamos tus datos personales mientras mantengas una cuenta activa en VELA. Los boletos y registros de eventos se eliminan automáticamente 30 días después de la fecha del evento."
+    titulo: "10. Retención de datos",
+    contenido: [
+      "Conservamos tus datos personales mientras mantengas una cuenta activa en VELA.",
+      "Los boletos y registros de eventos se eliminan automáticamente 30 días después de la fecha del evento.",
+      "Cuando eliminas tu cuenta, se borran tus datos personales asociados a ella, incluida tu identificación oficial, salvo aquella información que debamos conservar por un plazo determinado para cumplir con obligaciones legales o fiscales (por ejemplo, registros de operaciones de pago).",
+    ]
   },
   {
-    titulo: "9. Cambios a esta política",
+    titulo: "11. Cambios a esta política",
     contenido: "Podemos actualizar esta Política de Privacidad en cualquier momento. Te notificaremos de cambios significativos a través de la aplicación. El uso continuado de VELA después de dichos cambios implica tu aceptación."
   },
   {
-    titulo: "10. Contacto",
-    contenido: "Si tienes preguntas sobre esta política o el tratamiento de tus datos, contáctanos a través del correo electrónico disponible en la sección de ayuda dentro de la aplicación VELA."
+    titulo: "12. Contacto",
+    contenido: `Si tienes preguntas sobre esta política o el tratamiento de tus datos, contáctanos en ${CORREO}.`
   },
 ]
 
@@ -101,7 +127,7 @@ export default function Privacidad() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: isMobile ? "40px 18px" : "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Política de Privacidad</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 2 de julio de 2026</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 9 de julio de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>

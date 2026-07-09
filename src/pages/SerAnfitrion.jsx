@@ -23,6 +23,7 @@ export default function SerAnfitrion() {
   const [error, setError] = useState("")
   const [ineFile, setIneFile] = useState(null)
   const [inePreview, setInePreview] = useState(null)
+  const [consentimiento, setConsentimiento] = useState(false)
   const [form, setForm] = useState({ nombre: "", telefono: "", fecha_nacimiento: "", bio: "", instagram: "", tipo_eventos: "" })
 
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function SerAnfitrion() {
     if (!form.nombre || !form.telefono || !form.fecha_nacimiento || !form.bio || !form.tipo_eventos) { setError("Por favor llena todos los campos obligatorios"); return }
     if (!ineFile) { setError("Por favor sube una foto de tu INE para verificar tu identidad"); return }
     if (calcularEdad(form.fecha_nacimiento) < 18) { setError("Debes ser mayor de 18 años para registrarte como anfitrión en VELA"); return }
+    if (!consentimiento) { setError("Debes aceptar el Aviso de Privacidad para poder enviar tu solicitud"); return }
     setEnviando(true)
     const extension = ineFile.name.split(".").pop()
     const nombreArchivo = `${user.id}-${Date.now()}.${extension}`
@@ -76,6 +78,7 @@ export default function SerAnfitrion() {
       nombre: form.nombre, telefono: form.telefono, fecha_nacimiento: form.fecha_nacimiento,
       bio: form.bio, instagram: form.instagram, ine_url: nombreArchivo,
       tipo: "anfitrion", estado_anfitrion: "pendiente",
+      aviso_privacidad_aceptado_en: new Date().toISOString(),
     }).eq("id", user.id)
     if (updateError) { setError("Error al guardar tu información. Intenta de nuevo.") } else { setExito(true) }
     setEnviando(false)
@@ -242,12 +245,32 @@ export default function SerAnfitrion() {
               </div>
 
               {/* AVISO */}
-              <div style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 18px", marginBottom: "24px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 18px", marginBottom: "14px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
                 <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: "2px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <p style={{ color: "rgba(255,255,255,0.32)", fontSize: "13px", lineHeight: 1.6, fontWeight: 400, margin: 0 }}>
                   Tu solicitud será revisada en un plazo de 24 horas. Al enviarla aceptas ser responsable de los eventos que publiques y cumplir con las políticas de seguridad de VELA.
                 </p>
               </div>
+
+              {/* CONSENTIMIENTO DE PRIVACIDAD (obligatorio) */}
+              <label style={{ display: "flex", gap: "12px", alignItems: "flex-start", cursor: "pointer", background: consentimiento ? "rgba(124,58,237,0.08)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${consentimiento ? "rgba(124,58,237,0.45)" : "rgba(255,255,255,0.1)"}`, borderRadius: "12px", padding: "14px 18px", marginBottom: "24px", transition: "background 0.2s, border-color 0.2s" }}>
+                <input
+                  type="checkbox"
+                  checked={consentimiento}
+                  onChange={e => setConsentimiento(e.target.checked)}
+                  style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+                />
+                <div style={{ flexShrink: 0, marginTop: "1px", width: "20px", height: "20px", borderRadius: "6px", border: `2px solid ${consentimiento ? "#7c3aed" : "rgba(255,255,255,0.25)"}`, background: consentimiento ? "linear-gradient(135deg, #7c3aed, #4f46e5)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+                  {consentimiento && (
+                    <svg width="12" height="12" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </div>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", lineHeight: 1.6, fontWeight: 400 }}>
+                  He leído y acepto el{" "}
+                  <Link to="/privacidad" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ color: "#a78bfa", textDecoration: "underline" }}>Aviso de Privacidad</Link>
+                  {" "}y autorizo el tratamiento de mis datos personales, incluida mi identificación oficial (<strong style={{ color: "rgba(255,255,255,0.75)", fontWeight: 600 }}>dato personal sensible</strong>), para verificar mi identidad como anfitrión. *
+                </span>
+              </label>
 
               <motion.button onClick={handleEnviar} whileTap={{ scale: 0.97 }} disabled={enviando}
                 className="btn-3d"
