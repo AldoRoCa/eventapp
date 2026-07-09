@@ -73,7 +73,11 @@ serve(async (req) => {
 
       let filtro = supabase
         .from("boletos")
-        .select("id, nombre_registro, codigo_grupo, estado, checkin_en, created_at")
+        // Solo los campos que necesita la pantalla del cooperador: id (para
+        // el check-in), nombre y código (para identificar), y checkin_en (para
+        // mostrar si ya entró). 'estado' ya se filtra abajo y 'created_at' no
+        // se usa — minimización de datos expuestos a alguien sin cuenta.
+        .select("id, nombre_registro, codigo_grupo, checkin_en")
         .eq("evento_id", cooperador.evento_id)
         .eq("estado", "activo")
 
