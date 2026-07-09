@@ -146,6 +146,14 @@ serve(async (req) => {
           // mp_payment_id se conservan para reintentar (los pagos ya
           // reembolsados se detectan y no se cobran doble).
           console.log("Reembolsos fallidos en resolver-reporte:", JSON.stringify({ reporte_id, evento_id: reporte.evento_id, fallidos }))
+          // Persistir el fallo para el panel de admin (best-effort).
+          await supabase.from("fallos_reembolso").insert({
+            contexto: "resolver-reporte",
+            usuario_id: user.id,
+            evento_id: reporte.evento_id,
+            payment_ids: fallidos,
+            detalle: `No se pudieron reembolsar ${fallidos.length} de ${paymentIds.length} pagos al aprobar un reporte (¿saldo insuficiente en la cuenta de Mercado Pago del anfitrión del evento?).`,
+          })
           return new Response(JSON.stringify({ error: `No se pudieron reembolsar ${fallidos.length} de ${paymentIds.length} pagos (¿saldo insuficiente en la cuenta del anfitrión?). El reporte queda pendiente; intenta de nuevo más tarde.` }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 502,

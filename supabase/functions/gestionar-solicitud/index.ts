@@ -95,6 +95,14 @@ serve(async (req) => {
 
         const ok = await reembolsarBoleto(supabase, boleto, cred.mp_access_token)
         if (!ok) {
+          // Persistir el fallo para el panel de admin (best-effort).
+          await supabase.from("fallos_reembolso").insert({
+            contexto: "gestionar-solicitud",
+            usuario_id: user.id,
+            evento_id: boleto.evento_id,
+            payment_ids: [String(boleto.mp_payment_id)],
+            detalle: "Mercado Pago no pudo procesar el reembolso al rechazar una solicitud (¿saldo insuficiente en la cuenta del anfitrión?).",
+          })
           return new Response(JSON.stringify({ error: "Mercado Pago no pudo procesar el reembolso (¿saldo insuficiente en tu cuenta?). El boleto NO fue rechazado; intenta de nuevo." }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 502,

@@ -23,6 +23,7 @@ export default function Admin() {
   const [tab, setTab] = useState("solicitudes")
   const [anfitriones, setAnfitriones] = useState([])
   const [reportes, setReportes] = useState([])
+  const [fallosReembolso, setFallosReembolso] = useState([])
   const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
   const cargarSolicitudes = async () => {
@@ -64,6 +65,15 @@ export default function Admin() {
     setReportes(data || [])
   }
 
+  const cargarFallosReembolso = async () => {
+    const { data } = await supabase
+      .from("fallos_reembolso")
+      .select("*")
+      .eq("resuelto", false)
+      .order("created_at", { ascending: false })
+    setFallosReembolso(data || [])
+  }
+
   useEffect(() => {
     const verificar = async () => {
       const { data: { user } } = await getUserSafe()
@@ -73,6 +83,7 @@ export default function Admin() {
       await cargarSolicitudes()
       await cargarAnfitriones()
       await cargarReportes()
+      await cargarFallosReembolso()
       setLoading(false)
     }
     verificar()
@@ -110,6 +121,17 @@ export default function Admin() {
       setMensaje("Error de conexión al resolver el reporte.")
     }
     setTimeout(() => setMensaje(""), 4000)
+    setProcesando(null)
+  }
+
+  const marcarResueltoFallo = async (id) => {
+    setProcesando(id)
+    const { error } = await supabase.from("fallos_reembolso").update({ resuelto: true }).eq("id", id)
+    if (!error) {
+      setFallosReembolso(prev => prev.filter(f => f.id !== id))
+      setMensaje("Fallo de reembolso marcado como resuelto.")
+      setTimeout(() => setMensaje(""), 3000)
+    }
     setProcesando(null)
   }
 
@@ -181,11 +203,28 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
+        {fallosReembolso.length > 0 && tab !== "reembolsos" && (
+          <div onClick={() => setTab("reembolsos")}
+            style={{ cursor: "pointer", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: "12px", padding: "14px 18px", marginBottom: "24px", display: "flex", alignItems: "center", gap: "12px" }}
+          >
+            <span style={{ fontSize: "22px", flexShrink: 0 }}>⚠️</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "14px", color: "#f87171" }}>
+                {fallosReembolso.length} reembolso{fallosReembolso.length > 1 ? "s" : ""} {fallosReembolso.length > 1 ? "fallaron" : "falló"} y {fallosReembolso.length > 1 ? "requieren" : "requiere"} tu atención
+              </div>
+              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
+                Un reembolso a un comprador no se pudo procesar (probable saldo insuficiente del anfitrión en Mercado Pago). Toca para ver el detalle.
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: "4px", marginBottom: "28px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "4px", width: isMobile ? "100%" : "fit-content", flexWrap: "wrap" }}>
           {[
             { id: "solicitudes", label: isMobile ? `Solicitudes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` : `Solicitudes pendientes ${solicitudes.length > 0 ? `(${solicitudes.length})` : ""}` },
             { id: "anfitriones", label: isMobile ? `Anfitriones (${anfitriones.length})` : `Anfitriones aprobados (${anfitriones.length})` },
             { id: "reportes", label: isMobile ? `Reportes ${reportes.length > 0 ? `(${reportes.length})` : ""}` : `Reportes de eventos ${reportes.length > 0 ? `(${reportes.length})` : ""}` },
+            { id: "reembolsos", label: isMobile ? `Reembolsos ${fallosReembolso.length > 0 ? `(${fallosReembolso.length})` : ""}` : `Reembolsos fallidos ${fallosReembolso.length > 0 ? `(${fallosReembolso.length})` : ""}` },
           ].map(t => (
             <motion.button key={t.id} onClick={() => setTab(t.id)} whileTap={{ scale: 0.97 }}
               style={{ padding: isMobile ? "8px 12px" : "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: isMobile ? "12.5px" : "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s", flex: isMobile ? "1" : "none", whiteSpace: "nowrap" }}
@@ -327,6 +366,57 @@ export default function Admin() {
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Descripción del usuario</div>
                             <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{rep.descripcion}</div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "reembolsos" && (
+          <div>
+            {fallosReembolso.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>💸</div>
+                <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay reembolsos fallidos</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando un reembolso a un comprador falle (p. ej. saldo insuficiente del anfitrión) aparecerá aquí</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {fallosReembolso.map((f, i) => {
+                  const contextoLabel = { "cancelar-evento": "Cancelación de evento", "gestionar-solicitud": "Rechazo de solicitud", "resolver-reporte": "Reporte aprobado", "eliminar-cuenta": "Baja de cuenta" }[f.contexto] || f.contexto
+                  return (
+                    <motion.div key={f.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                      style={{ background: "#0f0f11", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "16px", padding: "24px" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "4px", color: "#f87171" }}>{contextoLabel}</div>
+                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>{new Date(f.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                        </div>
+                        <motion.button onClick={() => marcarResueltoFallo(f.id)} whileTap={{ scale: 0.97 }} disabled={procesando === f.id}
+                          style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "8px", color: "#34d399", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                        >{procesando === f.id ? "..." : "Marcar resuelto"}</motion.button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginTop: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Detalle</div>
+                          <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{f.detalle || "—"}</div>
+                        </div>
+                        {f.evento_id && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>ID del evento</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{f.evento_id}</div>
+                          </div>
+                        )}
+                        {f.payment_ids && f.payment_ids.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagos sin reembolsar (Mercado Pago)</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{f.payment_ids.join(", ")}</div>
                           </div>
                         )}
                       </div>

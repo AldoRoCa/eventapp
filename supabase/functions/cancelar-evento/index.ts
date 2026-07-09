@@ -109,6 +109,16 @@ serve(async (req) => {
         // para poder reintentar la cancelación (los pagos ya reembolsados
         // se detectan y no se cobran doble).
         console.log("Reembolsos fallidos en cancelar-evento:", JSON.stringify({ evento_id, fallidos }))
+        // Persistir el fallo para que el admin lo vea en su panel (no se
+        // pierde en los logs). Best-effort: si el insert fallara, no cambia
+        // el resultado de la operación.
+        await supabase.from("fallos_reembolso").insert({
+          contexto: "cancelar-evento",
+          usuario_id: user.id,
+          evento_id,
+          payment_ids: fallidos,
+          detalle: `No se pudieron reembolsar ${fallidos.length} de ${paymentIds.length} pagos al cancelar el evento (¿saldo insuficiente en la cuenta de Mercado Pago del anfitrión?).`,
+        })
         return new Response(JSON.stringify({ error: `No se pudieron reembolsar ${fallidos.length} de ${paymentIds.length} pagos (¿saldo insuficiente en tu cuenta de Mercado Pago?). El evento NO se canceló; intenta de nuevo en unos minutos.` }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 502,

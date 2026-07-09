@@ -125,6 +125,14 @@ serve(async (req) => {
         // conservan para reintentar la baja (los pagos ya reembolsados se
         // detectan con un GET previo y no se cobran doble).
         console.log("Reembolsos fallidos en eliminar-cuenta:", JSON.stringify({ user_id: user.id, fallidos }))
+        // Persistir el fallo para el panel de admin (best-effort).
+        await supabase.from("fallos_reembolso").insert({
+          contexto: "eliminar-cuenta",
+          usuario_id: user.id,
+          evento_id: null,
+          payment_ids: fallidos,
+          detalle: `No se pudieron reembolsar ${fallidos.length} de ${pagosUnicos.length} pagos al dar de baja la cuenta (¿saldo insuficiente en la cuenta de Mercado Pago del anfitrión?).`,
+        })
         return new Response(JSON.stringify({ error: `No se pudieron reembolsar ${fallidos.length} de ${pagosUnicos.length} pagos (¿saldo insuficiente en tu cuenta de Mercado Pago?). Tu cuenta NO se dio de baja; intenta de nuevo en unos minutos.` }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 502,
