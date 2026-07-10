@@ -280,7 +280,7 @@ export default function Evento() {
         </div>
         <div>
           <div style={{ fontSize: "13px", fontWeight: 600 }}>{evento.tipo_boleto === "instantaneo" ? "Boleto instantáneo" : "Por solicitud"}</div>
-          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)" }}>{evento.tipo_boleto === "instantaneo" ? "Recibes tu boleto al instante" : "El anfitrión debe aprobar"}</div>
+          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)" }}>{evento.tipo_boleto === "instantaneo" ? "Recibes tu boleto al instante" : "El anfitrión debe aprobar"}</div>
         </div>
       </div>
 
@@ -344,7 +344,7 @@ export default function Evento() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.45)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", transition: "all 0.2s" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)", transition: "all 0.2s" }}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {!isMobile && "Volver"}
         </Link>
@@ -413,7 +413,7 @@ export default function Evento() {
           {evento.descripcion && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} style={{ marginBottom: "28px" }}>
               <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.2px" }}>Acerca del evento</h2>
-              <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.8, fontSize: "14.5px", fontWeight: 400 }}>{evento.descripcion}</p>
+              <p style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.8, fontSize: "14.5px", fontWeight: 400 }}>{evento.descripcion}</p>
             </motion.div>
           )}
 
@@ -442,7 +442,7 @@ export default function Evento() {
           {/* BARRA CAPACIDAD */}
           <div style={{ padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-              <span style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.45)" }}>{asistentes} de {evento.capacidad} lugares</span>
+              <span style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)" }}>{asistentes} de {evento.capacidad} lugares</span>
               {almostFull && <span style={{ fontSize: "12.5px", color: "#a78bfa", fontWeight: 700 }}>¡Casi lleno!</span>}
             </div>
             <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "999px", height: "6px", overflow: "hidden" }}>
@@ -510,7 +510,7 @@ export default function Evento() {
             {evento.descripcion && (
               <div style={{ marginBottom: "40px" }}>
                 <h2 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "16px", letterSpacing: "-0.3px" }}>Acerca del evento</h2>
-                <p style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.85, fontSize: "15.5px", fontWeight: 400 }}>{evento.descripcion}</p>
+                <p style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.85, fontSize: "15.5px", fontWeight: 400 }}>{evento.descripcion}</p>
               </div>
             )}
 
@@ -540,7 +540,7 @@ export default function Evento() {
             {/* BARRA CAPACIDAD */}
             <div style={{ padding: "20px 22px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.06)", borderRadius: "16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px", alignItems: "center" }}>
-                <span style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.45)" }}>{asistentes} de {evento.capacidad} lugares ocupados</span>
+                <span style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)" }}>{asistentes} de {evento.capacidad} lugares ocupados</span>
                 {almostFull && <span style={{ fontSize: "13px", color: "#a78bfa", fontWeight: 700, background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", padding: "3px 10px", borderRadius: "999px" }}>¡Casi lleno!</span>}
               </div>
               <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: "999px", height: "7px", overflow: "hidden" }}>
