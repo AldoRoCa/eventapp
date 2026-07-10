@@ -34,3 +34,9 @@ verify_jwt = false
 # el correo — todavía no existe ninguna sesión/JWT.
 [functions.guardar-avatar-registro]
 verify_jwt = false
+
+# avisar-fallo-reembolso: la dispara un Database Webhook (INSERT en
+# fallos_reembolso), no un usuario. Se protege con un secreto compartido
+# (x-alerta-secret) que verifica la propia función, no con JWT.
+[functions.avisar-fallo-reembolso]
+verify_jwt = false
