@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
+import { comprimirAvatar } from "../imagenUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -56,9 +57,12 @@ export default function Perfil() {
     if (!file) return
     if (file.size > 5 * 1024 * 1024) { setMensaje("La imagen no puede pesar más de 5MB"); return }
     setSubiendoAvatar(true)
-    const ext = file.name.split(".").pop()
+    // Comprimir/redimensionar antes de subir: baja el egress (cada visita que
+    // ve el perfil descarga el avatar) sin pérdida visible al tamaño que se usa.
+    const comprimida = await comprimirAvatar(file)
+    const ext = comprimida.name.split(".").pop()
     const nombre = `${user.id}-${Date.now()}.${ext}`
-    const { error: uploadError } = await supabase.storage.from("avatars").upload(nombre, file)
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(nombre, comprimida)
     if (uploadError) { setMensaje("Error al subir la imagen."); setSubiendoAvatar(false); return }
     const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(nombre)
     await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id)

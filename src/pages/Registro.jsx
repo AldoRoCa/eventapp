@@ -2,6 +2,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
+import { comprimirAvatar } from "../imagenUtils"
 
 export default function Registro() {
   const [nombre, setNombre] = useState("")
@@ -16,12 +17,17 @@ export default function Registro() {
   const [mayorEdad, setMayorEdad] = useState(false)
   const navigate = useNavigate()
 
-  const handleAvatar = (e) => {
+  const handleAvatar = async (e) => {
     const file = e.target.files[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) { setError("La imagen no puede pesar más de 5MB"); return }
-    setAvatarFile(file)
-    setAvatarPreview(URL.createObjectURL(file))
+    // Comprimir al seleccionar: así el archivo comprimido sirve para las dos
+    // vías de subida (Edge Function guardar-avatar-registro con base64 cuando no
+    // hay sesión, o subida directa cuando el correo ya viene confirmado). La
+    // Edge Function no cambia: recibe el base64 ya comprimido y lo sube igual.
+    const comprimida = await comprimirAvatar(file)
+    setAvatarFile(comprimida)
+    setAvatarPreview(URL.createObjectURL(comprimida))
   }
 
   const handleRegistro = async () => {

@@ -63,3 +63,11 @@ export function comprimirImagen(file, maxAncho = 1200, objetivoBytes = 250 * 102
     img.src = url
   })
 }
+
+// Igual que comprimirImagen pero con parámetros para avatares. Un avatar se
+// muestra chico (máx ~88px de lado en la UI), así que 512px y un objetivo de
+// ~120KB sobran de calidad y bajan mucho el peso (una foto de celular de ~3MB
+// termina en unos KB). Se usa en el cambio de foto (Perfil) y en el registro.
+export function comprimirAvatar(file) {
+  return comprimirImagen(file, 512, 120 * 1024)
+}
