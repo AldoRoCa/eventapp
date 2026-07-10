@@ -1,14 +1,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-
-// Tarifa estándar de Mercado Pago México para cobros con Checkout Pro y
-// dinero acreditado al instante: 3.49% del monto cobrado + $4.00 MXN fijos
-// por operación, más 16% de IVA sobre ambos. Verificada al centavo contra
-// recibos reales (venta de $6 → cargo de $4.88). Si MP cambia su tarifa,
-// ajustar estas constantes.
-const MP_PORCENTAJE = 0.0349
-const MP_FIJO = 4
-const IVA = 1.16
+import { precioConComision, comisionVela, cargoMercadoPago, gananciaNetaBoleto } from "../comisionUtils"
 
 const fmt = n => "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmtEntero = n => "$" + n.toLocaleString("es-MX", { maximumFractionDigits: 0 })
@@ -34,10 +26,10 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
   const p = parseInt(precio)
   if (isNaN(p) || p < 5) return null
 
-  const precioAsistente = Math.round(p * 1.10)
-  const comisionVela = precioAsistente - p
-  const cargoMP = (precioAsistente * MP_PORCENTAJE + MP_FIJO) * IVA
-  const netaBoleto = p - cargoMP
+  const precioAsistente = precioConComision(p)
+  const comision = comisionVela(p)
+  const cargoMP = cargoMercadoPago(p)
+  const netaBoleto = gananciaNetaBoleto(p)
 
   const cap = parseInt(capacidad)
   const hayCapacidad = !isNaN(cap) && cap > 0
@@ -73,7 +65,7 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.09)", paddingTop: "10px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "4px" }}>Por cada boleto</div>
                 <Fila etiqueta="El asistente paga" valor={fmtEntero(precioAsistente) + " MXN"} color="rgba(255,255,255,0.9)" isMobile={isMobile} />
-                <Fila etiqueta="Comisión VELA (la paga el asistente)" valor={"− " + fmtEntero(comisionVela)} color="#a78bfa" isMobile={isMobile} />
+                <Fila etiqueta="Comisión VELA (la paga el asistente)" valor={"− " + fmtEntero(comision)} color="#a78bfa" isMobile={isMobile} />
                 <Fila etiqueta="Recibes en Mercado Pago (tu precio)" valor={fmtEntero(p)} isMobile={isMobile} />
                 <Fila etiqueta="Tarifa de Mercado Pago*" valor={"− " + fmt(cargoMP)} color="#fbbf24" isMobile={isMobile} />
                 <div style={divisoria} />
@@ -92,7 +84,7 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
                     />
                   )}
                   <Fila etiqueta="Los asistentes pagan en total" valor={fmtEntero(nVendidos * precioAsistente)} color="rgba(255,255,255,0.9)" isMobile={isMobile} />
-                  <Fila etiqueta="Comisión VELA total" valor={"− " + fmtEntero(nVendidos * comisionVela)} color="#a78bfa" isMobile={isMobile} />
+                  <Fila etiqueta="Comisión VELA total" valor={"− " + fmtEntero(nVendidos * comision)} color="#a78bfa" isMobile={isMobile} />
                   <Fila etiqueta="Tarifa Mercado Pago total*" valor={"− " + fmt(nVendidos * cargoMP)} color="#fbbf24" isMobile={isMobile} />
                   <div style={divisoria} />
                   <Fila etiqueta="Tu ganancia neta total" valor={"≈ " + fmt(nVendidos * netaBoleto)} color="#34d399" destacada isMobile={isMobile} />
