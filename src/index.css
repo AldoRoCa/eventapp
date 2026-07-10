@@ -117,3 +117,8 @@ min-height: 100vh;
 @media (prefers-reduced-motion: reduce) {
   .vela-ring-spin { animation: none; }
 }
+
+/* Spinner genérico (fallback de carga diferida de páginas) */
+@keyframes velaSpin {
+  to { transform: rotate(360deg); }
+}

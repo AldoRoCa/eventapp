@@ -1,29 +1,45 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, lazy, Suspense } from "react"
 import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
 import { Routes, Route, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { supabase } from "./supabase"
-import Login from "./pages/Login"
-import Registro from "./pages/Registro"
-import Evento from "./pages/Evento"
-import CrearEvento from "./pages/CrearEvento"
-import MisBoletos from "./pages/MisBoletos"
-import Explorar from "./pages/Explorar"
-import SerAnfitrion from "./pages/SerAnfitrion"
-import PanelAnfitrion from "./pages/PanelAnfitrion"
-import UnirseCooperador from "./pages/UnirseCooperador"
-import Perfil from "./pages/Perfil"
-import Admin from "./pages/Admin"
-import PagoExitoso from "./pages/PagoExitoso"
-import PagoFallido from "./pages/PagoFallido"
-import Reembolsos from "./pages/Reembolsos"
-import PoliticasSeguridad from "./pages/PoliticasSeguridad"
-import AcercaDeVela from "./pages/AcercaDeVela"
-import Terminos from "./pages/Terminos"
-import Privacidad from "./pages/Privacidad"
-import Contacto from "./pages/Contacto"
 import HeroHolograma from "./components/HeroHolograma"
+
+// Carga diferida (code-splitting): cada página se descarga en su propio archivo
+// solo cuando el usuario navega a ella, en vez de venir toda en el bundle
+// inicial. La Home vive inline en este archivo (más abajo) y NO se difiere, para
+// que el primer render sea lo más ligero posible. HeroHolograma también se queda
+// eager porque la Home lo usa de inmediato.
+const Login = lazy(() => import("./pages/Login"))
+const Registro = lazy(() => import("./pages/Registro"))
+const Evento = lazy(() => import("./pages/Evento"))
+const CrearEvento = lazy(() => import("./pages/CrearEvento"))
+const MisBoletos = lazy(() => import("./pages/MisBoletos"))
+const Explorar = lazy(() => import("./pages/Explorar"))
+const SerAnfitrion = lazy(() => import("./pages/SerAnfitrion"))
+const PanelAnfitrion = lazy(() => import("./pages/PanelAnfitrion"))
+const UnirseCooperador = lazy(() => import("./pages/UnirseCooperador"))
+const Perfil = lazy(() => import("./pages/Perfil"))
+const Admin = lazy(() => import("./pages/Admin"))
+const PagoExitoso = lazy(() => import("./pages/PagoExitoso"))
+const PagoFallido = lazy(() => import("./pages/PagoFallido"))
+const Reembolsos = lazy(() => import("./pages/Reembolsos"))
+const PoliticasSeguridad = lazy(() => import("./pages/PoliticasSeguridad"))
+const AcercaDeVela = lazy(() => import("./pages/AcercaDeVela"))
+const Terminos = lazy(() => import("./pages/Terminos"))
+const Privacidad = lazy(() => import("./pages/Privacidad"))
+const Contacto = lazy(() => import("./pages/Contacto"))
+
+// Fallback mientras se descarga el archivo de una página. Minimalista y en el
+// tono oscuro del sitio para que no "parpadee" en blanco.
+function CargandoPagina() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#080808" }}>
+      <div style={{ width: "38px", height: "38px", border: "3px solid rgba(124,58,237,0.25)", borderTopColor: "#7c3aed", borderRadius: "999px", animation: "velaSpin 0.7s linear infinite" }} />
+    </div>
+  )
+}
 
 // Hook para detectar si es móvil
 function useIsMobile() {
@@ -630,6 +646,7 @@ export default function App() {
           />
         </motion.div>
       )}
+      <Suspense fallback={<CargandoPagina />}>
       <Routes>
         <Route path="/" element={<HomePage user={user} perfil={perfil} onLogout={handleLogout} setFotoZoom={setFotoZoom} />} />
         <Route path="/login" element={<Login />} />
@@ -652,6 +669,7 @@ export default function App() {
         <Route path="/acerca" element={<AcercaDeVela />} />
         <Route path="/contacto" element={<Contacto />} />
       </Routes>
+      </Suspense>
     </>
   )
 }
