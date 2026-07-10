@@ -54,7 +54,7 @@ export default function Reembolsos() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {isMobile ? "Volver" : "Volver al inicio"}
         </Link>
@@ -63,7 +63,7 @@ export default function Reembolsos() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: isMobile ? "40px 18px" : "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Política de Reembolsos</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 8 de junio de 2025</p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Última actualización: 8 de junio de 2025</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -73,7 +73,7 @@ export default function Reembolsos() {
               {Array.isArray(s.contenido) ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   {s.contenido.map((p, j) => (
-                    <p key={j} style={{ color: p.startsWith("•") ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.7)", fontSize: "14.5px", lineHeight: 1.75, margin: 0, paddingLeft: p.startsWith("•") ? "8px" : "0" }}>{p}</p>
+                    <p key={j} style={{ color: p.startsWith("•") ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.7)", fontSize: "14.5px", lineHeight: 1.75, margin: 0, paddingLeft: p.startsWith("•") ? "8px" : "0" }}>{p}</p>
                   ))}
                 </div>
               ) : (
@@ -84,7 +84,7 @@ export default function Reembolsos() {
         </div>
 
         <div style={{ marginTop: "64px", paddingTop: "32px", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>© 2025 VELA. Todos los derechos reservados.</span>
+          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>© 2025 VELA. Todos los derechos reservados.</span>
           <Link to="/terminos" style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none" }}>Términos de Uso →</Link>
         </div>
       </div>
