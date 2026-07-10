@@ -44,19 +44,19 @@ export default function PagoExitoso() {
           <>
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>⚠</div>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>No pudimos confirmar tu pago</h1>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", marginBottom: "8px" }}>Si el cargo se realizó, tu boleto se activará en unos minutos. Si no aparece en Mis Boletos, contáctanos.</p>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "8px" }}>Si el cargo se realizó, tu boleto se activará en unos minutos. Si no aparece en Mis Boletos, contáctanos.</p>
           </>
         ) : estado === "pendiente" ? (
           <>
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>⏳</div>
             <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>¡Pago recibido!</h1>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", marginBottom: "8px" }}>Este evento es por solicitud: el anfitrión debe aprobar tu boleto. Si lo rechaza, se te reembolsará automáticamente.</p>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "8px" }}>Este evento es por solicitud: el anfitrión debe aprobar tu boleto. Si lo rechaza, se te reembolsará automáticamente.</p>
           </>
         ) : (
           <>
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(16,185,129,0.2)", border: "1px solid rgba(16,185,129,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>✓</div>
             <h1 style={{ fontSize: "2rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>¡Pago exitoso!</h1>
-            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", marginBottom: "8px" }}>Tu boleto ha sido confirmado.</p>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "8px" }}>Tu boleto ha sido confirmado.</p>
           </>
         )}
         <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "13px" }}>Redirigiendo a Mis Boletos...</p>

@@ -23,7 +23,7 @@ export default function AcercaDeVela() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap" }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {isMobile ? "Volver" : "Volver al inicio"}
         </Link>
@@ -39,7 +39,7 @@ export default function AcercaDeVela() {
               </div>
               <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px" }}>Acerca de VELA</h1>
             </div>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Conectando a la comunidad a través de experiencias únicas</p>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Conectando a la comunidad a través de experiencias únicas</p>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
@@ -76,7 +76,7 @@ export default function AcercaDeVela() {
                     <div style={{ fontSize: "24px", fontWeight: 700, color: "#7c3aed", flexShrink: 0, lineHeight: 1 }}>{item.num}</div>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "6px" }}>{item.titulo}</div>
-                      <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "13.5px", lineHeight: 1.6 }}>{item.desc}</div>
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "13.5px", lineHeight: 1.6 }}>{item.desc}</div>
                     </div>
                   </div>
                 ))}

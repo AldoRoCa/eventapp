@@ -21,7 +21,7 @@ export default function Contacto() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "16px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.45)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "5px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "5px" }}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           Inicio
         </Link>
@@ -31,7 +31,7 @@ export default function Contacto() {
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <div style={{ width: "64px", height: "64px", borderRadius: "18px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 0 32px rgba(124,58,237,0.4)", fontSize: "28px" }}>✉️</div>
           <h1 style={{ fontSize: "2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Contacto</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "15px", lineHeight: 1.7, marginBottom: "36px" }}>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", lineHeight: 1.7, marginBottom: "36px" }}>
             ¿Tienes dudas, reportes o sugerencias? Escríbenos directamente.
           </p>
 
@@ -58,7 +58,7 @@ export default function Contacto() {
             </div>
           </div>
 
-          <p style={{ color: "rgba(255,255,255,0.2)", fontSize: "12.5px", lineHeight: 1.6 }}>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px", lineHeight: 1.6 }}>
             Respondemos en un plazo de 24–48 horas hábiles.
           </p>
         </motion.div>

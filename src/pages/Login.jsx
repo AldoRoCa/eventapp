@@ -54,7 +54,7 @@ export default function Login() {
         </div>
 
         <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "white", marginBottom: "8px", letterSpacing: "-0.5px", textAlign: "center" }}>Bienvenido de vuelta</h1>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "32px", textAlign: "center", fontWeight: 400 }}>Inicia sesión para continuar</p>
+        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginBottom: "32px", textAlign: "center", fontWeight: 400 }}>Inicia sesión para continuar</p>
 
         {error && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
@@ -63,12 +63,12 @@ export default function Login() {
         )}
 
         <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Correo electrónico</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Correo electrónico</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: "28px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Contraseña</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Contraseña</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} style={inputStyle} />
         </div>
 
@@ -77,13 +77,13 @@ export default function Login() {
           style={{ width: "100%", border: "none", borderRadius: "12px", color: "white", padding: "13px", fontWeight: 700, fontSize: "15px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? 0.7 : 1 }}
         >{loading ? "Iniciando sesión..." : "Iniciar sesión"}</motion.button>
 
-        <p style={{ textAlign: "center", marginTop: "24px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>
+        <p style={{ textAlign: "center", marginTop: "24px", color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>
           ¿No tienes cuenta?{" "}
           <Link to="/registro" style={{ color: "#a78bfa", textDecoration: "none", fontWeight: 600 }}>Regístrate</Link>
         </p>
 
         <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <Link to="/" style={{ color: "rgba(255,255,255,0.25)", fontSize: "13px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <Link to="/" style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px" }}>
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
             Volver al inicio
           </Link>
