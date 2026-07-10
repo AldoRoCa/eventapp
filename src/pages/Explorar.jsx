@@ -101,7 +101,7 @@ export default function Explorar() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {!isMobile && "Inicio"}
         </Link>
@@ -121,7 +121,7 @@ export default function Explorar() {
           <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             style={{ fontSize: isMobile ? "1.8rem" : "2.2rem", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: "6px" }}
           >Explorar eventos</motion.h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14.5px", marginBottom: isMobile ? "24px" : "32px" }}>Encuentra tu próxima experiencia</p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14.5px", marginBottom: isMobile ? "24px" : "32px" }}>Encuentra tu próxima experiencia</p>
 
           {/* BARRA DE BÚSQUEDA */}
           {isMobile ? (
@@ -184,7 +184,7 @@ export default function Explorar() {
         </div>
 
         {/* CONTADOR RESULTADOS */}
-        <div style={{ marginBottom: "18px", color: "rgba(255,255,255,0.3)", fontSize: "13px" }}>
+        <div style={{ marginBottom: "18px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>
           {loading ? "Buscando..." : `${eventosFiltrados.length} evento${eventosFiltrados.length !== 1 ? "s" : ""} encontrado${eventosFiltrados.length !== 1 ? "s" : ""}`}
         </div>
 
@@ -194,7 +194,7 @@ export default function Explorar() {
           <div style={{ textAlign: "center", padding: "64px 24px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "20px" }}>
             <div style={{ fontSize: "44px", marginBottom: "16px" }}>🔍</div>
             <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "8px" }}>No encontramos eventos</div>
-            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "24px" }}>Intenta con otra búsqueda o categoría</div>
+            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginBottom: "24px" }}>Intenta con otra búsqueda o categoría</div>
             <button onClick={() => { setBusqueda(""); setCategoria("Todas"); setEstadoFiltro(""); setFechaFiltro("") }}
               style={{ background: "rgba(124,58,237,0.2)", border: "1.5px solid rgba(124,58,237,0.45)", borderRadius: "10px", color: "#a78bfa", padding: "10px 24px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 12px rgba(124,58,237,0.2)" }}
             >Limpiar filtros</button>
@@ -227,13 +227,13 @@ export default function Explorar() {
                   </div>
                   <div style={{ padding: isMobile ? "16px" : "18px 20px" }}>
                     <div style={{ fontWeight: 700, fontSize: "15.5px", marginBottom: "3px", letterSpacing: "-0.2px" }}>{ev.titulo}</div>
-                    <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px", marginBottom: "12px" }}>por {ev.profiles?.nombre || "Anfitrión"}</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px", marginBottom: "12px" }}>por {ev.profiles?.nombre || "Anfitrión"}</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "12.5px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>
                         <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         {fechaFormato}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "12.5px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>
                         <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ opacity: 0.6, flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                         {ev.ubicacion}
                       </div>

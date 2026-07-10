@@ -114,10 +114,10 @@ export default function Registro() {
               <svg width="28" height="28" fill="none" stroke="#a78bfa" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <h1 style={{ fontSize: "1.4rem", fontWeight: 700, color: "white", marginBottom: "10px", letterSpacing: "-0.5px" }}>Revisa tu correo</h1>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", lineHeight: 1.6, marginBottom: "8px" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", lineHeight: 1.6, marginBottom: "8px" }}>
               Te enviamos un link de confirmación a<br /><strong style={{ color: "white" }}>{email}</strong>
             </p>
-            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", lineHeight: 1.6, marginBottom: "28px" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", lineHeight: 1.6, marginBottom: "28px" }}>
               Da clic en el link para activar tu cuenta. Si no lo ves, revisa también tu carpeta de spam.
             </p>
             <Link to="/login" style={{ display: "block", width: "100%", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "rgba(255,255,255,0.7)", padding: "12px", fontWeight: 600, fontSize: "14px", textDecoration: "none", boxSizing: "border-box" }}>
@@ -134,7 +134,7 @@ export default function Registro() {
         </div>
 
         <h1 style={{ fontSize: "1.6rem", fontWeight: 700, color: "white", marginBottom: "8px", letterSpacing: "-0.5px", textAlign: "center" }}>Crea tu cuenta</h1>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "28px", textAlign: "center", fontWeight: 400 }}>Empieza a descubrir eventos</p>
+        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginBottom: "28px", textAlign: "center", fontWeight: 400 }}>Empieza a descubrir eventos</p>
 
         {error && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
@@ -143,30 +143,30 @@ export default function Registro() {
         )}
 
         <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Nombre completo (real)</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Nombre completo (real)</label>
           <input type="text" value={nombreReal} onChange={e => setNombreReal(e.target.value)} placeholder="Como aparece en tu identificación" maxLength={100} style={inputStyle} />
-          <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.3)", marginTop: "6px", lineHeight: 1.5 }}>
+          <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "6px", lineHeight: 1.5 }}>
             Se usará para el registro al comprar boletos. Si es incorrecto, el check-in en los eventos no se hará correctamente.
           </p>
         </div>
 
         <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Nombre de usuario</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Nombre de usuario</label>
           <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Como te verán otros usuarios" maxLength={50} style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Correo electrónico</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Correo electrónico</label>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@correo.com" maxLength={255} style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: "14px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Contraseña</label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Contraseña</label>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" maxLength={72} onKeyDown={e => e.key === "Enter" && handleRegistro()} style={inputStyle} />
         </div>
 
         <div style={{ marginBottom: "28px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Foto de perfil <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 400 }}>(opcional)</span></label>
+          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Foto de perfil <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 400 }}>(opcional)</span></label>
           <label style={{ cursor: "pointer", display: "block" }}>
             <input type="file" accept="image/*" onChange={handleAvatar} style={{ display: "none" }} />
             {avatarPreview ? (
@@ -179,7 +179,7 @@ export default function Registro() {
                 <div style={{ width: "36px", height: "36px", borderRadius: "999px", background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="16" height="16" fill="none" stroke="#a78bfa" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 </div>
-                <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "13.5px" }}>Subir foto de perfil</span>
+                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "13.5px" }}>Subir foto de perfil</span>
               </div>
             )}
           </label>
@@ -189,7 +189,7 @@ export default function Registro() {
           <input type="checkbox" checked={mayorEdad} onChange={e => setMayorEdad(e.target.checked)}
             style={{ marginTop: "3px", flexShrink: 0, cursor: "pointer" }}
           />
-          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+          <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
             Confirmo que soy mayor de edad (18 años o más).
           </span>
         </label>
@@ -199,13 +199,13 @@ export default function Registro() {
           style={{ width: "100%", border: "none", borderRadius: "12px", color: "white", padding: "13px", fontWeight: 700, fontSize: "15px", cursor: (loading || !mayorEdad) ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: (loading || !mayorEdad) ? 0.7 : 1 }}
         >{loading ? "Creando cuenta..." : "Crear cuenta"}</motion.button>
 
-        <p style={{ textAlign: "center", marginTop: "24px", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>
+        <p style={{ textAlign: "center", marginTop: "24px", color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>
           ¿Ya tienes cuenta?{" "}
           <Link to="/login" style={{ color: "#a78bfa", textDecoration: "none", fontWeight: 600 }}>Inicia sesión</Link>
         </p>
 
         <div style={{ marginTop: "16px", textAlign: "center" }}>
-          <Link to="/" style={{ color: "rgba(255,255,255,0.25)", fontSize: "13px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <Link to="/" style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "5px" }}>
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
             Volver al inicio
           </Link>
