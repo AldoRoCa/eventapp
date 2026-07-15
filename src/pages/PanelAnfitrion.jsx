@@ -52,6 +52,7 @@ export default function PanelAnfitrion() {
   const canvasRef = useRef(null)
   const streamRef = useRef(null)
   const rafRef = useRef(null)
+  const checkinBusquedaRef = useRef("") // último término buscado — para descartar respuestas que lleguen tarde
   const [cooperadoresEvento, setCooperadoresEvento] = useState(null) // evento cuyo modal de cooperadores está abierto
   const [cooperadoresLista, setCooperadoresLista] = useState([])
   const [invitacionActiva, setInvitacionActiva] = useState(null)
@@ -150,6 +151,7 @@ export default function PanelAnfitrion() {
 
   const buscarCheckin = async (q) => {
     setCheckinBusqueda(q)
+    checkinBusquedaRef.current = q
     if (!q.trim() || !checkinEvento) { setCheckinResultados([]); return }
     setCheckinBuscando(true)
     const termino = q.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -159,11 +161,17 @@ export default function PanelAnfitrion() {
       .eq("evento_id", checkinEvento.id)
       .eq("estado", "activo")
     if (esCodigo) {
-      query = query.eq("codigo_grupo", q.trim().toUpperCase())
+      // Lo escrito PODRÍA ser un código de grupo, pero también un nombre corto
+      // sin espacios ("ana", "maria") — buscar en ambos campos, no adivinar.
+      // Seguro para .or(): esCodigo garantiza que solo hay letras/dígitos.
+      query = query.or(`codigo_grupo.eq.${q.trim().toUpperCase()},nombre_registro_normalizado.ilike.*${termino}*`)
     } else {
       query = query.ilike("nombre_registro_normalizado", `%${termino}%`)
     }
     const { data } = await query.order("nombre_registro_normalizado")
+    // Si mientras esperábamos la respuesta el usuario ya escribió otra cosa,
+    // esta respuesta es vieja — descartarla para no pisar la búsqueda nueva.
+    if (checkinBusquedaRef.current !== q) return
     const grupos = {}
     for (const b of data || []) {
       const key = b.codigo_grupo || b.id

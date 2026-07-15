@@ -81,8 +81,11 @@ serve(async (req) => {
         .eq("evento_id", cooperador.evento_id)
         .eq("estado", "activo")
 
+      // Lo escrito PODRÍA ser un código de grupo, pero también un nombre corto
+      // sin espacios ("ana", "maria") — buscar en ambos campos, no adivinar.
+      // Seguro para .or(): esCodigo garantiza que solo hay letras/dígitos.
       filtro = esCodigo
-        ? filtro.eq("codigo_grupo", query.trim().toUpperCase())
+        ? filtro.or(`codigo_grupo.eq.${query.trim().toUpperCase()},nombre_registro_normalizado.ilike.*${termino}*`)
         : filtro.ilike("nombre_registro_normalizado", `%${termino}%`)
 
       const resultado = await filtro.order("nombre_registro_normalizado")

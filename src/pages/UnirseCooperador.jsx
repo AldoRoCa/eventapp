@@ -23,6 +23,7 @@ export default function UnirseCooperador() {
   const canvasRef = useRef(null)
   const streamRef = useRef(null)
   const rafRef = useRef(null)
+  const busquedaRef = useRef("") // último término buscado — para descartar respuestas que lleguen tarde
 
   useEffect(() => {
     const guardado = localStorage.getItem(`vela_cooperador_${codigo}`)
@@ -65,6 +66,7 @@ export default function UnirseCooperador() {
 
   const buscar = async (q) => {
     setBusqueda(q)
+    busquedaRef.current = q
     if (!q.trim() || !sesion) { setResultados([]); return }
     setBuscando(true)
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/buscar-checkin-cooperador`, {
@@ -73,6 +75,9 @@ export default function UnirseCooperador() {
       body: JSON.stringify({ cooperador_id: sesion.cooperador_id, query: q })
     })
     const data = await res.json()
+    // Si mientras esperábamos la respuesta el usuario ya escribió otra cosa,
+    // esta respuesta es vieja — descartarla para no pisar la búsqueda nueva.
+    if (busquedaRef.current !== q) return
     setResultados(res.ok ? (data.resultados || []) : [])
     setBuscando(false)
   }
