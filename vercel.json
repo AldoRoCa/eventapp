@@ -17,6 +17,10 @@
       "destination": "/api/og-evento?id=:id"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /panel
+Disallow: /admin
+Disallow: /mis-boletos
+Disallow: /perfil
+Disallow: /crear-evento
+Disallow: /pago-exitoso
+Disallow: /pago-fallido
+Disallow: /unirse-cooperador/
+
+Sitemap: https://www.velaapp.online/sitemap.xml
