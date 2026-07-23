@@ -3,6 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
 import { Routes, Route, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
+import { Analytics } from "@vercel/analytics/react"
 import { supabase } from "./supabase"
 import HeroHolograma from "./components/HeroHolograma"
 
@@ -670,6 +671,7 @@ export default function App() {
         <Route path="/contacto" element={<Contacto />} />
       </Routes>
       </Suspense>
+      <Analytics />
     </>
   )
 }
