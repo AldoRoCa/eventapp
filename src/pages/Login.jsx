@@ -65,6 +65,17 @@ export default function Login() {
 
         <BotonGoogle texto="Continuar con Google" onError={setError} />
 
+        {/* Con OAuth no existe un "solo entrar si ya existe": si la cuenta no
+            está, Google la crea en el momento. O sea que ESTA pantalla también
+            es una vía de registro, aunque se llame "iniciar sesión" — por eso
+            aquí van los mismos avisos que en Registro. Sin esto, alguien podía
+            crear su cuenta desde aquí sin que se le mostrara nada que aceptar. */}
+        <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, margin: "10px 2px 0", textAlign: "center" }}>
+          Si todavía no tienes cuenta, se creará una con tu correo de Google. Al continuar confirmas que eres mayor de edad y aceptas los{" "}
+          <Link to="/terminos" style={{ color: "#a78bfa", textDecoration: "none" }}>Términos</Link>{" "}y la{" "}
+          <Link to="/privacidad" style={{ color: "#a78bfa", textDecoration: "none" }}>Política de Privacidad</Link>.
+        </p>
+
         <SeparadorO texto="o con tu correo" />
 
         <div style={{ marginBottom: "16px" }}>
