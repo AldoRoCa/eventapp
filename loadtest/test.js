@@ -13,7 +13,7 @@ export const options = {
   },
 }
 
-const BASE_URL = 'https://eventapp-flax.vercel.app'
+const BASE_URL = 'https://www.velaapp.online'
 
 export default function () {
   // Test página principal

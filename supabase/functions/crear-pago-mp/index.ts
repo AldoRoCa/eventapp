@@ -99,6 +99,13 @@ serve(async (req) => {
     })
 
     const siteUrl = Deno.env.get("SITE_URL")!
+    // OJO: SITE_URL es el sitio web (donde vuelve el COMPRADOR tras pagar).
+    // El webhook NO vive ahí, vive en Supabase. Se armaba con siteUrl y por
+    // eso la notification_url apuntaba al frontend: Vercel reescribe
+    // cualquier ruta a index.html y respondía 200 con HTML, así que Mercado
+    // Pago daba la notificación por entregada y ni siquiera reintentaba —
+    // mp-webhook nunca llegaba a ejecutarse.
+    const funcionesUrl = Deno.env.get("SUPABASE_URL")!
     // marketplace_fee es un monto absoluto sobre toda la preferencia. Debe
     // ser exactamente el extra que el comprador paga sobre el precio del
     // anfitrión (precioConComision - precio, por cantidad de boletos) —
@@ -134,7 +141,7 @@ serve(async (req) => {
         // comprador ya no está en pago-exitoso para que confirmar-pago-mp
         // lo active. MP llama esta URL cada vez que el pago cambia de
         // estado, y mp-webhook hace la misma verificación/activación.
-        notification_url: `${siteUrl}/functions/v1/mp-webhook?evento_id=${evento_id}`,
+        notification_url: `${funcionesUrl}/functions/v1/mp-webhook?evento_id=${evento_id}`,
         metadata: {
           evento_id,
           usuario_id,
