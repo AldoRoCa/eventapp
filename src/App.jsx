@@ -607,28 +607,64 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
 
 export default function App() {
   const [user, setUser] = useState(null)
-  const [perfil, setPerfil] = useState(null)
+  const [perfilCargado, setPerfilCargado] = useState(null)
   const [fotoZoom, setFotoZoom] = useState(null)
+  const userId = user?.id ?? null
 
+  // El perfil que tenemos guardado solo vale para el usuario que lo pidió: si
+  // cierra sesión o entra otra cuenta, se descarta solo. Así no hace falta
+  // limpiarlo desde un efecto (que además provocaría un render de más).
+  const perfil = perfilCargado?.id === userId ? perfilCargado : null
+
+  /**
+   * REGLA IMPORTANTE: el callback de onAuthStateChange NO debe esperar
+   * (`await`) ninguna llamada a Supabase adentro. Solo guarda la sesión.
+   *
+   * Por qué: al abrir la página, el cliente de Supabase se inicializa (lee la
+   * sesión guardada y, si el token ya venció, lo renueva por red) y al final
+   * avisa a los suscriptores de onAuthStateChange — pero se queda ESPERANDO a
+   * que cada callback termine. Si adentro pedimos datos, esa consulta a su vez
+   * espera a que la inicialización acabe... que espera al callback. Se traba en
+   * círculo, y a partir de ahí TODA consulta a Supabase de la página se queda
+   * colgada para siempre: la home se queda en "Cargando eventos..." y el
+   * encabezado sin nombre ni foto (solo el correo), hasta recargar a mano.
+   *
+   * Solo se trababa a veces porque es una carrera: hay que alcanzar a
+   * suscribirse antes de que termine la inicialización. Con el token vencido
+   * (entrar al sitio después de un rato) la inicialización tarda lo que tarda
+   * la renovación por red, así que React siempre alcanzaba a meterse; al
+   * recargar, el token ya está fresco y la inicialización termina al instante.
+   */
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
-        setPerfil(data)
-      }
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data } = await supabase.from("profiles").select("nombre, avatar_url").eq("id", session.user.id).single()
-        setPerfil(data)
-      } else {
-        setPerfil(null)
-      }
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // El perfil (nombre y foto del encabezado) se pide aparte, ya fuera del
+  // callback de arriba. Depende del id y no del objeto `user` completo: en cada
+  // renovación de token llega un objeto nuevo con el mismo id, y no hay por qué
+  // volver a consultar el perfil por eso.
+  useEffect(() => {
+    if (!userId) return
+    let cancelado = false
+    supabase
+      .from("profiles")
+      .select("nombre, avatar_url")
+      .eq("id", userId)
+      .single()
+      .then(({ data }) => {
+        if (!cancelado && data) setPerfilCargado({ id: userId, ...data })
+      })
+      .catch(() => {
+        // Si falla, el encabezado se queda mostrando el correo (como antes).
+      })
+    return () => { cancelado = true }
+  }, [userId])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
