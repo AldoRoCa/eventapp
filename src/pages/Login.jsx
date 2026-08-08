@@ -2,6 +2,7 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
+import BotonGoogle, { SeparadorO } from "../components/BotonGoogle"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -61,6 +62,10 @@ export default function Login() {
             style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "20px", color: "#f87171", fontSize: "13.5px" }}
           >{error}</motion.div>
         )}
+
+        <BotonGoogle texto="Continuar con Google" onError={setError} />
+
+        <SeparadorO texto="o con tu correo" />
 
         <div style={{ marginBottom: "16px" }}>
           <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Correo electrónico</label>

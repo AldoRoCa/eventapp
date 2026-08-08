@@ -3,6 +3,7 @@ import { motion } from "framer-motion"
 import { supabase } from "../supabase"
 import { useNavigate, Link } from "react-router-dom"
 import { comprimirAvatar } from "../imagenUtils"
+import BotonGoogle, { SeparadorO } from "../components/BotonGoogle"
 
 export default function Registro() {
   const [nombre, setNombre] = useState("")
@@ -141,6 +142,38 @@ export default function Registro() {
             style={{ background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "12px 16px", marginBottom: "20px", color: "#f87171", fontSize: "13.5px" }}
           >{error}</motion.div>
         )}
+
+        <BotonGoogle texto="Continuar con Google" onError={setError} />
+
+        {/* Aviso de correo institucional. Es una petición directa a propósito:
+            varios anfitriones universitarios señalaron que conviene que la
+            mayor cantidad posible de gente entre con su correo escolar, así
+            que va con el porqué (qué hace ese correo) y SIN descargo de
+            "es opcional" — el descargo desinflaba la petición y ya era
+            redundante: la frase arranca condicionada en "¿Eres universitario?"
+            y el formulario de correo normal está justo debajo, a la vista. */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.28)", borderRadius: "12px", padding: "12px 14px", marginTop: "14px" }}>
+          <svg width="17" height="17" fill="none" stroke="#a78bfa" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: "2px" }}>
+            <path d="M22 10L12 5 2 10l10 5 10-5z" />
+            <path d="M6 12v5c0 1 2.5 2.5 6 2.5s6-1.5 6-2.5v-5" />
+          </svg>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.75)", lineHeight: 1.55, margin: 0 }}>
+            <strong style={{ color: "#c4b5fd", fontWeight: 600 }}>¿Eres universitario?</strong> Usa tu correo escolar — así reconocemos tu universidad y te mostramos los eventos de tu campus.
+          </p>
+        </div>
+
+        {/* Google no nos dice la edad del usuario, así que la confirmación de
+            mayoría de edad que el formulario de correo pide con una casilla
+            aquí va como consentimiento implícito al pulsar el botón — el
+            patrón estándar, y el único que no reintroduce la fricción que
+            este cambio vino a quitar. */}
+        <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, margin: "10px 2px 0", textAlign: "center" }}>
+          Al continuar con Google confirmas que eres mayor de edad y aceptas los{" "}
+          <Link to="/terminos" style={{ color: "#a78bfa", textDecoration: "none" }}>Términos</Link>{" "}y la{" "}
+          <Link to="/privacidad" style={{ color: "#a78bfa", textDecoration: "none" }}>Política de Privacidad</Link>.
+        </p>
+
+        <SeparadorO texto="o regístrate con tu correo" />
 
         <div style={{ marginBottom: "14px" }}>
           <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Nombre completo (real)</label>
