@@ -116,8 +116,12 @@ export default function Perfil() {
       // sacar al usuario a la pantalla de inicio.
       await supabase.auth.signOut()
       navigate("/")
-    } catch {
-      setErrorEliminar("Error de conexión. Revisa tu internet e intenta de nuevo.")
+    } catch (err) {
+      // El motivo real importa: "Failed to fetch" (bloqueo de red, CORS o una
+      // extensión del navegador) y un fallo posterior al cierre de sesión se
+      // veían idénticos, como un genérico "revisa tu internet". Sin el detalle
+      // no hay forma de distinguirlos sin ir a buscar a la consola.
+      setErrorEliminar(`No se pudo contactar al servidor: ${err?.message || "error desconocido"}. Si tienes internet, puede ser una extensión del navegador bloqueando la petición — prueba en una ventana de incógnito.`)
       setEliminando(false)
     }
   }
