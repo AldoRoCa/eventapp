@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://eventapp-flax.vercel.app",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { corsFor } from "../_shared/cors.ts"
 
 const EXTENSIONES_VALIDAS = ["jpg", "jpeg", "png", "webp", "gif"]
 const MAX_BYTES = 5 * 1024 * 1024
@@ -19,6 +15,7 @@ const MAX_BYTES = 5 * 1024 * 1024
 // confirmación en otro dispositivo (p.ej. revisa su correo en el celular
 // pero se registró en la PC), la foto nunca se subía en ningún lado.
 serve(async (req) => {
+  const corsHeaders = corsFor(req)
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }

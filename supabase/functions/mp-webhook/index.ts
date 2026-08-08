@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://eventapp-flax.vercel.app",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-}
+import { corsFor } from "../_shared/cors.ts"
 
 // Mercado Pago llama esta URL server-a-server cada vez que un pago cambia
 // de estado (la configuramos como notification_url al crear la preferencia
@@ -59,6 +55,7 @@ async function firmaValida(req: Request, dataId: string | null): Promise<boolean
 }
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req)
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
