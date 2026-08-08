@@ -184,7 +184,23 @@ serve(async (req) => {
 
     // Eliminar la cuenta de autenticación — sin esto, el usuario podría
     // seguir iniciando sesión aunque su perfil esté vacío.
-    await supabase.auth.admin.deleteUser(user.id)
+    //
+    // El resultado SÍ se revisa: antes se ignoraba y la función respondía
+    // ok:true pase lo que pasara. Si este borrado fallaba (típicamente por
+    // una llave foránea que todavía apunta a auth.users), el usuario veía
+    // "cuenta eliminada", se le cerraba la sesión... y podía volver a
+    // entrar como si nada, con el perfil ya anonimizado. Un fallo aquí deja
+    // la cuenta a medias, así que tiene que verse.
+    const { error: errorBorrado } = await supabase.auth.admin.deleteUser(user.id)
+    if (errorBorrado) {
+      console.error("[ALERTA-BAJA] No se pudo eliminar el usuario de auth:", JSON.stringify({ user_id: user.id, error: errorBorrado.message }))
+      return new Response(JSON.stringify({
+        error: `Tus datos personales se borraron, pero no se pudo cerrar la cuenta de acceso (${errorBorrado.message}). Contáctanos para terminar la baja.`,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      })
+    }
 
     return new Response(JSON.stringify({
       ok: true,

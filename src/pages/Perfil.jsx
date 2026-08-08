@@ -29,6 +29,11 @@ export default function Perfil() {
   const [guardandoNombre, setGuardandoNombre] = useState(false)
   const [modalEliminar, setModalEliminar] = useState(false)
   const [confirmacionTexto, setConfirmacionTexto] = useState("")
+  // Los errores al eliminar la cuenta necesitan su propio estado: `mensaje` se
+  // dibuja en la página, que queda TAPADA por este modal (zIndex 1000 y fondo
+  // desenfocado). El servidor explicaba el rechazo y el usuario no lo veía
+  // nunca — la pantalla solo se quedaba ahí, sin pasar nada.
+  const [errorEliminar, setErrorEliminar] = useState("")
   const [eliminando, setEliminando] = useState(false)
   const avatarRef = useRef(null)
 
@@ -86,8 +91,14 @@ export default function Perfil() {
   const eliminarCuenta = async () => {
     if (confirmacionTexto !== "ELIMINAR") return
     setEliminando(true)
+    setErrorEliminar("")
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        setErrorEliminar("Tu sesión expiró. Vuelve a iniciar sesión e intenta de nuevo.")
+        setEliminando(false)
+        return
+      }
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/eliminar-cuenta`, {
         method: "POST",
         headers: {
@@ -95,9 +106,9 @@ export default function Perfil() {
           "Authorization": `Bearer ${session.access_token}`,
         },
       })
-      const json = await res.json()
+      const json = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setMensaje(json.error || "No se pudo eliminar la cuenta. Intenta de nuevo.")
+        setErrorEliminar(json.error || `No se pudo eliminar la cuenta (error ${res.status}). Intenta de nuevo.`)
         setEliminando(false)
         return
       }
@@ -106,7 +117,7 @@ export default function Perfil() {
       await supabase.auth.signOut()
       navigate("/")
     } catch {
-      setMensaje("Error de conexión. Intenta de nuevo.")
+      setErrorEliminar("Error de conexión. Revisa tu internet e intenta de nuevo.")
       setEliminando(false)
     }
   }
@@ -345,8 +356,14 @@ export default function Perfil() {
               <input value={confirmacionTexto} onChange={e => setConfirmacionTexto(e.target.value)} disabled={eliminando}
                 style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 12px", color: "white", fontSize: "14px", fontFamily: "inherit", marginBottom: "20px" }}
               />
+              {errorEliminar && (
+                <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ background: "rgba(239,68,68,0.12)", border: "1.5px solid rgba(239,68,68,0.35)", borderRadius: "10px", padding: "11px 14px", marginBottom: "16px", color: "#fca5a5", fontSize: "13px", lineHeight: 1.55 }}
+                >{errorEliminar}</motion.div>
+              )}
+
               <div style={{ display: "flex", gap: "10px" }}>
-                <button onClick={() => { setModalEliminar(false); setConfirmacionTexto("") }} disabled={eliminando}
+                <button onClick={() => { setModalEliminar(false); setConfirmacionTexto(""); setErrorEliminar("") }} disabled={eliminando}
                   style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}
                 >Cancelar</button>
                 <button onClick={eliminarCuenta} disabled={confirmacionTexto !== "ELIMINAR" || eliminando}
