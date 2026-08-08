@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
-import { eventoFinalizado } from "../eventoUtils"
+import { eventoFinalizado, horasRegistro } from "../eventoUtils"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 
 function useIsMobile() {
@@ -191,11 +191,28 @@ export default function Evento() {
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
   const precioTotal = Math.round(evento.precio * 1.10) * cantidad
 
+  // Hasta qué hora se espera hacer check-in. Es SOLO informativo para el
+  // asistente: `tiempo_registro_horas` nunca ha bloqueado la entrada ni la
+  // bloquea ahora (ver eventoUtils.js). Si el anfitrión no lo definió, se
+  // usa la duración del evento, que es la misma regla de horasRegistro().
+  const finCheckin = new Date(fecha.getTime() + horasRegistro(evento) * 60 * 60 * 1000)
+  const horaFinCheckin = finCheckin.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
+  // Con eventos largos o que empiezan de noche, el check-in puede terminar
+  // ya en otro día; decir solo la hora sería confuso ("hasta las 02:00"
+  // ¿de hoy?), así que en ese caso se nombra el día.
+  const checkinOtroDia = finCheckin.toDateString() !== fecha.toDateString()
+  const valorCheckin = checkinOtroDia
+    ? `Hasta las ${horaFinCheckin} del ${finCheckin.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long" })}`
+    : `Hasta las ${horaFinCheckin}`
+
   const detalles = [
     { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, label: "Fecha", value: fechaFormato, color: "#a78bfa", glow: "#7c3aed" },
     { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, label: "Hora", value: horaFormato, color: "#60a5fa", glow: "#2563eb" },
     { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>, label: "Ubicación", value: evento.ubicacion, color: "#34d399", glow: "#059669" },
     { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>, label: "Asistentes", value: `${asistentes} / ${evento.capacidad}`, color: "#fbbf24", glow: "#d97706" },
+    // Va al final y ocupa el ancho completo: es impar en una rejilla de dos
+    // columnas y su texto es el más largo de los cinco.
+    { icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>, label: "Check-in", value: valorCheckin, color: "#f472b6", glow: "#db2777", anchoCompleto: true },
   ]
 
   // Elemento JSX precalculado (no un componente definido dentro del
@@ -421,7 +438,7 @@ export default function Evento() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "24px" }}>
             {detalles.map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}
-                style={{ background: "rgba(255,255,255,0.03)", border: `1.5px solid rgba(255,255,255,0.07)`, borderRadius: "14px", padding: "14px", display: "flex", alignItems: "flex-start", gap: "10px", position: "relative", overflow: "hidden" }}
+                style={{ background: "rgba(255,255,255,0.03)", border: `1.5px solid rgba(255,255,255,0.07)`, borderRadius: "14px", padding: "14px", display: "flex", alignItems: "flex-start", gap: "10px", position: "relative", overflow: "hidden", gridColumn: item.anchoCompleto ? "1 / -1" : undefined }}
               >
                 <div style={{ position: "absolute", bottom: 0, right: 0, width: "60px", height: "60px", background: `radial-gradient(circle, ${item.glow}15 0%, transparent 70%)`, pointerEvents: "none" }} />
                 <div style={{ color: item.color, flexShrink: 0, marginTop: "1px", filter: `drop-shadow(0 0 6px ${item.glow}60)` }}>{item.icon}</div>
@@ -518,7 +535,7 @@ export default function Evento() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "28px" }}>
               {detalles.map((item, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "20px", display: "flex", alignItems: "flex-start", gap: "14px", position: "relative", overflow: "hidden", transition: "border 0.2s" }}
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "20px", display: "flex", alignItems: "flex-start", gap: "14px", position: "relative", overflow: "hidden", transition: "border 0.2s", gridColumn: item.anchoCompleto ? "1 / -1" : undefined }}
                   whileHover={{ borderColor: `${item.glow}40` }}
                 >
                   <div style={{ position: "absolute", bottom: 0, right: 0, width: "80px", height: "80px", background: `radial-gradient(circle, ${item.glow}12 0%, transparent 70%)`, pointerEvents: "none" }} />

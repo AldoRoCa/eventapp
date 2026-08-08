@@ -57,7 +57,12 @@ export default function MisBoletos() {
         .from("boletos")
         .select("*, eventos(titulo, fecha, ubicacion, categoria, imagen_url, precio, tipo_boleto, duracion_horas, profiles(nombre)), mp_payment_id, codigo_grupo, nombre_registro")
         .eq("usuario_id", user.id)
-        .in("estado", ["activo", "pendiente"])
+        // "rechazado" se incluye a propósito: antes solo se pedían activo y
+        // pendiente, así que una solicitud rechazada existía en la base pero
+        // desaparecía de la vista del asistente sin explicación — para él era
+        // idéntico a que le hubieran borrado el boleto. Ahora la ve con su
+        // estado, que además le confirma que su reembolso se procesó.
+        .in("estado", ["activo", "pendiente", "rechazado"])
         .order("created_at", { ascending: false })
       setBoletos(data || [])
 
@@ -249,10 +254,12 @@ export default function MisBoletos() {
               const fechaFormato = fecha ? fecha.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "Fecha no disponible"
               const horaFormato = fecha ? fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : ""
 
-              const estadoColor = boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"
-              const estadoBg = boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.1)"
-              const estadoBorder = boleto.estado === "pendiente" ? "rgba(245,158,11,0.3)" : usado ? "rgba(255,255,255,0.1)" : "rgba(16,185,129,0.3)"
-              const estadoLabel = boleto.estado === "pendiente" ? "Pendiente" : usado ? "Usado" : "Activo"
+              const rechazado = boleto.estado === "rechazado"
+
+              const estadoColor = rechazado ? "#f87171" : boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"
+              const estadoBg = rechazado ? "rgba(239,68,68,0.1)" : boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.1)"
+              const estadoBorder = rechazado ? "rgba(239,68,68,0.3)" : boleto.estado === "pendiente" ? "rgba(245,158,11,0.3)" : usado ? "rgba(255,255,255,0.1)" : "rgba(16,185,129,0.3)"
+              const estadoLabel = rechazado ? "Rechazado" : boleto.estado === "pendiente" ? "Pendiente" : usado ? "Usado" : "Activo"
 
               return (
                 <motion.div key={boleto.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
@@ -304,6 +311,20 @@ export default function MisBoletos() {
                             )}
                           </div>
                         </div>
+
+                        {/* Explicación del rechazo. Sin esto el asistente solo
+                            vería una etiqueta roja, sin saber qué pasó con su
+                            dinero — que es lo primero que se va a preguntar. */}
+                        {rechazado && (
+                          <div style={{ marginTop: "14px", padding: "12px 14px", background: "rgba(239,68,68,0.07)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "12px" }}>
+                            <div style={{ fontSize: "12.5px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>El anfitrión no aprobó tu solicitud</div>
+                            <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                              {boleto.mp_payment_id
+                                ? "Tu pago fue reembolsado automáticamente. Puede tardar de 5 a 10 días hábiles en reflejarse."
+                                : "No se te cobró nada."}
+                            </div>
+                          </div>
+                        )}
 
                         {/* CÓDIGO + QR de check-in */}
                         {boleto.codigo_grupo && boleto.estado === "activo" && (
@@ -399,6 +420,17 @@ export default function MisBoletos() {
                             </button>
                           )}
                         </div>
+
+                        {rechazado && (
+                          <div style={{ marginTop: "16px", padding: "14px 16px", background: "rgba(239,68,68,0.07)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "12px" }}>
+                            <div style={{ fontSize: "13px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>El anfitrión no aprobó tu solicitud</div>
+                            <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                              {boleto.mp_payment_id
+                                ? "Tu pago fue reembolsado automáticamente. Puede tardar de 5 a 10 días hábiles en reflejarse."
+                                : "No se te cobró nada."}
+                            </div>
+                          </div>
+                        )}
 
                         {/* CÓDIGO + QR de check-in — versión desktop */}
                         {boleto.codigo_grupo && boleto.estado === "activo" && (
