@@ -6,7 +6,7 @@ import { supabase } from "../supabase"
 export default function PagoExitoso() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [estado, setEstado] = useState("verificando") // verificando | confirmado | pendiente | error
+  const [estado, setEstado] = useState("verificando") // verificando | confirmado | pendiente | reembolsado | error
 
   useEffect(() => {
     const activarBoleto = async () => {
@@ -25,14 +25,18 @@ export default function PagoExitoso() {
             body: JSON.stringify({ evento_id, payment_id })
           })
           const data = await res.json().catch(() => ({}))
-          if (res.ok) resultado = data.estado === "pendiente" ? "pendiente" : "confirmado"
+          // "reembolsado": el detector de liberación inmediata devolvió el
+          // pago automáticamente (ver _shared/liberacion.ts) — decírselo al
+          // comprador con la verdad, no con un "pago exitoso" falso.
+          if (res.ok) resultado = data.estado === "pendiente" ? "pendiente" : data.estado === "reembolsado" ? "reembolsado" : "confirmado"
         } catch {
           resultado = "error"
         }
       }
       setEstado(resultado)
-      // El mensaje de solicitud pendiente es más largo; dar tiempo de leerlo
-      setTimeout(() => navigate("/mis-boletos"), resultado === "pendiente" ? 5000 : 3000)
+      // Los mensajes de solicitud pendiente y de reembolso son más largos;
+      // dar tiempo de leerlos
+      setTimeout(() => navigate("/mis-boletos"), resultado === "pendiente" ? 5000 : resultado === "reembolsado" ? 8000 : 3000)
     }
     activarBoleto()
   }, [navigate, searchParams])
@@ -45,6 +49,12 @@ export default function PagoExitoso() {
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>⚠</div>
             <h1 style={{ fontSize: "1.6rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>No pudimos confirmar tu pago</h1>
             <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "8px" }}>Si el cargo se realizó, tu boleto se activará en unos minutos. Si no aparece en Mis Boletos, contáctanos.</p>
+          </>
+        ) : estado === "reembolsado" ? (
+          <>
+            <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "rgba(245,158,11,0.2)", border: "1px solid rgba(245,158,11,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: "36px" }}>↩</div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>Tu pago fue devuelto</h1>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", marginBottom: "8px" }}>El pago se procesó, pero se reembolsó automáticamente: las ventas de este organizador están pausadas por una revisión de seguridad de su cuenta de cobro. El dinero volverá a tu método de pago; el tiempo exacto depende de tu banco.</p>
           </>
         ) : estado === "pendiente" ? (
           <>

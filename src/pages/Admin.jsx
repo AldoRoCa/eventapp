@@ -24,6 +24,8 @@ export default function Admin() {
   const [anfitriones, setAnfitriones] = useState([])
   const [reportes, setReportes] = useState([])
   const [fallosReembolso, setFallosReembolso] = useState([])
+  const [incidentes, setIncidentes] = useState([]) // liberación inmediata de MP
+  const [nombresIncidentes, setNombresIncidentes] = useState({}) // { [anfitrion_id]: nombre }
   const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
   const cargarSolicitudes = async () => {
@@ -74,6 +76,23 @@ export default function Admin() {
     setFallosReembolso(data || [])
   }
 
+  const cargarIncidentes = async () => {
+    const { data } = await supabase
+      .from("incidentes_liberacion")
+      .select("*")
+      .eq("resuelto", false)
+      .order("created_at", { ascending: false })
+    setIncidentes(data || [])
+    // Nombres de los anfitriones involucrados, para no mostrar solo UUIDs
+    const ids = [...new Set((data || []).map(i => i.anfitrion_id))]
+    if (ids.length > 0) {
+      const { data: perfiles } = await supabase.from("profiles").select("id, nombre").in("id", ids)
+      const mapa = {}
+      for (const p of perfiles || []) mapa[p.id] = p.nombre
+      setNombresIncidentes(mapa)
+    }
+  }
+
   useEffect(() => {
     const verificar = async () => {
       const { data: { user } } = await getUserSafe()
@@ -84,6 +103,7 @@ export default function Admin() {
       await cargarAnfitriones()
       await cargarReportes()
       await cargarFallosReembolso()
+      await cargarIncidentes()
       setLoading(false)
     }
     verificar()
@@ -132,6 +152,31 @@ export default function Admin() {
       setMensaje("Fallo de reembolso marcado como resuelto.")
       setTimeout(() => setMensaje(""), 3000)
     }
+    setProcesando(null)
+  }
+
+  const desbloquearAnfitrion = async (anfitrionId) => {
+    const nombre = nombresIncidentes[anfitrionId] || "este anfitrión"
+    if (!window.confirm(`¿Desbloquear a ${nombre}? Hazlo solo si ya te mandó captura de su plazo de liberación corregido (7 o 30 días). Su próxima venta se vuelve a verificar automáticamente: si no lo cambió de verdad, se bloquea solo otra vez.`)) return
+    setProcesando(anfitrionId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/desbloquear-anfitrion`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` },
+        body: JSON.stringify({ anfitrion_id: anfitrionId }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setMensaje(json.error || "No se pudo desbloquear al anfitrión.")
+      } else {
+        setIncidentes(prev => prev.filter(i => i.anfitrion_id !== anfitrionId))
+        setMensaje(`✓ ${nombre} desbloqueado. Su próxima venta volverá a verificar su cuenta.`)
+      }
+    } catch {
+      setMensaje("Error de conexión al desbloquear.")
+    }
+    setTimeout(() => setMensaje(""), 4000)
     setProcesando(null)
   }
 
@@ -225,6 +270,7 @@ export default function Admin() {
             { id: "anfitriones", label: isMobile ? `Anfitriones (${anfitriones.length})` : `Anfitriones aprobados (${anfitriones.length})` },
             { id: "reportes", label: isMobile ? `Reportes ${reportes.length > 0 ? `(${reportes.length})` : ""}` : `Reportes de eventos ${reportes.length > 0 ? `(${reportes.length})` : ""}` },
             { id: "reembolsos", label: isMobile ? `Reembolsos ${fallosReembolso.length > 0 ? `(${fallosReembolso.length})` : ""}` : `Reembolsos fallidos ${fallosReembolso.length > 0 ? `(${fallosReembolso.length})` : ""}` },
+            { id: "liberacion", label: isMobile ? `Liberación ${incidentes.length > 0 ? `(${incidentes.length})` : ""}` : `Liberación MP ${incidentes.length > 0 ? `(${incidentes.length})` : ""}` },
           ].map(t => (
             <motion.button key={t.id} onClick={() => setTab(t.id)} whileTap={{ scale: 0.97 }}
               style={{ padding: isMobile ? "8px 12px" : "8px 20px", borderRadius: "9px", cursor: "pointer", border: "none", background: tab === t.id ? "rgba(124,58,237,0.3)" : "transparent", color: tab === t.id ? "white" : "rgba(255,255,255,0.45)", fontSize: isMobile ? "12.5px" : "14px", fontWeight: tab === t.id ? 600 : 500, fontFamily: "inherit", transition: "all 0.15s", flex: isMobile ? "1" : "none", whiteSpace: "nowrap" }}
@@ -417,6 +463,64 @@ export default function Admin() {
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagos sin reembolsar (Mercado Pago)</div>
                             <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{f.payment_ids.join(", ")}</div>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "liberacion" && (
+          <div>
+            {incidentes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
+                <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔓</div>
+                <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>Sin incidentes de liberación</div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando se detecte una venta de una cuenta de Mercado Pago que libera el dinero al instante, aparecerá aquí — con las ventas del anfitrión ya pausadas y el pago detector ya reembolsado automáticamente</div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {incidentes.map((inc, i) => {
+                  const esInmediata = inc.tipo === "liberacion_inmediata"
+                  return (
+                    <motion.div key={inc.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+                      style={{ background: "#0f0f11", border: `1px solid ${esInmediata ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.12)"}`, borderRadius: "16px", padding: "24px" }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "4px", color: esInmediata ? "#fbbf24" : "rgba(255,255,255,0.7)" }}>
+                            {esInmediata ? "Liberación inmediata detectada" : "Dato de liberación ilegible"}
+                          </div>
+                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>{new Date(inc.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · vía {inc.origen}</div>
+                        </div>
+                        <motion.button onClick={() => desbloquearAnfitrion(inc.anfitrion_id)} whileTap={{ scale: 0.97 }} disabled={procesando === inc.anfitrion_id}
+                          style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "8px", color: "#34d399", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
+                        >{procesando === inc.anfitrion_id ? "..." : "Desbloquear anfitrión"}</motion.button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginTop: "20px", padding: "16px", background: "rgba(255,255,255,0.02)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        <div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Anfitrión</div>
+                          <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.7)" }}>{nombresIncidentes[inc.anfitrion_id] || "—"}</div>
+                          <div style={{ fontSize: "11.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.35)", wordBreak: "break-all" }}>{inc.anfitrion_id}</div>
+                        </div>
+                        {inc.liberacion_dias !== null && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Plazo de liberación detectado</div>
+                            <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)" }}>{inc.liberacion_dias} días</div>
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Detalle</div>
+                          <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{inc.detalle || "—"}</div>
+                        </div>
+                        {inc.mp_payment_id && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pago detector (Mercado Pago)</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{inc.mp_payment_id}</div>
                           </div>
                         )}
                       </div>

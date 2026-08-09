@@ -50,7 +50,7 @@ serve(async (req) => {
     // navegador del comprador.
     const { data: evento, error: eventoError } = await supabase
       .from("eventos")
-      .select("anfitrion_id")
+      .select("anfitrion_id, ventas_pausadas")
       .eq("id", evento_id)
       .single()
 
@@ -63,7 +63,7 @@ serve(async (req) => {
 
     const { data: anfitrionCredenciales, error: anfitrionError } = await supabase
       .from("mp_credenciales")
-      .select("mp_access_token")
+      .select("mp_access_token, liberacion_inmediata")
       .eq("id", evento.anfitrion_id)
       .single()
 
@@ -71,6 +71,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "El anfitrión no ha conectado su cuenta de Mercado Pago" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
+      })
+    }
+
+    // Candado de liberación inmediata: si la cuenta de MP del anfitrión
+    // libera el dinero al instante (detectado en una venta anterior por
+    // _shared/liberacion.ts), un reembolso futuro podría fallar por falta
+    // de saldo — no se aceptan más ventas hasta que el admin lo desbloquee
+    // (desbloquear-anfitrion, previa captura del plazo corregido). La
+    // fuente de verdad es mp_credenciales (sin acceso de cliente);
+    // ventas_pausadas en eventos es el reflejo informativo.
+    if (anfitrionCredenciales.liberacion_inmediata === true || evento.ventas_pausadas === true) {
+      return new Response(JSON.stringify({ error: "Las ventas de este organizador están pausadas temporalmente mientras corrige la configuración de cobro de su cuenta de Mercado Pago. Intenta de nuevo más tarde." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
       })
     }
 

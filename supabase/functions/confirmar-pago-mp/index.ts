@@ -67,6 +67,26 @@ serve(async (req) => {
       .eq("estado", "pendiente_pago")
 
     if (!boletosPendientes || boletosPendientes.length === 0) {
+      // mp-webhook llega server-a-server y suele ganarle al navegador del
+      // comprador: si ya procesó este mismo pago, aquí no queda ningún
+      // "pendiente_pago" — pero eso no es un error. Reportar el estado real
+      // de los boletos de ESTE pago para que PagoExitoso diga la verdad.
+      const { data: yaProcesados } = await supabase
+        .from("boletos")
+        .select("estado")
+        .eq("usuario_id", user.id)
+        .eq("evento_id", evento_id)
+        .eq("mp_payment_id", String(payment_id))
+      if (yaProcesados && yaProcesados.length > 0) {
+        const estado = yaProcesados.some((b) => b.estado === "activo") ? "activo"
+          : yaProcesados.some((b) => b.estado === "pendiente") ? "pendiente"
+          : yaProcesados.every((b) => b.estado === "rechazado") ? "reembolsado"
+          : yaProcesados[0].estado
+        return new Response(JSON.stringify({ ok: true, estado, ya_procesado: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        })
+      }
       return new Response(JSON.stringify({ error: "No hay boletos pendientes de pago para este evento" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
@@ -142,13 +162,14 @@ serve(async (req) => {
       })
     }
 
-    // Observación (Fase B): registrar en cuántos días se le libera al
-    // anfitrión el dinero de este pago (detección de cuentas MP en "al
-    // instante", cuyos reembolsos pueden fallar si retira el dinero).
-    // Corre DESPUÉS de activar los boletos y nunca bloquea ni rompe nada.
-    await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, "confirmar-pago-mp")
+    // Detección de liberación inmediata (Fase C): corre DESPUÉS de activar
+    // los boletos y jamás rompe la confirmación. Si la cuenta de MP del
+    // anfitrión libera el dinero al instante, el detector pausa sus ventas
+    // y reembolsa ESTE pago (recién aprobado: el dinero sigue ahí) — en ese
+    // caso se le dice la verdad al comprador con estado "reembolsado".
+    const resultadoDeteccion = await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, anfitrionCredenciales.mp_access_token, "confirmar-pago-mp")
 
-    return new Response(JSON.stringify({ ok: true, estado: nuevoEstado }), {
+    return new Response(JSON.stringify({ ok: true, estado: resultadoDeteccion === "reembolsado" ? "reembolsado" : nuevoEstado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     })

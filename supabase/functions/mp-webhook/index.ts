@@ -226,10 +226,13 @@ serve(async (req) => {
       })
     }
 
-    // Observación (Fase B): igual que en confirmar-pago-mp — registrar el
-    // plazo de liberación del dinero de este pago. Si ambas rutas ven el
-    // mismo pago, el upsert de incidentes deduplica solo.
-    await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, "mp-webhook")
+    // Detección de liberación inmediata (Fase C): igual que en
+    // confirmar-pago-mp — si la cuenta del anfitrión libera al instante,
+    // pausa sus ventas y reembolsa este pago. El candado del upsert de
+    // incidentes garantiza que solo una de las dos rutas actúe por pago.
+    // Aquí no hay comprador esperando respuesta, así que el resultado no
+    // se usa (PagoExitoso se entera vía confirmar-pago-mp).
+    await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, cred.mp_access_token, "mp-webhook")
 
     return new Response(JSON.stringify({ ok: true, estado: nuevoEstado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
