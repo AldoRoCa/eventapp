@@ -439,6 +439,32 @@ export default function Admin() {
 
         {tab === "reembolsos" && (
           <div>
+            {/* Daño total en juego: cuánto dinero falta por devolverles a los
+                compradores y cuántos boletos están sin reembolsar. */}
+            {fallosReembolso.length > 0 && (() => {
+              const dinero = fallosReembolso.reduce((s, f) => s + (Number(f.monto_pendiente) || 0), 0)
+              const boletos = fallosReembolso.reduce((s, f) => s + (Number(f.boletos_afectados) || 0), 0)
+              const anfitriones = new Set(fallosReembolso.map(f => f.evento_id)).size
+              return (
+                <div style={{ marginBottom: "18px", padding: "16px 18px", background: "rgba(239,68,68,0.07)", border: "1.5px solid rgba(239,68,68,0.25)", borderRadius: "14px", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? "12px" : "18px" }}>
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Dinero sin devolver</div>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: "#f87171" }}>
+                      ${dinero.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Boletos afectados</div>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{boletos || "—"}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Eventos con deuda</div>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{anfitriones}</div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Protocolo: qué hacer cuando un reembolso falla. Escrito aquí
                 para no depender de recordarlo en el momento. */}
             <div style={{ marginBottom: "18px", padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px" }}>
@@ -505,6 +531,20 @@ export default function Admin() {
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Motivo real (Mercado Pago)</div>
                             <div style={{ fontSize: "13px", color: "#fca5a5", lineHeight: 1.55 }}>{f.ultimo_error}</div>
+                          </div>
+                        )}
+                        {(f.monto_pendiente !== null && f.monto_pendiente !== undefined) && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Dinero sin devolver</div>
+                            <div style={{ fontSize: "15px", fontWeight: 700, color: "#f87171" }}>
+                              ${Number(f.monto_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN
+                              {f.boletos_afectados ? <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.5)" }}> · {f.boletos_afectados} boleto{f.boletos_afectados === 1 ? "" : "s"}</span> : null}
+                            </div>
+                            {Number(f.monto_recuperado) > 0 && (
+                              <div style={{ fontSize: "12px", color: "#34d399", marginTop: "3px" }}>
+                                Ya devuelto: ${Number(f.monto_recuperado).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN
+                              </div>
+                            )}
                           </div>
                         )}
                         <div>

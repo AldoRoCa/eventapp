@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { enviarAlerta, datosAnfitrion } from "../_shared/alertas.ts"
+import { resumenMontos, pesos } from "../_shared/montos.ts"
 
 // Reintento automático de reembolsos fallidos. La dispara pg_cron cada 8 horas
 // (ver migración 20260809140000).
@@ -159,6 +160,9 @@ async function procesarFallo(supabase: any, fallo: any, resumen: { recuperados: 
   // Solo se declara incobrable si TODO lo que queda ya venció.
   const incobrable = !todoResuelto && vencido && diasRestantesMin === Infinity
 
+  // Cuánto dinero queda realmente sin devolver, leído de MP.
+  const montos = await resumenMontos(supabase, todos, recuperadosTotal, token)
+
   await supabase.from("fallos_reembolso").update({
     intentos,
     ultimo_intento_en: new Date().toISOString(),
@@ -166,6 +170,9 @@ async function procesarFallo(supabase: any, fallo: any, resumen: { recuperados: 
     payment_ids_recuperados: recuperadosTotal,
     resuelto: todoResuelto,
     incobrable,
+    monto_pendiente: montos.pendiente,
+    monto_recuperado: montos.recuperado,
+    boletos_afectados: montos.boletos,
   }).eq("id", fallo.id)
 
   const datos = await datosAnfitrion(supabase, evento.anfitrion_id)
@@ -174,6 +181,8 @@ async function procesarFallo(supabase: any, fallo: any, resumen: { recuperados: 
     ["Teléfono", datos.telefono],
     ...(datos.whatsapp ? [["WhatsApp", datos.whatsapp] as [string, unknown]] : []),
     ["Evento", evento.titulo],
+    ["Dinero sin devolver", pesos(montos.pendiente)],
+    ["Boletos afectados", montos.boletos],
     ["Origen del reembolso", CONTEXTO_LABEL[fallo.contexto] ?? fallo.contexto],
   ] as [string, unknown][]
 
@@ -181,9 +190,9 @@ async function procesarFallo(supabase: any, fallo: any, resumen: { recuperados: 
     resumen.recuperados++
     await enviarAlerta({
       titulo: "✅ VELA — Reembolso recuperado automáticamente",
-      resumen: `El reembolso que había fallado se completó solo en el intento ${intentos}. El comprador ya tiene su dinero de vuelta. No tienes que hacer nada.`,
+      resumen: `El reembolso que había fallado se completó solo en el intento ${intentos}. Los compradores ya tienen su dinero de vuelta. No tienes que hacer nada.`,
       colorHtml: "#059669",
-      filas: [...filasBase, ["Pagos reembolsados", recuperadosTotal.join(", ")], ["Intentos", intentos]],
+      filas: [...filasBase, ["Dinero devuelto", pesos(montos.recuperado)], ["Pagos reembolsados", recuperadosTotal.join(", ")], ["Intentos", intentos]],
     })
     return
   }

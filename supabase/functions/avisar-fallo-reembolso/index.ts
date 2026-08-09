@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { enviarAlerta, datosAnfitrion } from "../_shared/alertas.ts"
+import { resumenMontos, pesos } from "../_shared/montos.ts"
 
 // Alerta activa cuando un reembolso a Mercado Pago falla.
 //
@@ -55,6 +56,7 @@ serve(async (req) => {
   // que en un reporte resuelto es el admin, no el anfitrión).
   let tituloEvento = String(r.evento_id ?? "—")
   let filasAnfitrion: [string, unknown][] = []
+  let filasMonto: [string, unknown][] = []
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SERVICE_ROLE_KEY")!)
     const { data: evento } = await supabase.from("eventos").select("anfitrion_id, titulo").eq("id", r.evento_id).single()
@@ -65,6 +67,23 @@ serve(async (req) => {
       ["Teléfono", datos.telefono],
       ...(datos.whatsapp ? [["WhatsApp", datos.whatsapp] as [string, unknown]] : []),
     ]
+
+    // Cuánto dinero quedó sin devolver, YA en esta primera alerta (si se
+    // esperara al primer reintento, la sabrías hasta 8 horas después).
+    const { data: cred } = await supabase
+      .from("mp_credenciales")
+      .select("mp_access_token")
+      .eq("id", evento?.anfitrion_id)
+      .single()
+    if (cred?.mp_access_token && Array.isArray(r.payment_ids)) {
+      const m = await resumenMontos(supabase, r.payment_ids as string[], [], cred.mp_access_token)
+      filasMonto = [["Dinero sin devolver", pesos(m.pendiente)], ["Boletos afectados", m.boletos]]
+      await supabase.from("fallos_reembolso").update({
+        monto_pendiente: m.pendiente,
+        monto_recuperado: m.recuperado,
+        boletos_afectados: m.boletos,
+      }).eq("id", r.id)
+    }
   } catch (e) {
     console.error("[avisar-fallo-reembolso] No se pudieron resolver los datos del anfitrión:", e)
   }
@@ -75,6 +94,7 @@ serve(async (req) => {
     filas: [
       ...filasAnfitrion,
       ["Evento", tituloEvento],
+      ...filasMonto,
       ["Origen", r.contexto],
       ["Pagos MP", paymentIds],
       ["Detalle", r.detalle],

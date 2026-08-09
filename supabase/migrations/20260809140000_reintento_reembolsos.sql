@@ -22,6 +22,12 @@
 --   incobrable            → se agotaron los 180 días, ya no se puede
 --   ultimo_aviso_en       → para el resumen diario, y no mandar un Telegram
 --                           en cada ciclo de reintento
+--   monto_pendiente       → cuánto dinero falta por devolverle a los
+--                           compradores (suma de los pagos no recuperados,
+--                           leída de Mercado Pago). Es "con cuánto se fugó".
+--   monto_recuperado      → cuánto ya se devolvió de esta fila
+--   boletos_afectados     → cuántos boletos cubren esos pagos (un solo pago
+--                           puede cubrir varios boletos de una compra grupal)
 -- ============================================================================
 
 alter table public.fallos_reembolso
@@ -30,7 +36,10 @@ alter table public.fallos_reembolso
   add column if not exists ultimo_error text,
   add column if not exists payment_ids_recuperados text[] not null default '{}',
   add column if not exists incobrable boolean not null default false,
-  add column if not exists ultimo_aviso_en timestamptz;
+  add column if not exists ultimo_aviso_en timestamptz,
+  add column if not exists monto_pendiente numeric,
+  add column if not exists monto_recuperado numeric,
+  add column if not exists boletos_afectados integer;
 
 -- ============================================================================
 -- Cron: llama a la Edge Function reintentar-reembolsos cada 8 horas
