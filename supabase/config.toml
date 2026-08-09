@@ -40,3 +40,8 @@ verify_jwt = false
 # (x-alerta-secret) que verifica la propia función, no con JWT.
 [functions.avisar-fallo-reembolso]
 verify_jwt = false
+
+# avisar-incidente-liberacion: igual que la anterior — la dispara un trigger
+# pg_net (INSERT en incidentes_liberacion), protegida con x-alerta-secret.
+[functions.avisar-incidente-liberacion]
+verify_jwt = false

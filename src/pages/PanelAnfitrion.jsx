@@ -4,6 +4,11 @@ import jsQR from "jsqr"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
+
+// Número de WhatsApp del admin (lada de país incluida, sin "+"), al que el
+// anfitrión con ventas pausadas manda la captura de su plazo de liberación
+// corregido (14 o 30 días) para que se le reactiven las ventas.
+const WHATSAPP_ADMIN = "5214423807981"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 import DesgloseGanancias from "../components/DesgloseGanancias"
 
@@ -686,6 +691,30 @@ export default function PanelAnfitrion() {
                 {eventos.map(ev => {
                   const fecha = new Date(ev.fecha)
                   const finalizado = eventoFinalizado(ev)
+                  // Ventas pausadas por el detector de liberación inmediata
+                  // (ver _shared/liberacion.ts). En un evento ya finalizado
+                  // la pausa da igual, no se muestra.
+                  const pausado = !finalizado && ev.ventas_pausadas
+                  // Mismo patrón que bloqueCompra en Evento.jsx: JSX en
+                  // variable (no componente) para reusarlo en la rama móvil
+                  // y la de escritorio sin remount.
+                  const avisoPausa = pausado ? (
+                    <div style={{ marginTop: "14px", padding: "13px 15px", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "11px" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "#fbbf24", marginBottom: "6px" }}>⚠️ Ventas pausadas</div>
+                      <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.65)", lineHeight: 1.65, marginBottom: "12px" }}>
+                        {ev.pausa_motivo || "Tu cuenta de cobro requiere una corrección. Contacta al equipo de VELA para reactivar tus ventas."}
+                      </div>
+                      <a
+                        href={`https://wa.me/${WHATSAPP_ADMIN}?text=${encodeURIComponent(`Hola, soy anfitrión en VELA. Ya corregí mi plazo de liberación a 14 días en Mercado Pago — aquí te adjunto la captura para reactivar las ventas de mi evento "${ev.titulo}".`)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(37,211,102,0.1)", border: "1.5px solid rgba(37,211,102,0.35)", borderRadius: "9px", color: "#4ade80", padding: "8px 14px", fontSize: "12.5px", fontWeight: 600, textDecoration: "none" }}
+                      >
+                        <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        Mandar captura por WhatsApp
+                      </a>
+                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>Se abre el chat con el mensaje listo — solo adjunta ahí tu captura de pantalla.</div>
+                    </div>
+                  ) : null
                   return (
                     <motion.div key={ev.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px" }}
@@ -699,8 +728,8 @@ export default function PanelAnfitrion() {
                                 {fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {ev.ubicacion}
                               </div>
                             </div>
-                            <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : "#a78bfa", flexShrink: 0 }}>
-                              {finalizado ? "Finalizado" : "Activo"}
+                            <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : pausado ? "rgba(245,158,11,0.15)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : pausado ? "rgba(245,158,11,0.35)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : pausado ? "#fbbf24" : "#a78bfa", flexShrink: 0 }}>
+                              {finalizado ? "Finalizado" : pausado ? "Ventas pausadas" : "Activo"}
                             </span>
                           </div>
                           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -730,8 +759,8 @@ export default function PanelAnfitrion() {
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                               <span style={{ fontWeight: 600, fontSize: "15.5px" }}>{ev.titulo}</span>
-                              <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "2px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : "#a78bfa" }}>
-                                {finalizado ? "Finalizado" : "Activo"}
+                              <span style={{ background: finalizado ? "rgba(255,255,255,0.06)" : pausado ? "rgba(245,158,11,0.15)" : "rgba(124,58,237,0.2)", border: `1.5px solid ${finalizado ? "rgba(255,255,255,0.1)" : pausado ? "rgba(245,158,11,0.35)" : "rgba(124,58,237,0.35)"}`, borderRadius: "999px", padding: "2px 10px", fontSize: "11px", fontWeight: 600, color: finalizado ? "rgba(255,255,255,0.4)" : pausado ? "#fbbf24" : "#a78bfa" }}>
+                                {finalizado ? "Finalizado" : pausado ? "Ventas pausadas" : "Activo"}
                               </span>
                             </div>
                             <div style={{ display: "flex", gap: "20px", color: "rgba(255,255,255,0.4)", fontSize: "13px", flexWrap: "wrap" }}>
@@ -764,6 +793,7 @@ export default function PanelAnfitrion() {
                           </div>
                         </div>
                       )}
+                      {avisoPausa}
                     </motion.div>
                   )
                 })}
