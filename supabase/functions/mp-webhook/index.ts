@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { detectarLiberacion } from "../_shared/liberacion.ts"
 
 // Mercado Pago llama esta URL server-a-server cada vez que un pago cambia
 // de estado (la configuramos como notification_url al crear la preferencia
@@ -224,6 +225,11 @@ serve(async (req) => {
         status: 500,
       })
     }
+
+    // Observación (Fase B): igual que en confirmar-pago-mp — registrar el
+    // plazo de liberación del dinero de este pago. Si ambas rutas ven el
+    // mismo pago, el upsert de incidentes deduplica solo.
+    await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, "mp-webhook")
 
     return new Response(JSON.stringify({ ok: true, estado: nuevoEstado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

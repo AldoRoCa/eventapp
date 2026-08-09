@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { detectarLiberacion } from "../_shared/liberacion.ts"
 
 serve(async (req) => {
   const corsHeaders = corsFor(req)
@@ -140,6 +141,12 @@ serve(async (req) => {
         status: 500,
       })
     }
+
+    // Observación (Fase B): registrar en cuántos días se le libera al
+    // anfitrión el dinero de este pago (detección de cuentas MP en "al
+    // instante", cuyos reembolsos pueden fallar si retira el dinero).
+    // Corre DESPUÉS de activar los boletos y nunca bloquea ni rompe nada.
+    await detectarLiberacion(supabase, pago, String(evento_id), evento.anfitrion_id, "confirmar-pago-mp")
 
     return new Response(JSON.stringify({ ok: true, estado: nuevoEstado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
