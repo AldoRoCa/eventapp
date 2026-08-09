@@ -11,34 +11,45 @@ function useIsMobile() {
   return isMobile
 }
 
+// Redactada para prometer exactamente lo que el sistema garantiza (2026-08-08):
+// los reembolsos se disparan solos y se verifican contra Mercado Pago; si uno
+// no puede procesarse, NADA se borra ni se marca como resuelto y el caso queda
+// registrado para seguimiento del admin (fallos_reembolso + alerta por correo).
+// El plazo "5 a 10 días hábiles" que prometía la versión anterior era un número
+// inventado — el tiempo real de acreditación depende del banco, no de VELA.
 const secciones = [
   {
     titulo: "1. Reembolso por cancelación del evento",
-    contenido: "Si el anfitrión cancela un evento, todos los asistentes que hayan comprado boletos recibirán un reembolso completo del monto pagado, incluyendo la comisión de servicio de VELA. El reembolso se procesará automáticamente a través de Mercado Pago en un plazo de 5 a 10 días hábiles."
+    contenido: "Si el anfitrión cancela un evento, el reembolso completo de todos los boletos pagados — incluyendo la comisión de servicio de VELA — se dispara automáticamente, sin que tengas que solicitarlo. La cancelación solo se completa cuando Mercado Pago confirma los reembolsos: si alguno no puede procesarse, el evento no se elimina y el caso queda registrado para que VELA le dé seguimiento directo hasta resolverlo."
   },
   {
     titulo: "2. Reembolso por solicitud rechazada",
-    contenido: "En eventos con sistema de solicitud de boletos, si el anfitrión rechaza tu solicitud, el monto pagado será reembolsado automáticamente a tu cuenta o método de pago original en un plazo de 5 a 10 días hábiles. No es necesario realizar ninguna gestión adicional."
+    contenido: "En eventos con sistema de solicitud de boletos, si el anfitrión rechaza tu solicitud pagada, el reembolso se dispara automáticamente en el momento del rechazo, sin ninguna gestión de tu parte. Un boleto solo puede quedar marcado como rechazado si Mercado Pago confirmó su reembolso — nunca te quedarás con un boleto rechazado y un pago sin devolver."
   },
   {
-    titulo: "3. Política de no reembolso por decisión del asistente",
+    titulo: "3. Reembolsos automáticos por seguridad",
+    contenido: "VELA verifica cada pago directamente con Mercado Pago. Si al procesar tu pago se detecta un riesgo en la configuración de cobro del organizador, VELA puede reembolsarlo automáticamente como medida de protección: verás el aviso al terminar la compra y el boleto aparecerá como rechazado en Mis Boletos. El dinero vuelve solo a tu método de pago original."
+  },
+  {
+    titulo: "4. Política de no reembolso por decisión del asistente",
     contenido: "Una vez confirmada la compra de un boleto, VELA no procesa reembolsos por decisión unilateral del asistente (cambio de planes, imposibilidad de asistir, etc.). Te recomendamos verificar la fecha, hora y ubicación del evento antes de realizar tu compra."
   },
   {
-    titulo: "4. Eventos reprogramados",
+    titulo: "5. Eventos reprogramados",
     contenido: "Si el anfitrión reprograma un evento a una nueva fecha, los boletos adquiridos seguirán siendo válidos para la nueva fecha. Si el cambio de fecha te imposibilita asistir, puedes contactar al anfitrión directamente. VELA no gestiona reembolsos por reprogramaciones."
   },
   {
-    titulo: "5. Cómo se procesa el reembolso",
+    titulo: "6. Cómo y cuándo se procesa el reembolso",
     contenido: [
       "Los reembolsos se procesan a través de Mercado Pago al método de pago original utilizado en la compra.",
-      "El tiempo de acreditación puede variar según tu banco o institución financiera.",
-      "VELA no tiene control sobre los tiempos internos de procesamiento de cada banco.",
+      "La orden de reembolso queda registrada en Mercado Pago de inmediato. Verla reflejada en tu estado de cuenta depende de tu banco: puede tomar desde unas horas hasta varios días hábiles, y VELA no tiene control sobre esos tiempos internos.",
+      "Si pagaste con tarjeta y el reembolso ocurre poco después del cargo, es posible que ninguno de los dos llegue a aparecer en tu estado de cuenta: el banco los cancela entre sí antes de facturarlos. El recibo de Mercado Pago es el comprobante de que la devolución existe.",
+      "Si un reembolso no puede procesarse por causas ajenas a VELA (por ejemplo, un problema con la cuenta de cobro del organizador), el caso queda registrado automáticamente y VELA le da seguimiento directo hasta resolverlo.",
       "En caso de dudas sobre tu reembolso, puedes contactarnos en panel.admin2026eventapp@gmail.com",
     ]
   },
   {
-    titulo: "6. Disputas y contracargos",
+    titulo: "7. Disputas y contracargos",
     contenido: "Si consideras que se realizó un cargo incorrecto, contáctanos antes de iniciar un contracargo con tu banco. Resolveremos cualquier disputa de manera directa y rápida. Los contracargos no autorizados pueden resultar en la suspensión de tu cuenta."
   },
 ]
@@ -63,7 +74,7 @@ export default function Reembolsos() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: isMobile ? "40px 18px" : "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Política de Reembolsos</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 8 de junio de 2025</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 8 de agosto de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
