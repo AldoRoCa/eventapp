@@ -45,3 +45,8 @@ verify_jwt = false
 # pg_net (INSERT en incidentes_liberacion), protegida con x-alerta-secret.
 [functions.avisar-incidente-liberacion]
 verify_jwt = false
+
+# reintentar-reembolsos: la dispara pg_cron cada 8 horas vía pg_net, no un
+# usuario. Protegida con el mismo secreto compartido (x-alerta-secret).
+[functions.reintentar-reembolsos]
+verify_jwt = false

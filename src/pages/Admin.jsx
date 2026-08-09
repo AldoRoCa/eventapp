@@ -439,6 +439,18 @@ export default function Admin() {
 
         {tab === "reembolsos" && (
           <div>
+            {/* Protocolo: qué hacer cuando un reembolso falla. Escrito aquí
+                para no depender de recordarlo en el momento. */}
+            <div style={{ marginBottom: "18px", padding: "16px 18px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px" }}>
+              <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "10px" }}>Qué hacer cuando falla un reembolso</div>
+              <ol style={{ margin: 0, paddingLeft: "18px", color: "rgba(255,255,255,0.6)", fontSize: "13px", lineHeight: 1.8 }}>
+                <li><strong style={{ color: "rgba(255,255,255,0.8)" }}>No hagas nada las primeras horas.</strong> El reintento automático corre cada 8 horas; si el anfitrión repone saldo, se recupera solo y te avisa por Telegram.</li>
+                <li><strong style={{ color: "rgba(255,255,255,0.8)" }}>Si sigue fallando al día siguiente</strong>, escríbele al anfitrión (su WhatsApp viene en la alerta) y pídele que reponga saldo en Mercado Pago.</li>
+                <li><strong style={{ color: "rgba(255,255,255,0.8)" }}>Si no responde o se niega</strong>, puedes cubrirle el reembolso al comprador y reclamárselo después: la sección 11 de los Términos de Uso lo obliga y te subroga en los derechos del asistente.</li>
+                <li><strong style={{ color: "#fbbf24" }}>Ojo con los 180 días.</strong> Mercado Pago no permite reembolsar un pago después de ese plazo desde su aprobación. El sistema te avisa cuando queden menos de 15 días.</li>
+              </ol>
+            </div>
+
             {fallosReembolso.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>💸</div>
@@ -476,9 +488,33 @@ export default function Admin() {
                         {f.payment_ids && f.payment_ids.length > 0 && (
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagos sin reembolsar (Mercado Pago)</div>
-                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{f.payment_ids.join(", ")}</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>
+                              {f.payment_ids.filter(p => !(f.payment_ids_recuperados || []).includes(p)).join(", ") || "—"}
+                            </div>
+                            {(f.payment_ids_recuperados || []).length > 0 && (
+                              <div style={{ fontSize: "12px", color: "#34d399", marginTop: "5px" }}>
+                                Ya recuperados: {f.payment_ids_recuperados.join(", ")}
+                              </div>
+                            )}
                           </div>
                         )}
+                        {/* Motivo REAL de Mercado Pago, que lo captura el
+                            reintento automático. El `detalle` de arriba es la
+                            suposición que escribió la función de reembolso. */}
+                        {f.ultimo_error && (
+                          <div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Motivo real (Mercado Pago)</div>
+                            <div style={{ fontSize: "13px", color: "#fca5a5", lineHeight: 1.55 }}>{f.ultimo_error}</div>
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Reintentos automáticos</div>
+                          <div style={{ fontSize: "13px", color: f.incobrable ? "#f87171" : "rgba(255,255,255,0.6)" }}>
+                            {f.incobrable
+                              ? "Incobrable — pasaron los 180 días que da Mercado Pago"
+                              : `${f.intentos || 0} intento${(f.intentos || 0) === 1 ? "" : "s"}${f.ultimo_intento_en ? ` · último ${new Date(f.ultimo_intento_en).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : ""}`}
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   )

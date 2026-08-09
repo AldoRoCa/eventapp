@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { enviarAlerta, datosAnfitrion } from "../_shared/alertas.ts"
 
 // Alerta activa cuando un reembolso a Mercado Pago falla.
 //
@@ -6,29 +8,18 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 // MP), las Edge Functions de reembolso (cancelar-evento, gestionar-solicitud,
 // resolver-reporte, eliminar-cuenta) NO borran nada y registran el fallo en la
 // tabla fallos_reembolso. Pero eso solo se ve entrando al panel de Admin. Esta
-// función manda un correo de aviso en el momento, para no depender de que
+// función avisa en el momento por Telegram y correo, para no depender de que
 // alguien revise el panel.
 //
-// La dispara un Database Webhook de Supabase en cada INSERT a fallos_reembolso
-// (ver la migración que crea el trigger). Así NO hay que tocar las 4 funciones
-// de reembolso (que manejan dinero real) — el aviso vive por completo fuera de
-// ellas.
+// La dispara un trigger pg_net en cada INSERT a fallos_reembolso (migración
+// 20260710120000). Así NO hay que tocar las 4 funciones de reembolso (que
+// manejan dinero real) — el aviso vive por completo fuera de ellas.
 //
-// Envía el correo con Resend (https://resend.com). Con la cuenta de Resend
-// creada con el propio correo destino, se puede enviar desde el remitente de
-// prueba onboarding@resend.dev hacia ese correo sin verificar un dominio.
+// A partir de aquí solo avisa del PRIMER fallo. El seguimiento (reintento
+// automático cada 8 h, motivo real de MP, recuperación y vencimiento de los
+// 180 días) lo hace reintentar-reembolsos.
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")
 const ALERTA_WEBHOOK_SECRET = Deno.env.get("ALERTA_WEBHOOK_SECRET")
-const EMAIL_TO = Deno.env.get("ALERTA_EMAIL_TO") ?? "velaeventapp@gmail.com"
-const EMAIL_FROM = Deno.env.get("ALERTA_EMAIL_FROM") ?? "VELA Alertas <onboarding@resend.dev>"
-
-function esc(v: unknown): string {
-  return String(v ?? "—")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-}
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -41,11 +32,6 @@ serve(async (req) => {
   const secretRecibido = req.headers.get("x-alerta-secret")
   if (!ALERTA_WEBHOOK_SECRET || secretRecibido !== ALERTA_WEBHOOK_SECRET) {
     return new Response("No autorizado", { status: 401 })
-  }
-
-  if (!RESEND_API_KEY) {
-    console.error("[avisar-fallo-reembolso] Falta RESEND_API_KEY")
-    return new Response("Falta configuración de correo", { status: 500 })
   }
 
   let payload: { type?: string; record?: Record<string, unknown> }
@@ -64,46 +50,42 @@ serve(async (req) => {
 
   const paymentIds = Array.isArray(r.payment_ids) ? r.payment_ids.join(", ") : "—"
 
-  const html = `
-    <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:8px">
-      <h2 style="color:#dc2626;margin:0 0 4px">⚠️ Reembolso fallido en VELA</h2>
-      <p style="color:#374151;margin:0 0 16px">Un reembolso a Mercado Pago no se pudo completar. Nada se borró; requiere seguimiento manual.</p>
-      <table style="border-collapse:collapse;width:100%;font-size:14px;color:#111827">
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Contexto</td><td style="padding:6px 10px">${esc(r.contexto)}</td></tr>
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Detalle</td><td style="padding:6px 10px">${esc(r.detalle)}</td></tr>
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Evento</td><td style="padding:6px 10px">${esc(r.evento_id)}</td></tr>
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Usuario</td><td style="padding:6px 10px">${esc(r.usuario_id)}</td></tr>
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Pagos MP</td><td style="padding:6px 10px">${esc(paymentIds)}</td></tr>
-        <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Fecha</td><td style="padding:6px 10px">${esc(r.created_at)}</td></tr>
-      </table>
-      <p style="color:#6b7280;font-size:13px;margin:16px 0 0">Revisa la pestaña "Reembolsos fallidos" en el panel de Admin para darle seguimiento y marcarlo como resuelto.</p>
-    </div>`
-
+  // Nombre, teléfono y WhatsApp del anfitrión, para poder contactarlo de
+  // inmediato desde la alerta. Se resuelve por el evento (no por usuario_id,
+  // que en un reporte resuelto es el admin, no el anfitrión).
+  let tituloEvento = String(r.evento_id ?? "—")
+  let filasAnfitrion: [string, unknown][] = []
   try {
-    const resp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [EMAIL_TO],
-        subject: `⚠️ Reembolso fallido: ${esc(r.contexto)}`,
-        html,
-      }),
-    })
-
-    if (!resp.ok) {
-      const txt = await resp.text()
-      console.error("[avisar-fallo-reembolso] Resend rechazó el envío:", resp.status, txt)
-      // 500 para que el webhook reintente (fallo transitorio de Resend).
-      return new Response("Error al enviar correo", { status: 500 })
-    }
+    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SERVICE_ROLE_KEY")!)
+    const { data: evento } = await supabase.from("eventos").select("anfitrion_id, titulo").eq("id", r.evento_id).single()
+    if (evento?.titulo) tituloEvento = evento.titulo
+    const datos = await datosAnfitrion(supabase, evento?.anfitrion_id ?? null)
+    filasAnfitrion = [
+      ["Anfitrión", datos.nombre],
+      ["Teléfono", datos.telefono],
+      ...(datos.whatsapp ? [["WhatsApp", datos.whatsapp] as [string, unknown]] : []),
+    ]
   } catch (e) {
-    console.error("[avisar-fallo-reembolso] Error de red enviando correo:", e)
-    return new Response("Error de red", { status: 500 })
+    console.error("[avisar-fallo-reembolso] No se pudieron resolver los datos del anfitrión:", e)
   }
 
+  const { telegram, correo } = await enviarAlerta({
+    titulo: "🔴 VELA — Reembolso fallido",
+    resumen: "Un reembolso a Mercado Pago no se pudo completar (lo más común: el anfitrión no tiene saldo). Nada se borró. El reintento automático corre cada 8 horas y te avisará si se recupera; el motivo exacto de Mercado Pago aparecerá tras el primer reintento.",
+    filas: [
+      ...filasAnfitrion,
+      ["Evento", tituloEvento],
+      ["Origen", r.contexto],
+      ["Pagos MP", paymentIds],
+      ["Detalle", r.detalle],
+      ["Fecha", r.created_at],
+    ],
+  })
+
+  // Solo pedir reintento a pg_net si NINGUNA vía salió: si al menos una
+  // llegó, el admin ya está avisado y reintentar duplicaría alertas.
+  if (!telegram && !correo) {
+    return new Response("Ninguna alerta pudo enviarse", { status: 500 })
+  }
   return new Response("OK", { status: 200 })
 })
