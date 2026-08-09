@@ -45,7 +45,7 @@ export default function Evento() {
       }
       const { data: ev } = await supabase
         .from("eventos")
-        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, created_at, profiles(nombre, avatar_url)")
+        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, ventas_pausadas, created_at, profiles(nombre, avatar_url)")
         .eq("id", id).single()
       setEvento(ev)
 
@@ -122,6 +122,7 @@ export default function Evento() {
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
+    if (ventasPausadas) { alert("Las ventas de este evento están pausadas temporalmente. Vuelve a intentarlo más tarde."); return }
     if (!nombreRegistro.trim()) { alert("Por favor ingresa el nombre a quien se registrará el boleto."); return }
     if (nombreRegistro.trim().length > 100) { alert("El nombre no puede tener más de 100 caracteres."); return }
     setComprando(true)
@@ -186,6 +187,11 @@ export default function Evento() {
   // (reportar/reseñar) — consistente en toda la app hasta que el sistema
   // de check-in redefina cómo se determina el fin de un evento.
   const finalizado = eventoFinalizado(evento)
+  // Ventas pausadas por el detector de liberación inmediata. Solo aplica a
+  // eventos de pago: en uno gratis no hay dinero que reembolsar, así que
+  // bloquearlo sería fricción sin motivo (el candado real vive en
+  // crear-pago-mp, que solo se llama cuando hay precio).
+  const ventasPausadas = !!evento.ventas_pausadas && evento.precio > 0
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
@@ -322,12 +328,24 @@ export default function Evento() {
           </div>
         </div>
       ) : (
-        <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad || finalizado}
-          className={(asistentes >= evento.capacidad || finalizado) ? "" : "btn-3d"}
-          style={{ width: "100%", background: (asistentes >= evento.capacidad || finalizado) ? "rgba(255,255,255,0.06)" : undefined, border: (asistentes >= evento.capacidad || finalizado) ? "1px solid rgba(255,255,255,0.1)" : "none", borderRadius: "14px", color: (asistentes >= evento.capacidad || finalizado) ? "rgba(255,255,255,0.35)" : "white", padding: "16px", fontWeight: 700, fontSize: "15px", cursor: (comprando || asistentes >= evento.capacidad || finalizado) ? "not-allowed" : "pointer", fontFamily: "inherit" }}
-        >
-          {comprando ? "Procesando..." : finalizado ? "Este evento ya finalizó" : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
-        </motion.button>
+        <>
+          {/* Aviso de pausa ANTES de intentar pagar. Sin esto, el comprador
+              llenaba todo y se topaba con el error 403 de crear-pago-mp. */}
+          {ventasPausadas && (
+            <div style={{ marginBottom: "12px", padding: "12px 14px", background: "rgba(245,158,11,0.07)", border: "1.5px solid rgba(245,158,11,0.25)", borderRadius: "12px" }}>
+              <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#fbbf24", marginBottom: "4px" }}>Ventas pausadas temporalmente</div>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>
+                El organizador está corrigiendo la configuración de su cuenta de cobro. Vuelve a intentarlo más tarde.
+              </div>
+            </div>
+          )}
+          <motion.button onClick={handleComprar} whileHover={{ opacity: 0.9 }} whileTap={{ scale: 0.97 }} disabled={comprando || asistentes >= evento.capacidad || finalizado || ventasPausadas}
+            className={(asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "" : "btn-3d"}
+            style={{ width: "100%", background: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "rgba(255,255,255,0.06)" : undefined, border: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "1px solid rgba(255,255,255,0.1)" : "none", borderRadius: "14px", color: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "rgba(255,255,255,0.35)" : "white", padding: "16px", fontWeight: 700, fontSize: "15px", cursor: (comprando || asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "not-allowed" : "pointer", fontFamily: "inherit" }}
+          >
+            {comprando ? "Procesando..." : finalizado ? "Este evento ya finalizó" : ventasPausadas ? "Ventas pausadas" : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
+          </motion.button>
+        </>
       )}
 
       <div style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "center", marginTop: "14px" }}>

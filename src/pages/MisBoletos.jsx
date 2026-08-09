@@ -317,11 +317,15 @@ export default function MisBoletos() {
                             dinero — que es lo primero que se va a preguntar. */}
                         {rechazado && (
                           <div style={{ marginTop: "14px", padding: "12px 14px", background: "rgba(239,68,68,0.07)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "12px" }}>
-                            <div style={{ fontSize: "12.5px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>El anfitrión no aprobó tu solicitud</div>
+                            <div style={{ fontSize: "12.5px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>
+                              {boleto.motivo_rechazo ? "Tu boleto fue cancelado" : "El anfitrión no aprobó tu solicitud"}
+                            </div>
                             <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
-                              {boleto.mp_payment_id
-                                ? "Tu pago fue reembolsado automáticamente. Puede tardar de 5 a 10 días hábiles en reflejarse."
-                                : "No se te cobró nada."}
+                              {boleto.motivo_rechazo
+                                ? boleto.motivo_rechazo
+                                : boleto.mp_payment_id
+                                  ? "Tu pago fue reembolsado automáticamente. El tiempo en que se refleje depende de tu banco."
+                                  : "No se te cobró nada."}
                             </div>
                           </div>
                         )}
@@ -423,11 +427,18 @@ export default function MisBoletos() {
 
                         {rechazado && (
                           <div style={{ marginTop: "16px", padding: "14px 16px", background: "rgba(239,68,68,0.07)", border: "1.5px solid rgba(239,68,68,0.2)", borderRadius: "12px" }}>
-                            <div style={{ fontSize: "13px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>El anfitrión no aprobó tu solicitud</div>
+                            <div style={{ fontSize: "13px", color: "#fca5a5", fontWeight: 600, marginBottom: "4px" }}>
+                              {boleto.motivo_rechazo ? "Tu boleto fue cancelado" : "El anfitrión no aprobó tu solicitud"}
+                            </div>
                             <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
-                              {boleto.mp_payment_id
-                                ? "Tu pago fue reembolsado automáticamente. Puede tardar de 5 a 10 días hábiles en reflejarse."
-                                : "No se te cobró nada."}
+                              {/* El motivo lo escribe quien rechaza (hoy, el detector de
+                                  liberación inmediata). Sin él, el texto por defecto asume
+                                  el caso común: el anfitrión rechazó la solicitud. */}
+                              {boleto.motivo_rechazo
+                                ? boleto.motivo_rechazo
+                                : boleto.mp_payment_id
+                                  ? "Tu pago fue reembolsado automáticamente. El tiempo en que se refleje depende de tu banco."
+                                  : "No se te cobró nada."}
                             </div>
                           </div>
                         )}
