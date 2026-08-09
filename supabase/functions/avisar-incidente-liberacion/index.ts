@@ -52,22 +52,33 @@ serve(async (req) => {
     return new Response("Ignorado", { status: 200 })
   }
 
-  // Nombre del anfitrión y título del evento, para que la alerta sirva tal
-  // cual (el admin va a contactar al anfitrión por WhatsApp). Si la consulta
+  // Nombre y teléfono del anfitrión + título del evento, para que el admin
+  // pueda contactarlo por WhatsApp directo desde la alerta. Si la consulta
   // falla, la alerta sale igual con los UUIDs.
   let nombreAnfitrion = String(r.anfitrion_id ?? "—")
   let tituloEvento = String(r.evento_id ?? "—")
+  let telefonoAnfitrion = "—"
+  let linkWhatsApp: string | null = null
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
     const [{ data: perfil }, { data: evento }] = await Promise.all([
-      supabase.from("profiles").select("nombre").eq("id", r.anfitrion_id).single(),
+      supabase.from("profiles").select("nombre, telefono").eq("id", r.anfitrion_id).single(),
       supabase.from("eventos").select("titulo").eq("id", r.evento_id).single(),
     ])
     if (perfil?.nombre) nombreAnfitrion = `${perfil.nombre} (${r.anfitrion_id})`
     if (evento?.titulo) tituloEvento = evento.titulo
+    if (perfil?.telefono) {
+      telefonoAnfitrion = perfil.telefono
+      // El teléfono se captura en formato libre ("442 123 4567"); para el
+      // link de WhatsApp se limpia a dígitos y, si son los 10 de un número
+      // mexicano, se antepone 521 (formato wa.me para México).
+      const digitos = String(perfil.telefono).replace(/\D/g, "")
+      if (digitos.length === 10) linkWhatsApp = `https://wa.me/521${digitos}`
+      else if (digitos.length > 10) linkWhatsApp = `https://wa.me/${digitos}`
+    }
   } catch (e) {
     console.error("[avisar-incidente-liberacion] No se pudieron resolver nombres:", e)
   }
@@ -81,6 +92,8 @@ serve(async (req) => {
   const textoTelegram = [
     titulo,
     `Anfitrión: ${nombreAnfitrion}`,
+    `Teléfono: ${telefonoAnfitrion}`,
+    linkWhatsApp ? `WhatsApp directo: ${linkWhatsApp}` : null,
     `Evento: ${tituloEvento}`,
     `Pago MP: ${r.mp_payment_id ?? "—"}${esInmediata ? " (reembolsado)" : ""}`,
     esInmediata ? `Liberación detectada: ${r.liberacion_dias ?? "?"} días` : null,
@@ -116,6 +129,7 @@ serve(async (req) => {
         <p style="color:#374151;margin:0 0 16px">${esc(resumen)}</p>
         <table style="border-collapse:collapse;width:100%;font-size:14px;color:#111827">
           <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Anfitrión</td><td style="padding:6px 10px">${esc(nombreAnfitrion)}</td></tr>
+          <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Teléfono</td><td style="padding:6px 10px">${esc(telefonoAnfitrion)}${linkWhatsApp ? ` — <a href="${esc(linkWhatsApp)}">abrir WhatsApp</a>` : ""}</td></tr>
           <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Evento</td><td style="padding:6px 10px">${esc(tituloEvento)}</td></tr>
           <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Pago MP</td><td style="padding:6px 10px">${esc(r.mp_payment_id)}</td></tr>
           <tr><td style="padding:6px 10px;background:#f3f4f6;font-weight:600">Liberación (días)</td><td style="padding:6px 10px">${esc(r.liberacion_dias)}</td></tr>
