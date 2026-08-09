@@ -14,6 +14,7 @@ import HeroHolograma from "./components/HeroHolograma"
 // eager porque la Home lo usa de inmediato.
 const Login = lazy(() => import("./pages/Login"))
 const Registro = lazy(() => import("./pages/Registro"))
+const RestablecerContrasena = lazy(() => import("./pages/RestablecerContrasena"))
 const Evento = lazy(() => import("./pages/Evento"))
 const CrearEvento = lazy(() => import("./pages/CrearEvento"))
 const MisBoletos = lazy(() => import("./pages/MisBoletos"))
@@ -689,6 +690,7 @@ export default function App() {
         <Route path="/" element={<HomePage user={user} perfil={perfil} onLogout={handleLogout} setFotoZoom={setFotoZoom} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
         <Route path="/crear-evento" element={<CrearEvento />} />
         <Route path="/evento/:id" element={<Evento />} />
         <Route path="/mis-boletos" element={<MisBoletos />} />

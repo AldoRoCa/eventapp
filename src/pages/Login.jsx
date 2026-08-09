@@ -16,7 +16,13 @@ export default function Login() {
     setError("")
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      setError("Correo o contraseña incorrectos")
+      // Supabase responde lo mismo ante una contraseña equivocada y ante una
+      // cuenta que NUNCA tuvo contraseña (las creadas con Google), y no hay
+      // forma de distinguirlas desde el navegador sin permitir averiguar qué
+      // correos tienen cuenta. Así que el mensaje nombra las dos
+      // posibilidades: antes decía solo "contraseña incorrecta" y un usuario
+      // de Google se quedaba intentando una contraseña que no existe.
+      setError("No pudimos iniciar sesión. Revisa tu correo y contraseña — y si te registraste con Google, entra con el botón de arriba.")
     } else {
       navigate("/")
     }
@@ -84,7 +90,10 @@ export default function Login() {
         </div>
 
         <div style={{ marginBottom: "28px" }}>
-          <label style={{ display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Contraseña</label>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "10px", marginBottom: "7px" }}>
+            <label style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>Contraseña</label>
+            <Link to="/restablecer-contrasena" style={{ fontSize: "12.5px", color: "#a78bfa", textDecoration: "none" }}>¿La olvidaste?</Link>
+          </div>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && handleLogin()} style={inputStyle} />
         </div>
 
