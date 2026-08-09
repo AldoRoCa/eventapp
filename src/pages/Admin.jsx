@@ -26,6 +26,7 @@ export default function Admin() {
   const [fallosReembolso, setFallosReembolso] = useState([])
   const [incidentes, setIncidentes] = useState([]) // liberación inmediata de MP
   const [nombresIncidentes, setNombresIncidentes] = useState({}) // { [anfitrion_id]: nombre }
+  const [conteosIncidentes, setConteosIncidentes] = useState({}) // { "anfitrion|evento": veces detectado }
   const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
   const cargarSolicitudes = async () => {
@@ -91,6 +92,19 @@ export default function Admin() {
       for (const p of perfiles || []) mapa[p.id] = p.nombre
       setNombresIncidentes(mapa)
     }
+    // Historial completo (incluye resueltos, que no se borran) para marcar
+    // reincidencias: si el mismo evento ya había sido detectado, la tarjeta
+    // muestra "2.º intento", "3.º intento", etc.
+    const { data: historial } = await supabase
+      .from("incidentes_liberacion")
+      .select("anfitrion_id, evento_id")
+      .eq("tipo", "liberacion_inmediata")
+    const conteos = {}
+    for (const h of historial || []) {
+      const clave = `${h.anfitrion_id}|${h.evento_id}`
+      conteos[clave] = (conteos[clave] || 0) + 1
+    }
+    setConteosIncidentes(conteos)
   }
 
   useEffect(() => {
@@ -486,14 +500,22 @@ export default function Admin() {
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 {incidentes.map((inc, i) => {
                   const esInmediata = inc.tipo === "liberacion_inmediata"
+                  // Reincidencia sobre el mismo evento (cuenta también los
+                  // incidentes ya resueltos): 1 = primera vez, sin marcador.
+                  const intento = esInmediata ? (conteosIncidentes[`${inc.anfitrion_id}|${inc.evento_id}`] || 1) : 1
                   return (
                     <motion.div key={inc.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                       style={{ background: "#0f0f11", border: `1px solid ${esInmediata ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.12)"}`, borderRadius: "16px", padding: "24px" }}
                     >
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "4px", color: esInmediata ? "#fbbf24" : "rgba(255,255,255,0.7)" }}>
+                          <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "4px", color: esInmediata ? "#fbbf24" : "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                             {esInmediata ? "Liberación inmediata detectada" : "Dato de liberación ilegible"}
+                            {intento > 1 && (
+                              <span style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", color: "#f87171", borderRadius: "999px", padding: "2px 10px", fontSize: "11.5px", fontWeight: 700 }}>
+                                {intento}.º intento en este evento
+                              </span>
+                            )}
                           </div>
                           <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>{new Date(inc.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · vía {inc.origen}</div>
                         </div>
