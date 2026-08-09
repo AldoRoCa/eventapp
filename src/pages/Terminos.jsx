@@ -59,6 +59,8 @@ const secciones = [
     contenido: [
       "Los anfitriones son responsables de la organización, ejecución y cumplimiento legal de sus eventos.",
       "El anfitrión se compromete a no cancelar eventos de forma injustificada. En caso de cancelación, deberá reembolsar el valor íntegro de los boletos a los asistentes.",
+      "Mientras existan boletos vendidos de sus eventos, el anfitrión se obliga a mantener en su cuenta de cobro los fondos suficientes para cubrir los reembolsos que puedan corresponder, y a abstenerse de retirar, adelantar o disponer de dichos fondos con el propósito de evadir esa obligación.",
+      "El anfitrión se obliga a mantener en su cuenta de cobro un plazo de liberación de fondos conforme a los requisitos vigentes de la Plataforma. VELA podrá verificar esta condición de forma automatizada y suspender las ventas de sus eventos mientras no se cumpla.",
       "VELA no es responsable por daños, lesiones o perjuicios derivados de la asistencia a eventos organizados por anfitriones.",
     ]
   },
@@ -85,18 +87,29 @@ const secciones = [
     ]
   },
   {
-    titulo: "11. Limitación de responsabilidad",
+    titulo: "11. Incumplimiento de la obligación de reembolso",
+    contenido: [
+      "Cuando un reembolso no pueda procesarse por falta de fondos suficientes en la cuenta de cobro del anfitrión, o por cualquier otra causa imputable a él, el monto correspondiente constituirá una deuda cierta, líquida y exigible a cargo del anfitrión.",
+      "VELA podrá, a su entera discreción y sin estar obligada a ello, cubrir dicho reembolso al asistente afectado. En ese supuesto, VELA quedará subrogada en los derechos del asistente frente al anfitrión y podrá exigirle directamente el pago de la cantidad cubierta.",
+      "El anfitrión autoriza expresamente a VELA a conservar y utilizar los datos de identificación que proporcionó al registrarse (identificación oficial, nombre, teléfono y correo electrónico) para fines de cobranza, reclamación extrajudicial y, en su caso, para el ejercicio de las acciones legales que correspondan.",
+      "Además del monto principal, VELA podrá reclamar los gastos de cobranza y las costas que se generen, en los términos que autorice la legislación aplicable.",
+      "Cuando los hechos puedan ser constitutivos de un delito, VELA podrá presentar la denuncia o querella correspondiente ante las autoridades competentes y aportar la documentación e información de que disponga.",
+      "El incumplimiento previsto en esta sección dará lugar a la suspensión definitiva de la cuenta del anfitrión, sin perjuicio de las acciones señaladas y de las que correspondan al asistente afectado por su propio derecho.",
+    ]
+  },
+  {
+    titulo: "12. Limitación de responsabilidad",
     contenido: [
       "VELA actúa como intermediario entre anfitriones y asistentes. No garantiza la calidad, seguridad ni realización de ningún evento.",
       "En ningún caso la responsabilidad de VELA excederá el monto pagado por el usuario en la transacción relacionada con el reclamo.",
     ]
   },
   {
-    titulo: "12. Modificaciones",
+    titulo: "13. Modificaciones",
     contenido: "VELA puede modificar estos Términos de Uso en cualquier momento. Los cambios entrarán en vigor al ser publicados en la Plataforma. El uso continuado de VELA implica la aceptación de los términos vigentes."
   },
   {
-    titulo: "13. Ley aplicable",
+    titulo: "14. Ley aplicable",
     contenido: "Estos Términos de Uso se rigen por las leyes de los Estados Unidos Mexicanos. Para cualquier controversia derivada de su interpretación o cumplimiento, las partes se someten a la jurisdicción de los tribunales competentes de la ciudad de Querétaro, Qro."
   },
 ]
@@ -123,7 +136,7 @@ export default function Terminos() {
       <div style={{ maxWidth: "760px", margin: "0 auto", padding: isMobile ? "40px 18px" : "64px 24px" }}>
         <div style={{ marginBottom: "48px" }}>
           <h1 style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "12px" }}>Términos de Uso</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 2 de julio de 2026</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Última actualización: 9 de agosto de 2026</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>

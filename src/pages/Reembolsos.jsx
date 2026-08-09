@@ -44,7 +44,7 @@ const secciones = [
       "Los reembolsos se procesan a través de Mercado Pago al método de pago original utilizado en la compra.",
       "La orden de reembolso queda registrada en Mercado Pago de inmediato. Verla reflejada en tu estado de cuenta depende de tu banco: puede tomar desde unas horas hasta varios días hábiles, y VELA no tiene control sobre esos tiempos internos.",
       "Si pagaste con tarjeta y el reembolso ocurre poco después del cargo, es posible que ninguno de los dos llegue a aparecer en tu estado de cuenta: el banco los cancela entre sí antes de facturarlos. El recibo de Mercado Pago es el comprobante de que la devolución existe.",
-      "Si un reembolso no puede procesarse por causas ajenas a VELA (por ejemplo, un problema con la cuenta de cobro del organizador), el caso queda registrado automáticamente y VELA le da seguimiento directo hasta resolverlo.",
+      "Si un reembolso no puede procesarse por causas ajenas a VELA (por ejemplo, un problema con la cuenta de cobro del organizador), el caso queda registrado automáticamente y VELA le da seguimiento directo hasta resolverlo. El organizador sigue obligado a cubrir ese monto conforme a la sección 11 de los Términos de Uso.",
       "En caso de dudas sobre tu reembolso, puedes contactarnos en panel.admin2026eventapp@gmail.com",
     ]
   },
