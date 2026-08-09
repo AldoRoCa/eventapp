@@ -44,7 +44,7 @@ export default function CrearEvento() {
     const verificar = async () => {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
-      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_user_id").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_user_id, mp_config_confirmada_en").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       setVerificando(false)
@@ -53,6 +53,11 @@ export default function CrearEvento() {
   }, [navigate])
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  // Cobrar exige los DOS pasos de /conectar-mercadopago: cuenta de MP
+  // autorizada y plazos de liberación configurados en 14 días (de eso
+  // dependen los reembolsos).
+  const cobrosListos = !!perfil?.mp_user_id && !!perfil?.mp_config_confirmada_en
 
   const handleImagen = async (e) => {
     const file = e.target.files[0]
@@ -101,8 +106,8 @@ export default function CrearEvento() {
       setError("El precio mínimo para eventos de pago es $5 MXN (Mercado Pago no acepta pagos con tarjeta menores a $5). Usa $0 para eventos gratis.")
       return
     }
-    if (precio > 0 && !perfil?.mp_user_id) {
-      setError("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
+    if (precio > 0 && !cobrosListos) {
+      setError("Completa la conexión con Mercado Pago (los dos pasos) antes de poner un precio mayor a $0.")
       return
     }
     const maxBoletos = form.max_boletos_por_persona === "" ? 5 : parseInt(form.max_boletos_por_persona)
@@ -292,9 +297,12 @@ export default function CrearEvento() {
               Boletos y acceso
             </h2>
 
-            {!perfil?.mp_user_id && (
-              <div style={{ marginBottom: "16px", padding: "11px 14px", background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.2)", borderRadius: "10px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "#fbbf24" }}>⚠️ Conecta Mercado Pago en tu panel para poder cobrar por tus eventos.</span>
+            {!cobrosListos && (
+              <div style={{ marginBottom: "16px", padding: "11px 14px", background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.2)", borderRadius: "10px", fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <span style={{ color: "#fbbf24" }}>⚠️ {perfil?.mp_user_id ? "Te falta configurar tus plazos de cobro en Mercado Pago para poder cobrar por tus eventos." : "Conecta Mercado Pago para poder cobrar por tus eventos."}</span>
+                <button type="button" onClick={() => navigate("/conectar-mercadopago")}
+                  style={{ background: "rgba(9,103,210,0.15)", border: "1.5px solid rgba(9,103,210,0.35)", borderRadius: "8px", color: "#60a5fa", padding: "5px 12px", fontSize: "12.5px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                >Completar</button>
               </div>
             )}
 
@@ -308,10 +316,10 @@ export default function CrearEvento() {
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
                 <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
                 <input type="number" value={form.precio}
-                  onChange={e => perfil?.mp_user_id ? handleChange("precio", e.target.value) : null}
-                  placeholder={perfil?.mp_user_id ? "0 = Gratis" : "Activa MP para cobrar"}
+                  onChange={e => cobrosListos ? handleChange("precio", e.target.value) : null}
+                  placeholder={cobrosListos ? "0 = Gratis" : "Activa MP para cobrar"}
                   min="0"
-                  style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed", ...(form.precio > 0 && form.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }}
+                  style={{ ...inputStyle, opacity: cobrosListos ? 1 : 0.5, cursor: cobrosListos ? "text" : "not-allowed", ...(form.precio > 0 && form.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }}
                 />
                 <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", marginTop: "6px", lineHeight: 1.5 }}>
                   Mínimo $5 MXN para eventos de pago (Mercado Pago no acepta tarjetas por debajo de ese monto). Usa $0 para un evento gratis.

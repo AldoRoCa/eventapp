@@ -75,6 +75,15 @@ export async function detectarLiberacion(supabase: any, pago: any, eventoId: str
       .eq("id", anfitrionId)
     if (errCred) console.error(`[LIBERACION] No se pudo actualizar mp_credenciales:`, errCred.message)
 
+    // Espejo en profiles para que el Panel de Anfitrión pueda mostrar si su
+    // configuración ya fue verificada por una venta real (mp_credenciales no
+    // es legible por el cliente: guarda el token). null = sin verificar.
+    const { error: errPerfil } = await supabase
+      .from("profiles")
+      .update({ mp_liberacion_verificada_en: inmediata ? null : new Date().toISOString() })
+      .eq("id", anfitrionId)
+    if (errPerfil) console.error(`[LIBERACION] No se pudo actualizar profiles:`, errPerfil.message)
+
     if (!inmediata) return null
 
     console.error(`[LIBERACION] Liberación inmediata detectada: anfitrión ${anfitrionId}, pago ${pago.id}, ${diasRedondeados} días (${origen})`)

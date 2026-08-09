@@ -20,6 +20,7 @@ const MisBoletos = lazy(() => import("./pages/MisBoletos"))
 const Explorar = lazy(() => import("./pages/Explorar"))
 const SerAnfitrion = lazy(() => import("./pages/SerAnfitrion"))
 const PanelAnfitrion = lazy(() => import("./pages/PanelAnfitrion"))
+const ConectarMercadoPago = lazy(() => import("./pages/ConectarMercadoPago"))
 const UnirseCooperador = lazy(() => import("./pages/UnirseCooperador"))
 const Perfil = lazy(() => import("./pages/Perfil"))
 const Admin = lazy(() => import("./pages/Admin"))
@@ -694,6 +695,7 @@ export default function App() {
         <Route path="/explorar" element={<Explorar />} />
         <Route path="/ser-anfitrion" element={<SerAnfitrion />} />
         <Route path="/panel" element={<PanelAnfitrion />} />
+        <Route path="/conectar-mercadopago" element={<ConectarMercadoPago />} />
         <Route path="/unirse-cooperador/:codigo" element={<UnirseCooperador />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/admin" element={<Admin />} />

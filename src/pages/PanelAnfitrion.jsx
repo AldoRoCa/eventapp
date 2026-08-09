@@ -71,7 +71,7 @@ export default function PanelAnfitrion() {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       setUser(user)
-      const { data: perfil } = await supabase.from("profiles").select("id, nombre, avatar_url, tipo, estado_anfitrion, email, mp_user_id").eq("id", user.id).single()
+      const { data: perfil } = await supabase.from("profiles").select("id, nombre, avatar_url, tipo, estado_anfitrion, email, mp_user_id, mp_config_confirmada_en, mp_liberacion_verificada_en").eq("id", user.id).single()
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("created_at", { ascending: false })
@@ -461,8 +461,8 @@ export default function PanelAnfitrion() {
       setTimeout(() => setMensaje(""), 4000)
       return
     }
-    if (precio > 0 && !perfil?.mp_user_id) {
-      setMensaje("Debes conectar tu cuenta de Mercado Pago antes de poner un precio mayor a $0.")
+    if (precio > 0 && !cobrosListos) {
+      setMensaje("Completa la conexión con Mercado Pago (los dos pasos) antes de poner un precio mayor a $0.")
       setTimeout(() => setMensaje(""), 4000)
       return
     }
@@ -531,21 +531,16 @@ export default function PanelAnfitrion() {
     setTimeout(() => setMensaje(""), 3000)
   }
 
-  const conectarMP = async () => {
-    // El "state" de OAuth no puede ser el user.id directo: es un dato
-    // público (se ve en cualquier página de evento), así que cualquiera
-    // podría falsificarlo para que su propio token de Mercado Pago quede
-    // ligado al perfil de otro anfitrión. En vez de eso, generamos un
-    // código de un solo uso y lo guardamos ligado a este usuario; mp-oauth
-    // lo consulta para saber a quién pertenece de verdad.
-    const state = crypto.randomUUID()
-    const { error } = await supabase.from("mp_oauth_state").insert({ state, usuario_id: user.id })
-    if (error) { setMensaje("No se pudo iniciar la conexión con Mercado Pago. Intenta de nuevo."); setTimeout(() => setMensaje(""), 3000); return }
-    const clientId = import.meta.env.VITE_MP_CLIENT_ID
-    const redirectUri = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mp-oauth`
-    const url = `https://auth.mercadopago.com.mx/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`
-    window.location.href = url
-  }
+  // Conectar MP ya no es un solo clic: son dos pasos (autorizar la cuenta y
+  // configurar los plazos de liberación en 14 días, de lo que dependen los
+  // reembolsos). Ambos viven en /conectar-mercadopago; el flujo OAuth en sí
+  // es idéntico al de antes, solo se mudó de archivo.
+  const irAConectarMP = () => navigate("/conectar-mercadopago")
+
+  // "Cobros listos" exige los dos pasos. Un anfitrión conectado antes de este
+  // cambio quedó marcado como confirmado por la migración, así no se le
+  // rompe el flujo.
+  const cobrosListos = !!perfil?.mp_user_id && !!perfil?.mp_config_confirmada_en
 
   const inputStyle = {
     width: "100%", background: "rgba(255,255,255,0.05)",
@@ -633,20 +628,26 @@ export default function PanelAnfitrion() {
                 style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: isMobile ? "10px 16px" : "11px 22px", fontWeight: 600, fontSize: isMobile ? "13px" : "14px", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", boxShadow: "0 0 18px rgba(124,58,237,0.4)" }}
               >+ Crear evento</motion.button>
 
-              {perfil?.mp_user_id ? (
+              {cobrosListos ? (
+                // Tercer estado: "verificado" solo cuando una venta real
+                // confirmó los plazos contra la API de MP (lo escribe el
+                // detector). Hasta entonces, la configuración es una
+                // declaración del anfitrión, y así se dice.
                 <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? "flex-start" : "flex-end", gap: "4px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(16,185,129,0.1)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "8px", padding: "5px 11px" }}>
-                    <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
-                    <span style={{ fontSize: "12px", color: "#34d399", fontWeight: 600 }}>MP conectado ✓</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", background: perfil?.mp_liberacion_verificada_en ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.05)", border: `1.5px solid ${perfil?.mp_liberacion_verificada_en ? "rgba(16,185,129,0.25)" : "rgba(255,255,255,0.12)"}`, borderRadius: "8px", padding: "5px 11px" }}>
+                    <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: perfil?.mp_liberacion_verificada_en ? "#34d399" : "rgba(255,255,255,0.4)" }} />
+                    <span style={{ fontSize: "12px", color: perfil?.mp_liberacion_verificada_en ? "#34d399" : "rgba(255,255,255,0.6)", fontWeight: 600 }}>
+                      {perfil?.mp_liberacion_verificada_en ? "MP verificado ✓" : "MP conectado"}
+                    </span>
                   </div>
-                  <motion.button onClick={conectarMP} whileTap={{ scale: 0.97 }}
+                  <motion.button onClick={irAConectarMP} whileTap={{ scale: 0.97 }}
                     style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px", color: "rgba(255,255,255,0.35)", padding: "3px 9px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
-                  >Reconectar</motion.button>
+                  >Ver configuración</motion.button>
                 </div>
               ) : (
-                <motion.button onClick={conectarMP} whileTap={{ scale: 0.97 }}
+                <motion.button onClick={irAConectarMP} whileTap={{ scale: 0.97 }}
                   style={{ background: "rgba(9,103,210,0.15)", border: "1.5px solid rgba(9,103,210,0.3)", borderRadius: "10px", color: "#60a5fa", padding: "9px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}
-                >💳 Conectar Mercado Pago</motion.button>
+                >{perfil?.mp_user_id ? "⚠️ Completar conexión de MP" : "💳 Conectar Mercado Pago"}</motion.button>
               )}
             </div>
           </div>
@@ -951,10 +952,10 @@ export default function PanelAnfitrion() {
                   <div>
                     <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Precio (MXN)</label>
                     <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
-                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!perfil?.mp_user_id}
-                      style={{ ...inputStyle, opacity: perfil?.mp_user_id ? 1 : 0.5, cursor: perfil?.mp_user_id ? "text" : "not-allowed", ...(formEditar.precio > 0 && formEditar.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }} />
-                    {!perfil?.mp_user_id && (
-                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>Conecta Mercado Pago para poder cobrar por tus boletos.</div>
+                    <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!cobrosListos}
+                      style={{ ...inputStyle, opacity: cobrosListos ? 1 : 0.5, cursor: cobrosListos ? "text" : "not-allowed", ...(formEditar.precio > 0 && formEditar.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }} />
+                    {!cobrosListos && (
+                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>Completa la conexión con Mercado Pago para poder cobrar por tus boletos.</div>
                     )}
                     <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", marginTop: "6px", lineHeight: 1.5 }}>
                       Mínimo $5 MXN para eventos de pago (Mercado Pago no acepta tarjetas por debajo de ese monto). Usa $0 para un evento gratis.
