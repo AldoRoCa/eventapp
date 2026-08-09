@@ -2,7 +2,7 @@
 // Mercado Pago del anfitrión (Fase C: detecta Y actúa).
 //
 // Por qué: los reembolsos salen del saldo de MP del anfitrión. El plazo de
-// liberación lo elige él en su cuenta (al instante / 7 días / 30 días) y no
+// liberación lo elige él en su cuenta (al instante / 14 días / 30 días) y no
 // se puede forzar desde la API. Si está en "al instante", puede retirar el
 // dinero en cuanto vende y cualquier reembolso posterior falla por falta de
 // saldo. Lo único robusto es leer, en cada pago ya verificado contra la API
@@ -92,7 +92,7 @@ export async function detectarLiberacion(supabase: any, pago: any, eventoId: str
       money_release_date: String(releaseRaw),
       date_approved: String(approvedRaw),
       origen,
-      detalle: `El dinero de este pago se libera al anfitrión en ${diasRedondeados} días (cuenta en "al instante"). Acciones automáticas: ventas del anfitrión pausadas + reembolso del pago detector. Desbloquear solo cuando mande captura de su plazo corregido (7 o 30 días).`,
+      detalle: `El dinero de este pago se libera al anfitrión en ${diasRedondeados} días (cuenta en "al instante"). Acciones automáticas: ventas del anfitrión pausadas + reembolso del pago detector. Desbloquear solo cuando mande captura de su plazo corregido (14 o 30 días).`,
     }, { onConflict: "mp_payment_id,tipo", ignoreDuplicates: true }).select()
 
     if (errInc) {
@@ -117,7 +117,7 @@ export async function detectarLiberacion(supabase: any, pago: any, eventoId: str
       .from("eventos")
       .update({
         ventas_pausadas: true,
-        pausa_motivo: "Cuenta de Mercado Pago con liberación inmediata del dinero. Cambia el plazo de liberación a 7 o 30 días (Mercado Pago → Tu negocio → Costos) y manda captura al admin para reactivar tus ventas.",
+        pausa_motivo: "Cuenta de Mercado Pago con liberación inmediata del dinero. Cambia el plazo de liberación a 14 o 30 días (Mercado Pago → Tu perfil → Negocio → Comisiones y MSI → pestaña Checkout) y manda captura al admin para reactivar tus ventas.",
       })
       .eq("anfitrion_id", anfitrionId)
     if (errPausa) console.error(`[LIBERACION] No se pudieron pausar los eventos:`, errPausa.message)

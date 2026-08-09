@@ -5,7 +5,7 @@ import { corsFor } from "../_shared/cors.ts"
 // Desbloquea a un anfitrión pausado por liberación inmediata (ver
 // _shared/liberacion.ts). Solo el admin, y solo cuando el anfitrión le
 // demostró (captura de Mercado Pago → Tu negocio → Costos) que cambió su
-// plazo de liberación a 7 o 30 días.
+// plazo de liberación a 14 o 30 días.
 //
 // Qué hace: limpia la marca en mp_credenciales (vuelve a null = "sin
 // verificar", NO a false — la próxima venta re-verifica contra la API de MP

@@ -171,7 +171,7 @@ export default function Admin() {
 
   const desbloquearAnfitrion = async (anfitrionId) => {
     const nombre = nombresIncidentes[anfitrionId] || "este anfitrión"
-    if (!window.confirm(`¿Desbloquear a ${nombre}? Hazlo solo si ya te mandó captura de su plazo de liberación corregido (7 o 30 días). Su próxima venta se vuelve a verificar automáticamente: si no lo cambió de verdad, se bloquea solo otra vez.`)) return
+    if (!window.confirm(`¿Desbloquear a ${nombre}? Hazlo solo si ya te mandó captura de su plazo de liberación corregido (14 o 30 días). Su próxima venta se vuelve a verificar automáticamente: si no lo cambió de verdad, se bloquea solo otra vez.`)) return
     setProcesando(anfitrionId)
     try {
       const { data: { session } } = await supabase.auth.getSession()
