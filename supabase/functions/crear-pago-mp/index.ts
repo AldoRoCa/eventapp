@@ -88,6 +88,24 @@ serve(async (req) => {
       })
     }
 
+    // Segundo paso de la conexión con MP (declarar que configuró sus plazos
+    // de liberación en 14 días, ver /conectar-mercadopago). La interfaz ya no
+    // deja poner precio sin esto, pero el candado real vive aquí: si solo se
+    // validara en el navegador, bastaría crear el evento desde la consola
+    // para saltárselo.
+    const { data: perfilAnfitrion } = await supabase
+      .from("profiles")
+      .select("mp_config_confirmada_en")
+      .eq("id", evento.anfitrion_id)
+      .single()
+
+    if (!perfilAnfitrion?.mp_config_confirmada_en) {
+      return new Response(JSON.stringify({ error: "Este organizador todavía no ha terminado de configurar sus cobros. Intenta de nuevo más tarde." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      })
+    }
+
     const anfitrionMpToken = anfitrionCredenciales.mp_access_token
 
     // Rate limiting
