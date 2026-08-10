@@ -33,9 +33,33 @@
 // Devuelve "reembolsado" si este pago terminó reembolsado por la detección
 // (para que confirmar-pago-mp le diga la verdad al comprador), o null.
 
+// Modo del sistema de liberación (ajustes_plataforma.modo_liberacion):
+//   estricto → detecta, avisa, pausa ventas y reembolsa el pago detector
+//   avisar   → detecta y avisa, sin pausar ni reembolsar (cero fricción para
+//              el anfitrión, pero el admin conserva la visibilidad)
+//   apagado  → no hace nada
+// Ante cualquier duda se asume "estricto": si la consulta falla, es preferible
+// proteger de más que dejar pasar una cuenta riesgosa en silencio.
+// deno-lint-ignore no-explicit-any
+export async function modoLiberacion(supabase: any): Promise<"estricto" | "avisar" | "apagado"> {
+  try {
+    const { data } = await supabase
+      .from("ajustes_plataforma")
+      .select("valor")
+      .eq("clave", "modo_liberacion")
+      .single()
+    const v = data?.valor
+    return v === "avisar" || v === "apagado" ? v : "estricto"
+  } catch {
+    return "estricto"
+  }
+}
+
 // deno-lint-ignore no-explicit-any
 export async function detectarLiberacion(supabase: any, pago: any, eventoId: string, anfitrionId: string, mpToken: string, origen: string): Promise<"reembolsado" | null> {
   try {
+    const modo = await modoLiberacion(supabase)
+    if (modo === "apagado") return null
     const releaseRaw = pago?.money_release_date ?? null
     const approvedRaw = pago?.date_approved ?? pago?.date_created ?? null
 
@@ -101,13 +125,20 @@ export async function detectarLiberacion(supabase: any, pago: any, eventoId: str
       money_release_date: String(releaseRaw),
       date_approved: String(approvedRaw),
       origen,
-      detalle: `El dinero de este pago se libera al anfitrión en ${diasRedondeados} días (cuenta en "al instante"). Acciones automáticas: ventas del anfitrión pausadas + reembolso del pago detector. Desbloquear solo cuando mande captura de su plazo corregido (14 o 30 días).`,
+      detalle: modo === "estricto"
+        ? `El dinero de este pago se libera al anfitrión en ${diasRedondeados} días (cuenta en "al instante"). Acciones automáticas: ventas del anfitrión pausadas + reembolso del pago detector. Desbloquear solo cuando mande captura de su plazo corregido (14 o 30 días).`
+        : `El dinero de este pago se libera al anfitrión en ${diasRedondeados} días (cuenta en "al instante"). MODO "SOLO AVISAR": no se pausó nada ni se reembolsó — la venta siguió su curso normal. Es un aviso para que sepas que este anfitrión puede retirar su dinero de inmediato.`,
     }, { onConflict: "mp_payment_id,tipo", ignoreDuplicates: true }).select()
 
     if (errInc) {
       console.error(`[LIBERACION] No se pudo registrar el incidente:`, errInc.message)
       return null
     }
+
+    // Modo "avisar": el incidente ya quedó registrado (y con él salió la
+    // alerta de Telegram/correo). Aquí se corta: no se pausa, no se
+    // reembolsa, el comprador se queda con su boleto.
+    if (modo !== "estricto") return null
 
     if (!insertado || insertado.length === 0) {
       // La otra ruta ganó el candado y está actuando (o ya actuó) sobre este

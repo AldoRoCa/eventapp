@@ -27,6 +27,7 @@ export default function Admin() {
   const [incidentes, setIncidentes] = useState([]) // liberación inmediata de MP
   const [nombresIncidentes, setNombresIncidentes] = useState({}) // { [anfitrion_id]: nombre }
   const [conteosIncidentes, setConteosIncidentes] = useState({}) // { "anfitrion|evento": veces detectado }
+  const [modoLiberacion, setModoLiberacion] = useState(null) // estricto | avisar | apagado
   const [ineUrls, setIneUrls] = useState({}) // { [solicitud.id]: signedUrl }
 
   const cargarSolicitudes = async () => {
@@ -77,6 +78,26 @@ export default function Admin() {
     setFallosReembolso(data || [])
   }
 
+  const cargarModoLiberacion = async () => {
+    const { data } = await supabase.from("ajustes_plataforma").select("valor").eq("clave", "modo_liberacion").single()
+    setModoLiberacion(data?.valor || "estricto")
+  }
+
+  const cambiarModoLiberacion = async (nuevo) => {
+    const textos = {
+      estricto: "Modo ESTRICTO: se pausarán las ventas y se reembolsará el pago detector de los anfitriones con liberación inmediata, y todos deberán completar el paso 2 para poder cobrar.",
+      avisar: "Modo SOLO AVISAR: seguirás recibiendo alertas, pero NO se pausará ni reembolsará nada, y el paso 2 dejará de ser obligatorio. Cero fricción para los anfitriones.",
+      apagado: "Modo APAGADO: el sistema de liberación deja de funcionar por completo. No habrá detección ni alertas.",
+    }
+    if (!window.confirm(`${textos[nuevo]}\n\n¿Aplicar este modo?`)) return
+    setProcesando("modo")
+    const { error } = await supabase.from("ajustes_plataforma").update({ valor: nuevo, actualizado_en: new Date().toISOString() }).eq("clave", "modo_liberacion")
+    if (error) setMensaje("No se pudo cambiar el modo.")
+    else { setModoLiberacion(nuevo); setMensaje(`✓ Modo cambiado a "${nuevo}".`) }
+    setTimeout(() => setMensaje(""), 4000)
+    setProcesando(null)
+  }
+
   const cargarIncidentes = async () => {
     const { data } = await supabase
       .from("incidentes_liberacion")
@@ -118,6 +139,7 @@ export default function Admin() {
       await cargarReportes()
       await cargarFallosReembolso()
       await cargarIncidentes()
+      await cargarModoLiberacion()
       setLoading(false)
     }
     verificar()
@@ -566,6 +588,40 @@ export default function Admin() {
 
         {tab === "liberacion" && (
           <div>
+            {/* Interruptor de tres modos. Graduar la protección sin
+                desmontarla: el modo estricto protege pero le cuesta al
+                anfitrión esperar 14 días por su dinero. */}
+            <div style={{ marginBottom: "18px", padding: "16px 18px", background: modoLiberacion === "apagado" ? "rgba(239,68,68,0.07)" : modoLiberacion === "avisar" ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${modoLiberacion === "apagado" ? "rgba(239,68,68,0.3)" : modoLiberacion === "avisar" ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.08)"}`, borderRadius: "14px" }}>
+              <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "4px" }}>Modo del sistema de liberación</div>
+              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: "14px" }}>
+                Controla cuánta fricción le impone VELA a los anfitriones para proteger los reembolsos.
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {[
+                  { id: "estricto", label: "Estricto", desc: "Pausa, reembolsa y exige el paso 2" },
+                  { id: "avisar", label: "Solo avisar", desc: "Detecta y te alerta, sin bloquear a nadie" },
+                  { id: "apagado", label: "Apagado", desc: "El sistema no hace nada" },
+                ].map(m => (
+                  <motion.button key={m.id} onClick={() => modoLiberacion !== m.id && cambiarModoLiberacion(m.id)} whileTap={{ scale: 0.97 }} disabled={procesando === "modo"}
+                    style={{ flex: isMobile ? "1 1 100%" : "1", textAlign: "left", background: modoLiberacion === m.id ? "rgba(124,58,237,0.2)" : "rgba(255,255,255,0.03)", border: `1.5px solid ${modoLiberacion === m.id ? "rgba(124,58,237,0.45)" : "rgba(255,255,255,0.08)"}`, borderRadius: "11px", padding: "11px 14px", cursor: modoLiberacion === m.id ? "default" : "pointer", fontFamily: "inherit" }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: modoLiberacion === m.id ? "#c4b5fd" : "rgba(255,255,255,0.75)", marginBottom: "2px" }}>
+                      {modoLiberacion === m.id ? "● " : ""}{m.label}
+                    </div>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", lineHeight: 1.45 }}>{m.desc}</div>
+                  </motion.button>
+                ))}
+              </div>
+              {modoLiberacion && modoLiberacion !== "estricto" && (
+                <div style={{ marginTop: "12px", fontSize: "12px", color: modoLiberacion === "apagado" ? "#f87171" : "#fbbf24", lineHeight: 1.55 }}>
+                  {modoLiberacion === "apagado"
+                    ? "⚠️ Sin protección: no se detecta ni se avisa nada. Un anfitrión puede retirar su dinero y dejar reembolsos sin fondos."
+                    : "⚠️ Los anfitriones venden sin restricciones. Sigues recibiendo alertas, pero nada se pausa ni se reembolsa solo."}
+                  {" "}Cambiar de modo no despausa a quien ya estaba pausado — para eso usa el botón de cada incidente.
+                </div>
+              )}
+            </div>
+
             {incidentes.length === 0 ? (
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔓</div>

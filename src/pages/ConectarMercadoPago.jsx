@@ -56,6 +56,7 @@ export default function ConectarMercadoPago() {
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [modoEstricto, setModoEstricto] = useState(true)
   const [abrioLink, setAbrioLink] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState("")
@@ -72,6 +73,10 @@ export default function ConectarMercadoPago() {
         .single()
       if (!data || data.tipo !== "anfitrion" || data.estado_anfitrion !== "aprobado") { navigate("/panel"); return }
       setPerfil(data)
+      // En modo "avisar"/"apagado" el paso 2 no bloquea el cobro, así que se
+      // presenta como recomendación en vez de requisito.
+      const { data: ajuste } = await supabase.from("ajustes_plataforma").select("valor").eq("clave", "modo_liberacion").single()
+      setModoEstricto((ajuste?.valor || "estricto") === "estricto")
       setLoading(false)
     }
     cargar()
@@ -108,7 +113,9 @@ export default function ConectarMercadoPago() {
   const paso1Listo = !!perfil?.mp_user_id
   const paso2Listo = !!perfil?.mp_config_confirmada_en
   const verificado = !!perfil?.mp_liberacion_verificada_en
-  const todoListo = paso1Listo && paso2Listo
+  // Fuera del modo estricto, el paso 2 no bloquea el cobro: con la cuenta
+  // conectada ya se puede vender.
+  const todoListo = paso1Listo && (paso2Listo || !modoEstricto)
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", color: "white", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -169,9 +176,13 @@ export default function ConectarMercadoPago() {
 
           <Paso numero="2" titulo="Configura tus plazos de cobro" listo={paso2Listo} isMobile={isMobile}>
             <div style={{ padding: "14px 16px", background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.28)", borderRadius: "11px", marginBottom: "18px" }}>
-              <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fbbf24", marginBottom: "6px" }}>⚠️ Cuidado: hazlo bien o no podrás cobrar</div>
+              <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fbbf24", marginBottom: "6px" }}>
+                {modoEstricto ? "⚠️ Cuidado: hazlo bien o no podrás cobrar" : "Muy recomendable"}
+              </div>
               <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
-                VELA verifica esta configuración de forma automática en cada venta. Si tus plazos no quedan en 14 días, tus ventas se pausarán y el pago se le devolverá al comprador. Además, el plazo de 14 días te cobra <strong style={{ color: "rgba(255,255,255,0.85)" }}>menos comisión</strong> que recibir el dinero al instante.
+                {modoEstricto
+                  ? <>VELA verifica esta configuración de forma automática en cada venta. Si tus plazos no quedan en 14 días, tus ventas se pausarán y el pago se le devolverá al comprador. Además, el plazo de 14 días te cobra <strong style={{ color: "rgba(255,255,255,0.85)" }}>menos comisión</strong> que recibir el dinero al instante.</>
+                  : <>El plazo de 14 días te cobra <strong style={{ color: "rgba(255,255,255,0.85)" }}>menos comisión</strong> que recibir el dinero al instante, y asegura que siempre haya fondos si hay que reembolsarle a alguien. No es obligatorio para vender, pero te conviene.</>}
               </div>
             </div>
 

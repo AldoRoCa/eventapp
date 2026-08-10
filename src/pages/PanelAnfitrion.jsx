@@ -27,6 +27,7 @@ export default function PanelAnfitrion() {
   const isMobile = useIsMobile()
   const [user, setUser] = useState(null)
   const [perfil, setPerfil] = useState(null)
+  const [modoLiberacion, setModoLiberacion] = useState("estricto")
   const [eventos, setEventos] = useState([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("eventos")
@@ -72,6 +73,10 @@ export default function PanelAnfitrion() {
       if (!user) { navigate("/login"); return }
       setUser(user)
       const { data: perfil } = await supabase.from("profiles").select("id, nombre, avatar_url, tipo, estado_anfitrion, email, mp_user_id, mp_config_confirmada_en, mp_liberacion_verificada_en").eq("id", user.id).single()
+      // De qué modo depende que el paso 2 de la conexión con MP sea
+      // obligatorio (ver ajustes_plataforma.modo_liberacion).
+      const { data: ajuste } = await supabase.from("ajustes_plataforma").select("valor").eq("clave", "modo_liberacion").single()
+      setModoLiberacion(ajuste?.valor || "estricto")
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("created_at", { ascending: false })
@@ -537,10 +542,10 @@ export default function PanelAnfitrion() {
   // es idéntico al de antes, solo se mudó de archivo.
   const irAConectarMP = () => navigate("/conectar-mercadopago")
 
-  // "Cobros listos" exige los dos pasos. Un anfitrión conectado antes de este
-  // cambio quedó marcado como confirmado por la migración, así no se le
-  // rompe el flujo.
-  const cobrosListos = !!perfil?.mp_user_id && !!perfil?.mp_config_confirmada_en
+  // "Cobros listos" exige los dos pasos SOLO en modo estricto. En "avisar" o
+  // "apagado" basta con la cuenta conectada: el paso 2 sigue siendo
+  // recomendable, pero no bloquea (ver ajustes_plataforma.modo_liberacion).
+  const cobrosListos = !!perfil?.mp_user_id && (modoLiberacion !== "estricto" || !!perfil?.mp_config_confirmada_en)
 
   const inputStyle = {
     width: "100%", background: "rgba(255,255,255,0.05)",

@@ -28,6 +28,7 @@ export default function CrearEvento() {
   const [imagenFile, setImagenFile] = useState(null)
   const [imagenPreview, setImagenPreview] = useState(null)
   const [perfil, setPerfil] = useState(null)
+  const [modoLiberacion, setModoLiberacion] = useState("estricto")
   const errorRef = useRef(null)
 
   useEffect(() => {
@@ -45,6 +46,8 @@ export default function CrearEvento() {
       const { data: { user } } = await getUserSafe()
       if (!user) { navigate("/login"); return }
       const { data: perfil } = await supabase.from("profiles").select("tipo, estado_anfitrion, mp_user_id, mp_config_confirmada_en").eq("id", user.id).single()
+      const { data: ajuste } = await supabase.from("ajustes_plataforma").select("valor").eq("clave", "modo_liberacion").single()
+      setModoLiberacion(ajuste?.valor || "estricto")
       if (!perfil || perfil.tipo !== "anfitrion" || perfil.estado_anfitrion !== "aprobado") { navigate("/ser-anfitrion"); return }
       setPerfil(perfil)
       setVerificando(false)
@@ -54,10 +57,10 @@ export default function CrearEvento() {
 
   const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
-  // Cobrar exige los DOS pasos de /conectar-mercadopago: cuenta de MP
-  // autorizada y plazos de liberación configurados en 14 días (de eso
-  // dependen los reembolsos).
-  const cobrosListos = !!perfil?.mp_user_id && !!perfil?.mp_config_confirmada_en
+  // Cobrar exige los DOS pasos de /conectar-mercadopago (cuenta autorizada +
+  // plazos de liberación configurados) SOLO en modo estricto; en los otros
+  // modos basta la cuenta conectada.
+  const cobrosListos = !!perfil?.mp_user_id && (modoLiberacion !== "estricto" || !!perfil?.mp_config_confirmada_en)
 
   const handleImagen = async (e) => {
     const file = e.target.files[0]

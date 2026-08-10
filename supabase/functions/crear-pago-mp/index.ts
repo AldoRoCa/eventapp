@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { modoLiberacion } from "../_shared/liberacion.ts"
 
 const RATE_LIMIT = 10 // máximo 10 pagos por hora por usuario
 
@@ -74,36 +75,50 @@ serve(async (req) => {
       })
     }
 
-    // Candado de liberación inmediata: si la cuenta de MP del anfitrión
-    // libera el dinero al instante (detectado en una venta anterior por
-    // _shared/liberacion.ts), un reembolso futuro podría fallar por falta
-    // de saldo — no se aceptan más ventas hasta que el admin lo desbloquee
-    // (desbloquear-anfitrion, previa captura del plazo corregido). La
-    // fuente de verdad es mp_credenciales (sin acceso de cliente);
-    // ventas_pausadas en eventos es el reflejo informativo.
-    if (anfitrionCredenciales.liberacion_inmediata === true || evento.ventas_pausadas === true) {
+    // `ventas_pausadas` se respeta SIEMPRE, en cualquier modo: es un estado
+    // explícito y visible que el admin puede quitar con "Desbloquear
+    // anfitrión". Cambiar de modo no despausa a nadie por su cuenta.
+    if (evento.ventas_pausadas === true) {
       return new Response(JSON.stringify({ error: "Las ventas de este organizador están pausadas temporalmente mientras corrige la configuración de cobro de su cuenta de Mercado Pago. Intenta de nuevo más tarde." }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 403,
       })
     }
 
-    // Segundo paso de la conexión con MP (declarar que configuró sus plazos
-    // de liberación en 14 días, ver /conectar-mercadopago). La interfaz ya no
-    // deja poner precio sin esto, pero el candado real vive aquí: si solo se
-    // validara en el navegador, bastaría crear el evento desde la consola
-    // para saltárselo.
-    const { data: perfilAnfitrion } = await supabase
-      .from("profiles")
-      .select("mp_config_confirmada_en")
-      .eq("id", evento.anfitrion_id)
-      .single()
+    // Los otros dos candados del sistema de liberación solo aplican en modo
+    // "estricto" (ver ajustes_plataforma.modo_liberacion): la marca de cuenta
+    // con liberación inmediata y el paso 2 de la conexión con MP. En "avisar"
+    // y "apagado" el anfitrión vende sin fricción y el sistema solo observa.
+    const modo = await modoLiberacion(supabase)
 
-    if (!perfilAnfitrion?.mp_config_confirmada_en) {
-      return new Response(JSON.stringify({ error: "Este organizador todavía no ha terminado de configurar sus cobros. Intenta de nuevo más tarde." }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 403,
-      })
+    if (modo === "estricto") {
+      // Si la cuenta de MP del anfitrión libera el dinero al instante
+      // (detectado en una venta anterior), un reembolso futuro podría fallar
+      // por falta de saldo. La fuente de verdad es mp_credenciales, que no
+      // tiene acceso de cliente.
+      if (anfitrionCredenciales.liberacion_inmediata === true) {
+        return new Response(JSON.stringify({ error: "Las ventas de este organizador están pausadas temporalmente mientras corrige la configuración de cobro de su cuenta de Mercado Pago. Intenta de nuevo más tarde." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        })
+      }
+
+      // Segundo paso de la conexión con MP (declarar que configuró sus
+      // plazos, ver /conectar-mercadopago). La interfaz ya no deja poner
+      // precio sin esto, pero el candado real vive aquí: si solo se validara
+      // en el navegador, bastaría crear el evento desde la consola.
+      const { data: perfilAnfitrion } = await supabase
+        .from("profiles")
+        .select("mp_config_confirmada_en")
+        .eq("id", evento.anfitrion_id)
+        .single()
+
+      if (!perfilAnfitrion?.mp_config_confirmada_en) {
+        return new Response(JSON.stringify({ error: "Este organizador todavía no ha terminado de configurar sus cobros. Intenta de nuevo más tarde." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+        })
+      }
     }
 
     const anfitrionMpToken = anfitrionCredenciales.mp_access_token
