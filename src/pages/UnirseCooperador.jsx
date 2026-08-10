@@ -177,13 +177,13 @@ export default function UnirseCooperador() {
             style={{ background: "#0e0e11", border: "1.5px solid rgba(16,185,129,0.2)", borderRadius: "20px", padding: "28px 24px" }}
           >
             <div style={{ fontWeight: 700, fontSize: "18px", marginBottom: "8px" }}>Unirte como cooperador de check-in</div>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13.5px", marginBottom: "20px", lineHeight: 1.5 }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13.5px", marginBottom: "20px", lineHeight: 1.5 }}>
               Vas a poder buscar y marcar la entrada de los asistentes de este evento. No necesitas cuenta — solo escribe tu nombre.
             </p>
             {error && (
               <div style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "10px", color: "#f87171", fontSize: "13px" }}>{error}</div>
             )}
-            <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "7px" }}>Tu nombre</label>
+            <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.6)", marginBottom: "7px" }}>Tu nombre</label>
             <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Como quieres que te vea el anfitrión" maxLength={100}
               onKeyDown={e => e.key === "Enter" && unirse()} style={{ ...inputStyle, marginBottom: "16px" }} />
             <motion.button onClick={unirse} whileTap={{ scale: 0.97 }} disabled={uniendo}
@@ -196,7 +196,7 @@ export default function UnirseCooperador() {
           >
             <div style={{ marginBottom: "18px" }}>
               <div style={{ fontWeight: 700, fontSize: "18px" }}>Check-in</div>
-              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{sesion.evento_titulo} · cooperador: {nombre || "tú"}</div>
+              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", marginTop: "2px" }}>{sesion.evento_titulo} · cooperador: {nombre || "tú"}</div>
             </div>
 
             <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
@@ -222,7 +222,7 @@ export default function UnirseCooperador() {
                 placeholder="Buscar por nombre o código (ej. AB3X7K)"
                 style={inputStyle}
               />
-              {buscando && <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>Buscando...</div>}
+              {buscando && <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Buscando...</div>}
             </div>
 
             {mensaje && (
@@ -230,10 +230,10 @@ export default function UnirseCooperador() {
             )}
 
             {resultados.length === 0 && busqueda.trim().length > 0 && !buscando && (
-              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>No se encontraron boletos con ese nombre o código</div>
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>No se encontraron boletos con ese nombre o código</div>
             )}
             {resultados.length === 0 && busqueda.trim().length === 0 && (
-              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.25)", fontSize: "13px" }}>Escribe un nombre o el código para buscar</div>
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Escribe un nombre o el código para buscar</div>
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -241,7 +241,7 @@ export default function UnirseCooperador() {
                 <div key={gi} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "12px 14px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
                     <div style={{ fontWeight: 600, fontSize: "14px" }}>{grupo.nombre}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>{grupo.codigo}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", fontFamily: "monospace" }}>{grupo.codigo}</div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {grupo.boletos.map(b => (

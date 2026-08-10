@@ -93,7 +93,7 @@ export default function SerAnfitrion() {
     transition: "border 0.2s"
   }
 
-  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }
+  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }
 
   if (loading) return (
     <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -112,7 +112,7 @@ export default function SerAnfitrion() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {!isMobile && "Volver"}
         </Link>
@@ -124,10 +124,10 @@ export default function SerAnfitrion() {
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
             <div style={{ width: "80px", height: "80px", borderRadius: "999px", background: "linear-gradient(135deg, #7c3aed, #4f46e5)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 0 40px rgba(124,58,237,0.5)", fontSize: "36px" }}>⚡</div>
             <h1 style={{ fontSize: isMobile ? "1.7rem" : "2rem", fontWeight: 700, marginBottom: "12px", letterSpacing: "-0.5px" }}>Solicitud enviada</h1>
-            <p style={{ color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: "12px", fontSize: "15px" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: "12px", fontSize: "15px" }}>
               Tu solicitud está siendo revisada. En cuanto verifiquemos tu identidad activaremos tu cuenta de anfitrión.
             </p>
-            <p style={{ color: "rgba(255,255,255,0.3)", lineHeight: 1.7, marginBottom: "36px", fontSize: "13.5px" }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: "36px", fontSize: "13.5px" }}>
               Este proceso puede tomar hasta 24 horas hábiles.
             </p>
             <motion.button onClick={() => navigate("/")} whileTap={{ scale: 0.97 }}
@@ -146,7 +146,7 @@ export default function SerAnfitrion() {
                 <span style={{ color: "#a78bfa", fontSize: "12.5px", fontWeight: 600 }}>⚡ Programa de anfitriones</span>
               </div>
               <h1 style={{ fontSize: isMobile ? "1.7rem" : "2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "10px" }}>Conviértete en anfitrión</h1>
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14.5px", lineHeight: 1.7, fontWeight: 400, margin: 0 }}>
+              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14.5px", lineHeight: 1.7, fontWeight: 400, margin: 0 }}>
                 Crea eventos públicos o privados, gestiona boletos y llega a toda la comunidad de VELA.
               </p>
             </div>
@@ -165,7 +165,7 @@ export default function SerAnfitrion() {
                   <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: isMobile ? "16px" : "20px 18px" }}>
                     <div style={{ fontSize: "22px", marginBottom: "8px" }}>{b.icon}</div>
                     <div style={{ fontWeight: 600, fontSize: "13.5px", marginBottom: "5px" }}>{b.title}</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "12.5px", lineHeight: 1.5 }}>{b.desc}</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px", lineHeight: 1.5 }}>{b.desc}</div>
                   </div>
                 ))}
               </div>
@@ -192,7 +192,7 @@ export default function SerAnfitrion() {
                 <div style={{ marginBottom: "14px" }}>
                   <label style={labelStyle}>Fecha de nacimiento *</label>
                   <input type="date" value={form.fecha_nacimiento} onChange={e => handleChange("fecha_nacimiento", e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
-                  <p style={{ marginTop: "5px", fontSize: "12px", color: "rgba(255,255,255,0.28)" }}>Debes ser mayor de 18 años para ser anfitrión.</p>
+                  <p style={{ marginTop: "5px", fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>Debes ser mayor de 18 años para ser anfitrión.</p>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px" }}>
                   <div>
@@ -200,7 +200,7 @@ export default function SerAnfitrion() {
                     <input value={form.tipo_eventos} onChange={e => handleChange("tipo_eventos", e.target.value)} placeholder="Ej. Fiestas, conciertos..." style={inputStyle} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Instagram <span style={{ color: "rgba(255,255,255,0.25)", fontWeight: 400 }}>(opcional)</span></label>
+                    <label style={labelStyle}>Instagram <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>(opcional)</span></label>
                     <input value={form.instagram} onChange={e => handleChange("instagram", e.target.value)} placeholder="@tuusuario" style={inputStyle} />
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function SerAnfitrion() {
               {/* INE */}
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "18px", padding: isMobile ? "20px 16px" : "28px", marginBottom: "14px" }}>
                 <h2 style={{ fontSize: "14.5px", fontWeight: 600, marginBottom: "8px", color: "rgba(255,255,255,0.8)" }}>Verificación de identidad</h2>
-                <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px", marginBottom: "18px", lineHeight: 1.6 }}>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", marginBottom: "18px", lineHeight: 1.6 }}>
                   Sube una foto clara de tu identificación oficial (frente). Esta información es confidencial y solo se usa para verificar tu identidad. Documentos aceptados: INE, Pasaporte, Cédula profesional o Cartilla militar.
                 </p>
                 <label style={{ display: "block", cursor: "pointer" }}>
@@ -238,7 +238,7 @@ export default function SerAnfitrion() {
                     >
                       <div style={{ fontSize: "30px", marginBottom: "10px" }}>🪪</div>
                       <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "6px" }}>Sube tu identificación oficial</div>
-                      <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>INE, Pasaporte, Cédula o Cartilla · JPG, PNG · Máx 5MB</div>
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>INE, Pasaporte, Cédula o Cartilla · JPG, PNG · Máx 5MB</div>
                     </div>
                   )}
                 </label>
@@ -247,7 +247,7 @@ export default function SerAnfitrion() {
               {/* AVISO */}
               <div style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "12px", padding: "14px 18px", marginBottom: "14px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
                 <svg width="15" height="15" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: "2px" }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <p style={{ color: "rgba(255,255,255,0.32)", fontSize: "13px", lineHeight: 1.6, fontWeight: 400, margin: 0 }}>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", lineHeight: 1.6, fontWeight: 400, margin: 0 }}>
                   Tu solicitud será revisada en un plazo de 24 horas. Al enviarla aceptas ser responsable de los eventos que publiques y cumplir con las políticas de seguridad de VELA.
                 </p>
               </div>

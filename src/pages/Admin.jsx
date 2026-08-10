@@ -263,7 +263,7 @@ export default function Admin() {
           {!isMobile && <span style={{ fontWeight: 700, fontSize: "18px", letterSpacing: "0.5px" }}>VELA</span>}
           <span style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "999px", padding: "3px 10px", fontSize: "12px", fontWeight: 600, color: "#f87171", whiteSpace: "nowrap" }}>Admin</span>
         </div>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap", flexShrink: 0 }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px", whiteSpace: "nowrap", flexShrink: 0 }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {isMobile ? "Salir" : "Salir del panel"}
         </Link>
@@ -273,7 +273,7 @@ export default function Admin() {
 
         <div style={{ marginBottom: "36px" }}>
           <h1 style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "6px" }}>Panel de administración</h1>
-          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>Gestiona solicitudes de anfitriones y usuarios de la plataforma.</p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Gestiona solicitudes de anfitriones y usuarios de la plataforma.</p>
         </div>
 
         <AnimatePresence>
@@ -293,7 +293,7 @@ export default function Admin() {
               <div style={{ fontWeight: 700, fontSize: "14px", color: "#f87171" }}>
                 {fallosReembolso.length} reembolso{fallosReembolso.length > 1 ? "s" : ""} {fallosReembolso.length > 1 ? "fallaron" : "falló"} y {fallosReembolso.length > 1 ? "requieren" : "requiere"} tu atención
               </div>
-              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
+              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginTop: "2px" }}>
                 Un reembolso a un comprador no se pudo procesar (probable saldo insuficiente del anfitrión en Mercado Pago). Toca para ver el detalle.
               </div>
             </div>
@@ -320,7 +320,7 @@ export default function Admin() {
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
                 <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay solicitudes pendientes</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando alguien solicite ser anfitrión aparecerá aquí</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Cuando alguien solicite ser anfitrión aparecerá aquí</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -335,7 +335,7 @@ export default function Admin() {
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "2px" }}>{sol.nombre}</div>
-                          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>{sol.email}</div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>{sol.email}</div>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
@@ -396,7 +396,7 @@ export default function Admin() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: "14px" }}>{anf.nombre}</div>
-                      <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>{anf.email}</div>
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>{anf.email}</div>
                     </div>
                     <motion.button onClick={() => revocar(anf.id, anf.nombre)} whileTap={{ scale: 0.97 }} disabled={procesando === anf.id}
                       style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", color: "#f87171", padding: "8px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
@@ -414,7 +414,7 @@ export default function Admin() {
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🛡️</div>
                 <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay reportes pendientes</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando alguien reporte un evento aparecerá aquí</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Cuando alguien reporte un evento aparecerá aquí</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -427,8 +427,8 @@ export default function Admin() {
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: "16px", marginBottom: "4px" }}>{rep.evento_titulo_snapshot}</div>
-                          <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>Anfitrión: {rep.anfitrion_nombre_snapshot || "Desconocido"}</div>
-                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px", marginTop: "4px" }}>Reportado el {new Date(rep.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Anfitrión: {rep.anfitrion_nombre_snapshot || "Desconocido"}</div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", marginTop: "4px" }}>Reportado el {new Date(rep.created_at).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}</div>
                         </div>
                         <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
                           <motion.button onClick={() => resolverReporte(rep, "aprobar")} whileTap={{ scale: 0.97 }} disabled={procesando === rep.id}
@@ -503,7 +503,7 @@ export default function Admin() {
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>💸</div>
                 <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>No hay reembolsos fallidos</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando un reembolso a un comprador falle (p. ej. saldo insuficiente del anfitrión) aparecerá aquí</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Cuando un reembolso a un comprador falle (p. ej. saldo insuficiente del anfitrión) aparecerá aquí</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -516,7 +516,7 @@ export default function Admin() {
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: "15px", marginBottom: "4px", color: "#f87171" }}>{contextoLabel}</div>
-                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>{new Date(f.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>{new Date(f.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</div>
                         </div>
                         <motion.button onClick={() => marcarResueltoFallo(f.id)} whileTap={{ scale: 0.97 }} disabled={procesando === f.id}
                           style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "8px", color: "#34d399", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
@@ -530,13 +530,13 @@ export default function Admin() {
                         {f.evento_id && (
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>ID del evento</div>
-                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{f.evento_id}</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.6)", wordBreak: "break-all" }}>{f.evento_id}</div>
                           </div>
                         )}
                         {f.payment_ids && f.payment_ids.length > 0 && (
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pagos sin reembolsar (Mercado Pago)</div>
-                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.6)", wordBreak: "break-all" }}>
                               {f.payment_ids.filter(p => !(f.payment_ids_recuperados || []).includes(p)).join(", ") || "—"}
                             </div>
                             {(f.payment_ids_recuperados || []).length > 0 && (
@@ -560,7 +560,7 @@ export default function Admin() {
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Dinero sin devolver</div>
                             <div style={{ fontSize: "15px", fontWeight: 700, color: "#f87171" }}>
                               ${Number(f.monto_pendiente).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MXN
-                              {f.boletos_afectados ? <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.5)" }}> · {f.boletos_afectados} boleto{f.boletos_afectados === 1 ? "" : "s"}</span> : null}
+                              {f.boletos_afectados ? <span style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255,255,255,0.6)" }}> · {f.boletos_afectados} boleto{f.boletos_afectados === 1 ? "" : "s"}</span> : null}
                             </div>
                             {Number(f.monto_recuperado) > 0 && (
                               <div style={{ fontSize: "12px", color: "#34d399", marginTop: "3px" }}>
@@ -593,7 +593,7 @@ export default function Admin() {
                 anfitrión esperar 14 días por su dinero. */}
             <div style={{ marginBottom: "18px", padding: "16px 18px", background: modoLiberacion === "apagado" ? "rgba(239,68,68,0.07)" : modoLiberacion === "avisar" ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.02)", border: `1.5px solid ${modoLiberacion === "apagado" ? "rgba(239,68,68,0.3)" : modoLiberacion === "avisar" ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.08)"}`, borderRadius: "14px" }}>
               <div style={{ fontWeight: 700, fontSize: "14px", marginBottom: "4px" }}>Modo del sistema de liberación</div>
-              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: "14px" }}>
+              <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6, marginBottom: "14px" }}>
                 Controla cuánta fricción le impone VELA a los anfitriones para proteger los reembolsos.
               </div>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -608,7 +608,7 @@ export default function Admin() {
                     <div style={{ fontSize: "13px", fontWeight: 700, color: modoLiberacion === m.id ? "#c4b5fd" : "rgba(255,255,255,0.75)", marginBottom: "2px" }}>
                       {modoLiberacion === m.id ? "● " : ""}{m.label}
                     </div>
-                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", lineHeight: 1.45 }}>{m.desc}</div>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.45 }}>{m.desc}</div>
                   </motion.button>
                 ))}
               </div>
@@ -626,7 +626,7 @@ export default function Admin() {
               <div style={{ textAlign: "center", padding: "80px 24px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔓</div>
                 <div style={{ fontWeight: 600, fontSize: "18px", marginBottom: "8px" }}>Sin incidentes de liberación</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando se detecte una venta de una cuenta de Mercado Pago que libera el dinero al instante, aparecerá aquí — con las ventas del anfitrión ya pausadas y el pago detector ya reembolsado automáticamente</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Cuando se detecte una venta de una cuenta de Mercado Pago que libera el dinero al instante, aparecerá aquí — con las ventas del anfitrión ya pausadas y el pago detector ya reembolsado automáticamente</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -649,7 +649,7 @@ export default function Admin() {
                               </span>
                             )}
                           </div>
-                          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "12px" }}>{new Date(inc.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · vía {inc.origen}</div>
+                          <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>{new Date(inc.created_at).toLocaleString("es-MX", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })} · vía {inc.origen}</div>
                         </div>
                         <motion.button onClick={() => desbloquearAnfitrion(inc.anfitrion_id)} whileTap={{ scale: 0.97 }} disabled={procesando === inc.anfitrion_id}
                           style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: "8px", color: "#34d399", padding: "9px 18px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}
@@ -659,7 +659,7 @@ export default function Admin() {
                         <div>
                           <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Anfitrión</div>
                           <div style={{ fontSize: "13.5px", color: "rgba(255,255,255,0.7)" }}>{nombresIncidentes[inc.anfitrion_id] || "—"}</div>
-                          <div style={{ fontSize: "11.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.35)", wordBreak: "break-all" }}>{inc.anfitrion_id}</div>
+                          <div style={{ fontSize: "11.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.6)", wordBreak: "break-all" }}>{inc.anfitrion_id}</div>
                         </div>
                         {inc.liberacion_dias !== null && (
                           <div>
@@ -674,7 +674,7 @@ export default function Admin() {
                         {inc.mp_payment_id && (
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Pago detector (Mercado Pago)</div>
-                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }}>{inc.mp_payment_id}</div>
+                            <div style={{ fontSize: "12.5px", fontFamily: "monospace", color: "rgba(255,255,255,0.6)", wordBreak: "break-all" }}>{inc.mp_payment_id}</div>
                           </div>
                         )}
                       </div>

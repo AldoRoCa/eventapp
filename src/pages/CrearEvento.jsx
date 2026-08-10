@@ -168,7 +168,7 @@ export default function CrearEvento() {
     transition: "border 0.2s"
   }
 
-  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.5)", marginBottom: "7px" }
+  const labelStyle = { display: "block", fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.6)", marginBottom: "7px" }
 
   const cardStyle = {
     background: "rgba(255,255,255,0.03)",
@@ -197,7 +197,7 @@ export default function CrearEvento() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {!isMobile && "Volver al inicio"}
         </Link>
@@ -212,7 +212,7 @@ export default function CrearEvento() {
             <span style={{ color: "#a78bfa", fontSize: "12.5px", fontWeight: 600 }}>Nuevo evento</span>
           </div>
           <h1 style={{ fontSize: isMobile ? "1.8rem" : "2rem", fontWeight: 700, letterSpacing: "-0.5px", marginBottom: "6px" }}>Crear evento</h1>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "14.5px", fontWeight: 400, margin: 0 }}>Completa los datos y empieza a vender boletos.</p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14.5px", fontWeight: 400, margin: 0 }}>Completa los datos y empieza a vender boletos.</p>
         </div>
       </div>
 
@@ -272,7 +272,7 @@ export default function CrearEvento() {
               <div>
                 <label style={labelStyle}>Ubicación *</label>
                 <input value={form.ubicacion} onChange={e => handleChange("ubicacion", e.target.value)} placeholder="Ej. Ángel de la Independencia, CDMX" style={inputStyle} />
-                <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "6px", lineHeight: 1.4 }}>
+                <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "6px", lineHeight: 1.4 }}>
                   ⚠️ Escribe la ubicación tal como aparece en Google Maps — así el mapa de abajo apunta al lugar correcto. Si es una casa u otro lugar sin nombre, usa la dirección completa o una referencia conocida cercana.
                 </p>
               </div>
@@ -312,19 +312,19 @@ export default function CrearEvento() {
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "14px", marginBottom: "16px" }}>
               <div>
                 <label style={labelStyle}>Capacidad máxima *</label>
-                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
+                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
                 <input type="number" value={form.capacidad} onChange={e => handleChange("capacidad", e.target.value)} placeholder="Ej. 200" min="1" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Precio por boleto (MXN)</label>
-                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
+                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
                 <input type="number" value={form.precio}
                   onChange={e => cobrosListos ? handleChange("precio", e.target.value) : null}
                   placeholder={cobrosListos ? "0 = Gratis" : "Activa MP para cobrar"}
                   min="0"
                   style={{ ...inputStyle, opacity: cobrosListos ? 1 : 0.5, cursor: cobrosListos ? "text" : "not-allowed", ...(form.precio > 0 && form.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }}
                 />
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", marginTop: "6px", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "6px", lineHeight: 1.5 }}>
                   Mínimo $5 MXN para eventos de pago (Mercado Pago no acepta tarjetas por debajo de ese monto). Usa $0 para un evento gratis.
                 </div>
                 {form.precio > 0 && form.precio < 5 && (
@@ -334,9 +334,9 @@ export default function CrearEvento() {
                 )}
                 {form.precio >= 5 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
+                    <span style={{ color: "rgba(255,255,255,0.6)" }}>Precio final al asistente: </span>
                     <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(form.precio) * 1.10)} MXN</span>
-                    <span style={{ color: "rgba(255,255,255,0.28)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
                   </div>
                 )}
               </div>
@@ -347,19 +347,19 @@ export default function CrearEvento() {
             <div style={{ marginBottom: "16px" }}>
               <label style={labelStyle}>Límite de boletos por persona</label>
               <input type="number" value={form.max_boletos_por_persona} onChange={e => handleChange("max_boletos_por_persona", e.target.value)} placeholder="5" min="1" max="20" style={inputStyle} />
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>¿Cuántos boletos puede comprar una misma persona? Por defecto son 5.</p>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginTop: "5px" }}>¿Cuántos boletos puede comprar una misma persona? Por defecto son 5.</p>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
               <div>
                 <label style={labelStyle}>Duración del evento (horas)</label>
                 <input type="number" value={form.duracion_horas} onChange={e => handleChange("duracion_horas", e.target.value)} placeholder="5" min="1" max="24" step="0.5" style={inputStyle} />
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>Pasado este tiempo, el evento se marca como finalizado (máx. 24h).</p>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginTop: "5px" }}>Pasado este tiempo, el evento se marca como finalizado (máx. 24h).</p>
               </div>
               <div>
                 <label style={labelStyle}>Tiempo de registro/entrada (horas)</label>
                 <input type="number" value={form.tiempo_registro_horas} onChange={e => handleChange("tiempo_registro_horas", e.target.value)} placeholder="Igual que la duración" min="1" max="24" step="0.5" style={inputStyle} />
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", marginTop: "5px" }}>Opcional. Si lo dejas vacío, se usa la duración del evento.</p>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginTop: "5px" }}>Opcional. Si lo dejas vacío, se usa la duración del evento.</p>
               </div>
             </div>
 
@@ -374,7 +374,7 @@ export default function CrearEvento() {
                     style={{ padding: "14px", borderRadius: "14px", cursor: "pointer", border: `1.5px solid ${form.tipo_boleto === opt.value ? "rgba(124,58,237,0.6)" : "rgba(255,255,255,0.08)"}`, background: form.tipo_boleto === opt.value ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.02)", transition: "all 0.2s", boxShadow: form.tipo_boleto === opt.value ? "0 0 16px rgba(124,58,237,0.2)" : "none" }}
                   >
                     <div style={{ fontWeight: 600, fontSize: "13.5px", marginBottom: "4px" }}>{opt.label}</div>
-                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", fontWeight: 400, lineHeight: 1.4 }}>{opt.desc}</div>
+                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontWeight: 400, lineHeight: 1.4 }}>{opt.desc}</div>
                   </motion.div>
                 ))}
               </div>
@@ -386,7 +386,7 @@ export default function CrearEvento() {
             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "120px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.4), transparent)" }} />
             <h2 style={{ fontSize: "14.5px", fontWeight: 600, marginBottom: "20px", color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ width: "22px", height: "22px", borderRadius: "6px", background: "rgba(124,58,237,0.25)", border: "1px solid rgba(124,58,237,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#a78bfa" }}>4</span>
-              Imagen del evento <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.28)", fontWeight: 400 }}>(opcional)</span>
+              Imagen del evento <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>(opcional)</span>
             </h2>
             <label style={{ display: "block", cursor: "pointer", marginBottom: "14px" }}>
               <input type="file" accept="image/*" onChange={handleImagen} style={{ display: "none" }} />
@@ -402,13 +402,13 @@ export default function CrearEvento() {
                 >
                   <div style={{ fontSize: "28px", marginBottom: "10px" }}>🖼️</div>
                   <div style={{ fontWeight: 600, fontSize: "14px", marginBottom: "4px" }}>Subir imagen</div>
-                  <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>JPG, PNG o WEBP · Máximo 8MB</div>
+                  <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>JPG, PNG o WEBP · Máximo 8MB</div>
                 </div>
               )}
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>o pega un link</span>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>o pega un link</span>
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
             </div>
             <input value={form.imagen_url} onChange={e => handleChange("imagen_url", e.target.value)} placeholder="https://..." style={inputStyle} />

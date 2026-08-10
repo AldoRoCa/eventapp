@@ -579,7 +579,7 @@ export default function PanelAnfitrion() {
           </div>
           <span style={{ fontWeight: 700, fontSize: "17px", letterSpacing: "0.5px" }}>VELA</span>
         </Link>
-        <Link to="/" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+        <Link to="/" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", fontSize: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {!isMobile && "Inicio"}
         </Link>
@@ -613,15 +613,15 @@ export default function PanelAnfitrion() {
                   <h1 style={{ fontSize: isMobile ? "1.2rem" : "1.4rem", fontWeight: 700, letterSpacing: "-0.3px", margin: 0 }}>{perfil?.nombre}</h1>
                   <span style={{ background: "rgba(124,58,237,0.25)", border: "1.5px solid rgba(124,58,237,0.4)", borderRadius: "999px", padding: "2px 10px", fontSize: "11.5px", fontWeight: 600, color: "#a78bfa" }}>⚡ Anfitrión</span>
                 </div>
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", margin: "0 0 10px" }}>{perfil?.email}</p>
+                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", margin: "0 0 10px" }}>{perfil?.email}</p>
                 <div style={{ display: "flex", gap: "16px" }}>
                   <div style={{ background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.18)", borderRadius: "10px", padding: "6px 14px" }}>
                     <div style={{ fontWeight: 700, fontSize: "16px", color: "#a78bfa" }}>{eventos.length}</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>Eventos</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px" }}>Eventos</div>
                   </div>
                   <div style={{ background: "rgba(124,58,237,0.12)", border: "1.5px solid rgba(124,58,237,0.18)", borderRadius: "10px", padding: "6px 14px" }}>
                     <div style={{ fontWeight: 700, fontSize: "16px", color: "#a78bfa" }}>{eventos.reduce((acc, e) => acc + (e.capacidad || 0), 0)}</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>Cupos totales</div>
+                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px" }}>Cupos totales</div>
                   </div>
                 </div>
               </div>
@@ -646,7 +646,7 @@ export default function PanelAnfitrion() {
                     </span>
                   </div>
                   <motion.button onClick={irAConectarMP} whileTap={{ scale: 0.97 }}
-                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px", color: "rgba(255,255,255,0.35)", padding: "3px 9px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
+                    style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "7px", color: "rgba(255,255,255,0.6)", padding: "3px 9px", fontSize: "11px", cursor: "pointer", fontFamily: "inherit" }}
                   >Ver configuración</motion.button>
                 </div>
               ) : (
@@ -687,7 +687,7 @@ export default function PanelAnfitrion() {
               <div style={{ textAlign: "center", padding: isMobile ? "56px 20px" : "80px 24px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "44px", marginBottom: "16px" }}>📅</div>
                 <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "8px" }}>Aún no tienes eventos</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px", marginBottom: "28px" }}>Crea tu primer evento y empieza a vender boletos</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginBottom: "28px" }}>Crea tu primer evento y empieza a vender boletos</div>
                 <motion.button onClick={() => navigate("/crear-evento")} whileTap={{ scale: 0.97 }}
                   style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "12px", color: "white", padding: "12px 28px", fontWeight: 600, fontSize: "14px", cursor: "pointer", fontFamily: "inherit", boxShadow: "0 0 18px rgba(124,58,237,0.35)" }}
                 >Crear evento</motion.button>
@@ -718,7 +718,7 @@ export default function PanelAnfitrion() {
                         <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         Mandar captura por WhatsApp
                       </a>
-                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "8px" }}>Se abre el chat con el mensaje listo — solo adjunta ahí tu captura de pantalla.</div>
+                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "8px" }}>Se abre el chat con el mensaje listo — solo adjunta ahí tu captura de pantalla.</div>
                     </div>
                   ) : null
                   return (
@@ -730,7 +730,7 @@ export default function PanelAnfitrion() {
                           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "10px", gap: "10px" }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontWeight: 600, fontSize: "15px", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{ev.titulo}</div>
-                              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "12.5px" }}>
+                              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>
                                 {fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {ev.ubicacion}
                               </div>
                             </div>
@@ -769,7 +769,7 @@ export default function PanelAnfitrion() {
                                 {finalizado ? "Finalizado" : pausado ? "Ventas pausadas" : "Activo"}
                               </span>
                             </div>
-                            <div style={{ display: "flex", gap: "20px", color: "rgba(255,255,255,0.4)", fontSize: "13px", flexWrap: "wrap" }}>
+                            <div style={{ display: "flex", gap: "20px", color: "rgba(255,255,255,0.6)", fontSize: "13px", flexWrap: "wrap" }}>
                               <span>📅 {fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</span>
                               <span>📍 {ev.ubicacion}</span>
                               <span>👥 {ev.capacidad} cupos</span>
@@ -812,12 +812,12 @@ export default function PanelAnfitrion() {
         {tab === "solicitudes" && (
           <div>
             {loadingSolicitudes ? (
-              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.35)" }}>Cargando solicitudes...</div>
+              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.6)" }}>Cargando solicitudes...</div>
             ) : solicitudes.length === 0 ? (
               <div style={{ textAlign: "center", padding: isMobile ? "56px 20px" : "80px 24px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "44px", marginBottom: "16px" }}>✅</div>
                 <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "8px" }}>No hay solicitudes pendientes</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Cuando alguien solicite un boleto aparecerá aquí</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Cuando alguien solicite un boleto aparecerá aquí</div>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -831,7 +831,7 @@ export default function PanelAnfitrion() {
                       </div>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: "14px" }}>{sol.profiles?.nombre || "Usuario"}</div>
-                        <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px" }}>{sol.eventos?.titulo} · {sol.profiles?.email}</div>
+                        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px" }}>{sol.eventos?.titulo} · {sol.profiles?.email}</div>
                         {sol.mp_payment_id && (
                           <div style={{ color: "#f59e0b", fontSize: "11.5px", marginTop: "3px" }}>💳 Boleto pagado — si lo rechazas, se reembolsa automáticamente</div>
                         )}
@@ -856,20 +856,20 @@ export default function PanelAnfitrion() {
         {tab === "asistentes" && (
           <div>
             {!eventoSeleccionado ? (
-              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
+              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>
                 Selecciona un evento desde "Mis eventos" para ver sus asistentes
               </div>
             ) : loadingAsistentes ? (
-              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.35)" }}>Cargando asistentes...</div>
+              <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.6)" }}>Cargando asistentes...</div>
             ) : asistentes.length === 0 ? (
               <div style={{ textAlign: "center", padding: isMobile ? "56px 20px" : "80px 24px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "20px" }}>
                 <div style={{ fontSize: "44px", marginBottom: "16px" }}>👥</div>
                 <div style={{ fontWeight: 600, fontSize: "17px", marginBottom: "8px" }}>Aún no hay asistentes</div>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>Comparte tu evento para que la gente se registre</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>Comparte tu evento para que la gente se registre</div>
               </div>
             ) : (
               <div>
-                <div style={{ marginBottom: "16px", color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>{asistentes.length} asistente{asistentes.length !== 1 ? "s" : ""} en <span style={{ color: "#a78bfa" }}>{eventoSeleccionado.titulo}</span></div>
+                <div style={{ marginBottom: "16px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>{asistentes.length} asistente{asistentes.length !== 1 ? "s" : ""} en <span style={{ color: "#a78bfa" }}>{eventoSeleccionado.titulo}</span></div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {asistentes.map((boleto, i) => (
                     <motion.div key={boleto.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
@@ -880,7 +880,7 @@ export default function PanelAnfitrion() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: "14px" }}>{boleto.profiles?.nombre || "Usuario"}</div>
-                        <div style={{ color: "rgba(255,255,255,0.35)", fontSize: "12.5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{boleto.profiles?.email}</div>
+                        <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12.5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{boleto.profiles?.email}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "5px", background: "rgba(16,185,129,0.1)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "999px", padding: "4px 11px", flexShrink: 0 }}>
                         <div style={{ width: "6px", height: "6px", borderRadius: "999px", background: "#34d399" }} />
@@ -911,32 +911,32 @@ export default function PanelAnfitrion() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Nombre *</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Nombre *</label>
                   <input value={formEditar.titulo} onChange={e => setFormEditar(f => ({ ...f, titulo: e.target.value }))} style={inputStyle} />
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Descripción</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Descripción</label>
                   <textarea value={formEditar.descripcion} onChange={e => setFormEditar(f => ({ ...f, descripcion: e.target.value }))} rows={3} style={{ ...inputStyle, resize: "vertical" }} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Fecha</label>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Fecha</label>
                     <input type="date" value={formEditar.fecha} onChange={e => setFormEditar(f => ({ ...f, fecha: e.target.value }))} style={{ ...inputStyle, colorScheme: "dark" }} />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Hora</label>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Hora</label>
                     <input type="time" value={formEditar.hora} onChange={e => setFormEditar(f => ({ ...f, hora: e.target.value }))} style={{ ...inputStyle, colorScheme: "dark" }} />
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Ubicación</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Ubicación</label>
                   <input value={formEditar.ubicacion} onChange={e => setFormEditar(f => ({ ...f, ubicacion: e.target.value }))} style={inputStyle} />
-                  <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "6px", lineHeight: 1.4 }}>
+                  <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "6px", lineHeight: 1.4 }}>
                     ⚠️ Escribe la ubicación tal como aparece en Google Maps — así el mapa de abajo apunta al lugar correcto. Si es una casa u otro lugar sin nombre, usa la dirección completa o una referencia conocida cercana.
                   </p>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Estado</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Estado</label>
                   <select value={formEditar.estado_evento || ""} onChange={e => setFormEditar(f => ({ ...f, estado_evento: e.target.value }))} style={{ ...inputStyle, cursor: "pointer", colorScheme: "dark" }}>
                     <option value="" style={{ background: "#111" }}>Selecciona un estado</option>
                     {["Aguascalientes","Baja California","Baja California Sur","Campeche","Chiapas","Chihuahua","Ciudad de México","Coahuila","Colima","Durango","Estado de México","Guanajuato","Guerrero","Hidalgo","Jalisco","Michoacán","Morelos","Nayarit","Nuevo León","Oaxaca","Puebla","Querétaro","Quintana Roo","San Luis Potosí","Sinaloa","Sonora","Tabasco","Tamaulipas","Tlaxcala","Veracruz","Yucatán","Zacatecas"].map(e => (
@@ -945,24 +945,24 @@ export default function PanelAnfitrion() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Vista previa del mapa</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Vista previa del mapa</label>
                   <MiniMapaUbicacion ubicacion={formEditar.ubicacion} estado={formEditar.estado_evento} height={isMobile ? "150px" : "180px"} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Capacidad</label>
-                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Capacidad</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>¿Cuántas personas pueden asistir?</div>
                     <input type="number" value={formEditar.capacidad} onChange={e => setFormEditar(f => ({ ...f, capacidad: e.target.value }))} style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Precio (MXN)</label>
-                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Precio (MXN)</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Lo que recibirás por cada boleto</div>
                     <input type="number" value={formEditar.precio} onChange={e => setFormEditar(f => ({ ...f, precio: e.target.value }))} disabled={!cobrosListos}
                       style={{ ...inputStyle, opacity: cobrosListos ? 1 : 0.5, cursor: cobrosListos ? "text" : "not-allowed", ...(formEditar.precio > 0 && formEditar.precio < 5 ? { border: "1.5px solid rgba(239,68,68,0.5)" } : {}) }} />
                     {!cobrosListos && (
-                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>Completa la conexión con Mercado Pago para poder cobrar por tus boletos.</div>
+                      <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "5px" }}>Completa la conexión con Mercado Pago para poder cobrar por tus boletos.</div>
                     )}
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.28)", marginTop: "6px", lineHeight: 1.5 }}>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "6px", lineHeight: 1.5 }}>
                       Mínimo $5 MXN para eventos de pago (Mercado Pago no acepta tarjetas por debajo de ese monto). Usa $0 para un evento gratis.
                     </div>
                     {formEditar.precio > 0 && formEditar.precio < 5 && (
@@ -972,27 +972,27 @@ export default function PanelAnfitrion() {
                     )}
                     {formEditar.precio >= 5 && (
                       <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>
-                        <span style={{ color: "rgba(255,255,255,0.5)" }}>Precio final al asistente: </span>
+                        <span style={{ color: "rgba(255,255,255,0.6)" }}>Precio final al asistente: </span>
                         <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(formEditar.precio) * 1.10)} MXN</span>
-                        <span style={{ color: "rgba(255,255,255,0.28)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
+                        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
                       </div>
                     )}
                   </div>
                 </div>
                 <DesgloseGanancias precio={formEditar.precio} capacidad={formEditar.capacidad} isMobile={isMobile} />
                 <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Límite de boletos por persona</label>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Límite de boletos por persona</label>
                   <input type="number" value={formEditar.max_boletos_por_persona} onChange={e => setFormEditar(f => ({ ...f, max_boletos_por_persona: e.target.value }))} min="1" max="20" style={inputStyle} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Duración del evento (horas)</label>
-                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Pasado este tiempo, el evento se marca como finalizado</div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Duración del evento (horas)</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Pasado este tiempo, el evento se marca como finalizado</div>
                     <input type="number" value={formEditar.duracion_horas} onChange={e => setFormEditar(f => ({ ...f, duracion_horas: e.target.value }))} min="1" max="24" step="0.5" style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.45)", marginBottom: "6px" }}>Tiempo de registro/entrada (horas)</label>
-                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Opcional — si lo dejas vacío, se usa la duración del evento</div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Tiempo de registro/entrada (horas)</label>
+                    <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Opcional — si lo dejas vacío, se usa la duración del evento</div>
                     <input type="number" value={formEditar.tiempo_registro_horas} onChange={e => setFormEditar(f => ({ ...f, tiempo_registro_horas: e.target.value }))} placeholder="Igual que la duración" min="1" max="24" step="0.5" style={inputStyle} />
                   </div>
                 </div>
@@ -1035,10 +1035,10 @@ export default function PanelAnfitrion() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: "18px" }}>Check-in</div>
-                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{checkinEvento.titulo}</div>
+                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", marginTop: "2px" }}>{checkinEvento.titulo}</div>
               </div>
               <button onClick={() => setCheckinEvento(null)}
-                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
               >×</button>
             </div>
 
@@ -1077,14 +1077,14 @@ export default function PanelAnfitrion() {
                 placeholder="Buscar por nombre o código (ej. AB3X7K)"
                 style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(16,185,129,0.25)", borderRadius: "12px", padding: "12px 16px", color: "white", fontSize: "14px", fontFamily: "inherit", boxSizing: "border-box" }}
               />
-              {checkinBuscando && <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.4)", fontSize: "12px" }}>Buscando...</div>}
+              {checkinBuscando && <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>Buscando...</div>}
             </div>
 
             {checkinResultados.length === 0 && checkinBusqueda.trim().length > 0 && !checkinBuscando && (
-              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>No se encontraron boletos con ese nombre o código</div>
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.6)", fontSize: "14px" }}>No se encontraron boletos con ese nombre o código</div>
             )}
             {checkinResultados.length === 0 && checkinBusqueda.trim().length === 0 && (
-              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.25)", fontSize: "13px" }}>Escribe un nombre o el código de 6 caracteres para buscar</div>
+              <div style={{ textAlign: "center", padding: "32px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Escribe un nombre o el código de 6 caracteres para buscar</div>
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -1095,7 +1095,7 @@ export default function PanelAnfitrion() {
                       <div style={{ fontWeight: 700, fontSize: "15px" }}>{grupo.nombre || "Sin nombre"}</div>
                       {grupo.codigo && <div style={{ fontSize: "12px", color: "#34d399", fontFamily: "monospace", letterSpacing: "2px", marginTop: "2px" }}>{grupo.codigo}</div>}
                     </div>
-                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>
+                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>
                       {grupo.boletos.filter(b => b.checkin_en).length}/{grupo.boletos.length} boletos
                     </div>
                   </div>
@@ -1110,7 +1110,7 @@ export default function PanelAnfitrion() {
                             <div style={{ fontSize: "13px", color: b.checkin_en ? "#34d399" : "rgba(255,255,255,0.7)", fontWeight: 500 }}>
                               {b.checkin_en ? "✓ Check-in hecho" : "Pendiente de entrada"}
                             </div>
-                            {b.checkin_en && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "1px" }}>{new Date(b.checkin_en).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</div>}
+                            {b.checkin_en && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "1px" }}>{new Date(b.checkin_en).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</div>}
                           </div>
                         </div>
                         {!b.checkin_en && (
@@ -1127,7 +1127,7 @@ export default function PanelAnfitrion() {
 
             <div style={{ marginTop: "20px", padding: "12px 14px", background: "rgba(250,204,21,0.06)", border: "1px solid rgba(250,204,21,0.15)", borderRadius: "10px" }}>
               <div style={{ fontSize: "12px", color: "#fbbf24", fontWeight: 600, marginBottom: "3px" }}>💡 Recomendación</div>
-              <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+              <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
                 Se recomienda solicitar una identificación oficial que coincida con el nombre del registro, especialmente para eventos de edad restringida.
               </div>
             </div>
@@ -1147,19 +1147,19 @@ export default function PanelAnfitrion() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: "18px" }}>Cooperadores</div>
-                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>{cooperadoresEvento.titulo}</div>
+                <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", marginTop: "2px" }}>{cooperadoresEvento.titulo}</div>
               </div>
               <button onClick={() => setCooperadoresEvento(null)}
-                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "22px", cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}
               >×</button>
             </div>
 
-            <p style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: "18px" }}>
+            <p style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.6, marginBottom: "18px" }}>
               Comparte este link con quien quieras que te ayude a hacer check-in en la entrada. No necesita cuenta en VELA — solo escribe su nombre al abrirlo. Puedes quitarlo de la lista en cualquier momento.
             </p>
 
             {cargandoCooperadores ? (
-              <div style={{ textAlign: "center", padding: "24px", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>Cargando...</div>
+              <div style={{ textAlign: "center", padding: "24px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Cargando...</div>
             ) : (
               <>
                 <div style={{ padding: "14px", background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.18)", borderRadius: "12px", marginBottom: "20px" }}>
@@ -1190,7 +1190,7 @@ export default function PanelAnfitrion() {
                           onChange={e => setAceptaResponsabilidadCooperador(e.target.checked)}
                           style={{ marginTop: "3px", flexShrink: 0, cursor: "pointer" }}
                         />
-                        <span style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                        <span style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
                           Entiendo que la persona con este link verá nombres y datos de check-in de mis asistentes sin tener cuenta en VELA, y soy responsable de a quién se lo comparto. Puedo revocarlo en cualquier momento.
                         </span>
                       </label>
@@ -1201,18 +1201,18 @@ export default function PanelAnfitrion() {
                   )}
                 </div>
 
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "10px" }}>
                   {cooperadoresLista.length}/20 cooperadores
                 </div>
                 {cooperadoresLista.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.25)", fontSize: "13px" }}>Todavía no tienes cooperadores en este evento</div>
+                  <div style={{ textAlign: "center", padding: "20px", color: "rgba(255,255,255,0.6)", fontSize: "13px" }}>Todavía no tienes cooperadores en este evento</div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     {cooperadoresLista.map(c => (
                       <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
                         <div>
                           <div style={{ fontSize: "13.5px", fontWeight: 500 }}>{c.nombre}</div>
-                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>desde {new Date(c.created_at).toLocaleDateString("es-MX")}</div>
+                          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>desde {new Date(c.created_at).toLocaleDateString("es-MX")}</div>
                         </div>
                         <button onClick={() => quitarCooperador(c.id)}
                           style={{ background: "none", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "7px", color: "#f87171", padding: "5px 11px", fontSize: "11.5px", cursor: "pointer", fontFamily: "inherit" }}

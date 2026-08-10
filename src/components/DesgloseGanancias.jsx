@@ -45,9 +45,9 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", padding: isMobile ? "12px 14px" : "12px 16px", cursor: "pointer", userSelect: "none" }}
       >
         <div>
-          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginBottom: "3px" }}>💰 Ganancia neta aprox. por boleto</div>
+          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "3px" }}>💰 Ganancia neta aprox. por boleto</div>
           <div style={{ fontSize: isMobile ? "15px" : "16px", fontWeight: 700, color: "#34d399" }}>
-            ≈ {fmt(netaBoleto)} <span style={{ fontSize: "11.5px", fontWeight: 400, color: "rgba(255,255,255,0.35)" }}>MXN, ya con comisiones</span>
+            ≈ {fmt(netaBoleto)} <span style={{ fontSize: "11.5px", fontWeight: 400, color: "rgba(255,255,255,0.6)" }}>MXN, ya con comisiones</span>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "#a78bfa", whiteSpace: "nowrap", flexShrink: 0 }}>
@@ -91,7 +91,7 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
                 </div>
               )}
 
-              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", lineHeight: 1.5, margin: "12px 0 0" }}>
+              <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, margin: "12px 0 0" }}>
                 *Estimación con la tarifa estándar de Mercado Pago México (3.49% + $4.00 fijos por compra + IVA), calculada como si cada boleto se comprara por separado. Si un asistente compra varios boletos en un solo pago, el cargo fijo de $4 se cobra una sola vez y tu ganancia real mejora. El porcentaje puede variar según tu configuración de costos en Mercado Pago.
               </p>
             </div>

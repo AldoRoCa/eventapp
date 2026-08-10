@@ -17,7 +17,7 @@ export default function MiniMapaUbicacion({ ubicacion, estado, height = "180px" 
 
   if (!ubicacion || !ubicacion.trim()) {
     return (
-      <div style={{ height, borderRadius: "14px", border: "1.5px dashed rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "13px", textAlign: "center", padding: "0 20px" }}>
+      <div style={{ height, borderRadius: "14px", border: "1.5px dashed rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.02)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.6)", fontSize: "13px", textAlign: "center", padding: "0 20px" }}>
         Escribe una ubicación para ver el mapa
       </div>
     )
