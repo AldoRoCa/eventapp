@@ -35,6 +35,7 @@ const CONTEXTO_LABEL: Record<string, string> = {
   "resolver-reporte": "Reporte aprobado",
   "eliminar-cuenta": "Baja de cuenta",
   "liberacion-inmediata": "Detección de liberación inmediata",
+  "solicitud-vencida": "Solicitud nunca respondida (evento terminado)",
 }
 
 serve(async (req) => {

@@ -508,7 +508,7 @@ export default function Admin() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 {fallosReembolso.map((f, i) => {
-                  const contextoLabel = { "cancelar-evento": "Cancelación de evento", "gestionar-solicitud": "Rechazo de solicitud", "resolver-reporte": "Reporte aprobado", "eliminar-cuenta": "Baja de cuenta" }[f.contexto] || f.contexto
+                  const contextoLabel = { "cancelar-evento": "Cancelación de evento", "gestionar-solicitud": "Rechazo de solicitud", "resolver-reporte": "Reporte aprobado", "eliminar-cuenta": "Baja de cuenta", "liberacion-inmediata": "Detección de liberación inmediata", "solicitud-vencida": "Solicitud nunca respondida (evento terminado)" }[f.contexto] || f.contexto
                   return (
                     <motion.div key={f.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                       style={{ background: "#0f0f11", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "16px", padding: "24px" }}

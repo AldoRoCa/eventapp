@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import jsQR from "jsqr"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
-import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
+import { eventoFinalizado, eventoEmpezado, registroFinalizado, horasRegistro } from "../eventoUtils"
 import { precioConComision, porcentajeComision, desglosePrecio, montoPagadoBoleto } from "../comisionUtils"
 
 // Número de WhatsApp del admin (lada de país incluida, sin "+"), al que el
@@ -33,6 +33,9 @@ export default function PanelAnfitrion() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("eventos")
   const [solicitudes, setSolicitudes] = useState([])
+  // Cuántas solicitudes sin responder tiene cada evento, para avisarle al
+  // anfitrión en la tarjeta antes de que se le venzan (y se reembolsen solas).
+  const [pendientesPorEvento, setPendientesPorEvento] = useState({})
   const [loadingSolicitudes, setLoadingSolicitudes] = useState(false)
   const [procesando, setProcesando] = useState(null)
   const [checkinEvento, setCheckinEvento] = useState(null)
@@ -85,6 +88,14 @@ export default function PanelAnfitrion() {
       setPerfil(perfil)
       const { data: eventos } = await supabase.from("eventos").select("*").eq("anfitrion_id", user.id).order("created_at", { ascending: false })
       setEventos(eventos || [])
+      // Solo los ids, no las filas completas: es para contar por evento.
+      const ids = (eventos || []).map(e => e.id)
+      if (ids.length > 0) {
+        const { data: pend } = await supabase.from("boletos").select("evento_id").in("evento_id", ids).eq("estado", "pendiente")
+        const porEvento = {}
+        for (const b of pend || []) porEvento[b.evento_id] = (porEvento[b.evento_id] || 0) + 1
+        setPendientesPorEvento(porEvento)
+      }
       setLoading(false)
     }
     cargar()
@@ -767,6 +778,29 @@ export default function PanelAnfitrion() {
                       <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginTop: "8px" }}>Se abre el chat con el mensaje listo — solo adjunta ahí tu captura de pantalla.</div>
                     </div>
                   ) : null
+
+                  // Solicitudes sin responder. Se avisa desde que el evento
+                  // arranca: a partir de ahí ya no da tiempo de que el asistente
+                  // llegue, y al terminar (más 2h de gracia) el sistema las
+                  // cancela y devuelve el dinero solo — el anfitrión pierde esa
+                  // venta por no contestar, así que más vale que lo sepa.
+                  const sinResponder = pendientesPorEvento[ev.id] || 0
+                  const empezado = eventoEmpezado(ev)
+                  const avisoSinResponder = sinResponder > 0 && empezado ? (
+                    <div style={{ marginTop: "14px", padding: "13px 15px", background: finalizado ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)", border: `1px solid ${finalizado ? "rgba(239,68,68,0.25)" : "rgba(245,158,11,0.25)"}`, borderRadius: "11px" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: finalizado ? "#fca5a5" : "#fbbf24", marginBottom: "6px" }}>
+                        {sinResponder === 1 ? "1 solicitud sin responder" : `${sinResponder} solicitudes sin responder`}
+                      </div>
+                      <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.65)", lineHeight: 1.65 }}>
+                        {finalizado
+                          ? "Tu evento ya terminó. Estas solicitudes se cancelan y, si estaban pagadas, el dinero se devuelve automáticamente al comprador: esa venta se pierde."
+                          : "Tu evento ya empezó. Si no las respondes antes de que termine, se cancelan solas y el dinero se le devuelve al comprador."}
+                      </div>
+                      <button onClick={verSolicitudes}
+                        style={{ marginTop: "10px", background: "rgba(124,58,237,0.15)", border: "1.5px solid rgba(124,58,237,0.35)", borderRadius: "9px", color: "#a78bfa", padding: "7px 14px", fontSize: "12.5px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+                      >Ver solicitudes</button>
+                    </div>
+                  ) : null
                   return (
                     <motion.div key={ev.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                       style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: isMobile ? "16px" : "20px 24px" }}
@@ -846,6 +880,7 @@ export default function PanelAnfitrion() {
                         </div>
                       )}
                       {avisoPausa}
+                      {avisoSinResponder}
                     </motion.div>
                   )
                 })}

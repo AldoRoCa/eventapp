@@ -50,3 +50,8 @@ verify_jwt = false
 # usuario. Protegida con el mismo secreto compartido (x-alerta-secret).
 [functions.reintentar-reembolsos]
 verify_jwt = false
+
+# reembolsar-solicitudes-vencidas: la dispara pg_cron cada hora vía pg_net, no
+# un usuario. Protegida con el mismo secreto compartido (x-alerta-secret).
+[functions.reembolsar-solicitudes-vencidas]
+verify_jwt = false

@@ -261,6 +261,26 @@ export default function MisBoletos() {
               // boleto con 100% de descuento sale en $0, o sea "Gratis").
               const pagado = montoPagadoBoleto(boleto, ev)
 
+              // Solicitud que el anfitrión nunca respondió y su evento ya
+              // terminó. Antes esto se quedaba en un "Pendiente" eterno, sin
+              // explicación y sin que nada la tocara; ahora el cron de
+              // reembolsar-solicitudes-vencidas la cancela y devuelve el dinero,
+              // pero mientras eso ocurre (corre cada hora, con 2h de gracia) el
+              // asistente merece saber qué está pasando con su pago.
+              const solicitudVencida = boleto.estado === "pendiente" && eventoFinalizado(ev)
+              const avisoSolicitudVencida = (
+                <div style={{ marginTop: "14px", padding: "12px 14px", background: "rgba(245,158,11,0.07)", border: "1.5px solid rgba(245,158,11,0.22)", borderRadius: "12px" }}>
+                  <div style={{ fontSize: "12.5px", color: "#fbbf24", fontWeight: 600, marginBottom: "4px" }}>
+                    El evento terminó sin respuesta a tu solicitud
+                  </div>
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
+                    {boleto.mp_payment_id
+                      ? "El anfitrión nunca la aprobó ni la rechazó, así que tu pago se está devolviendo automáticamente. Cuando se procese, este boleto aparecerá como cancelado."
+                      : "El anfitrión nunca la aprobó ni la rechazó. No se te cobró nada."}
+                  </div>
+                </div>
+              )
+
               const estadoColor = rechazado ? "#f87171" : boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"
               const estadoBg = rechazado ? "rgba(239,68,68,0.1)" : boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.1)"
               const estadoBorder = rechazado ? "rgba(239,68,68,0.3)" : boleto.estado === "pendiente" ? "rgba(245,158,11,0.3)" : usado ? "rgba(255,255,255,0.1)" : "rgba(16,185,129,0.3)"
@@ -334,6 +354,8 @@ export default function MisBoletos() {
                             </div>
                           </div>
                         )}
+
+                        {solicitudVencida && avisoSolicitudVencida}
 
                         {/* CÓDIGO + QR de check-in */}
                         {boleto.codigo_grupo && boleto.estado === "activo" && (
@@ -447,6 +469,8 @@ export default function MisBoletos() {
                             </div>
                           </div>
                         )}
+
+                        {solicitudVencida && avisoSolicitudVencida}
 
                         {/* CÓDIGO + QR de check-in — versión desktop */}
                         {boleto.codigo_grupo && boleto.estado === "activo" && (

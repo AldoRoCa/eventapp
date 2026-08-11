@@ -22,6 +22,15 @@ export function eventoFinalizado(evento) {
   return new Date(evento.fecha).getTime() + horasDuracion(evento) * 60 * 60 * 1000 < Date.now()
 }
 
+// Ya pasó la hora de inicio (aunque siga en curso). Se usa para avisarle al
+// anfitrión que tiene solicitudes sin responder: a partir de que el evento
+// arranca ya no da tiempo de que el asistente llegue, y al terminar el sistema
+// las cancela y reembolsa solo (ver reembolsar-solicitudes-vencidas).
+export function eventoEmpezado(evento) {
+  if (!evento?.fecha) return false
+  return new Date(evento.fecha).getTime() <= Date.now()
+}
+
 // La ventana de registro/entrada es solo informativa (no bloquea el
 // check-in): indica hasta qué hora se espera que sigan llegando
 // asistentes, para que el anfitrión lo tenga como referencia.
