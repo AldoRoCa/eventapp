@@ -70,7 +70,14 @@ export default function CrearEvento() {
   const precioNum = parseInt(form.precio) || 0
   const descPct = parseInt(form.descuento_porcentaje) || 0
   const descMin = parseInt(form.descuento_min_boletos) || 0
-  const previewPaquete = precioNum >= 5 && descPct > 0 && descMin >= 2
+  // Ojo: la vista previa solo se calcula con valores DENTRO de rango. Si no,
+  // un 101% se mostraría como 100% (desglosePrecio topa el porcentaje) y la
+  // pantalla prometería "boletos gratis" justo antes de que el guardado
+  // fallara por fuera de rango.
+  const descPctValido = descPct >= 1 && descPct <= 100
+  const descMinValido = descMin >= 2 && descMin <= 20
+  const descuentoFueraDeRango = precioNum >= 5 && ((descPct > 0 && !descPctValido) || (descMin > 0 && !descMinValido))
+  const previewPaquete = precioNum >= 5 && descPctValido && descMinValido
     ? desglosePrecio({ precio: precioNum, descuento_porcentaje: descPct, descuento_min_boletos: descMin }, descMin)
     : null
 
@@ -419,6 +426,14 @@ export default function CrearEvento() {
                   </div>
                 </div>
 
+                {descuentoFueraDeRango && (
+                  <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "12.5px", color: "#f87171", lineHeight: 1.5 }}>
+                    {descPct > 0 && !descPctValido
+                      ? `El descuento tiene que estar entre 1% y 100%. Escribiste ${descPct}%.`
+                      : `El descuento por paquete aplica a partir de 2 boletos como mínimo y 20 como máximo. Escribiste ${descMin}.`}
+                  </div>
+                )}
+
                 {previewPaquete && !previewPaquete.cobrable && (
                   <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "12.5px", color: "#f87171", lineHeight: 1.5 }}>
                     Con {descPct}% el boleto quedaría en ${previewPaquete.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.
@@ -470,6 +485,19 @@ export default function CrearEvento() {
                   </motion.div>
                 ))}
               </div>
+
+              {/* En eventos de pago por solicitud, rechazar reembolsa desde el
+                  saldo del anfitrión en MP. Si ya retiró ese dinero, MP rechaza
+                  la devolución y la solicitud se queda atorada — mejor que lo
+                  sepa al configurarlo, no al toparse con el error. */}
+              {form.tipo_boleto === "solicitud" && form.precio >= 5 && (
+                <div style={{ marginTop: "12px", padding: "11px 14px", background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.25)", borderRadius: "10px", fontSize: "12.5px", lineHeight: 1.6 }}>
+                  <span style={{ color: "#fbbf24", fontWeight: 600 }}>⚠️ Ojo con el orden si cobras por solicitud: </span>
+                  <span style={{ color: "rgba(255,255,255,0.75)" }}>
+                    quien solicita un boleto <strong style={{ color: "white" }}>paga al momento</strong>, y si después lo rechazas, el reembolso sale de tu saldo en Mercado Pago. Por eso, antes de retirar dinero de MP, revisa que no te queden solicitudes pendientes: si tu saldo no alcanza, MP no procesa la devolución y el boleto no se puede rechazar hasta que vuelvas a tener saldo. En la pestaña "Solicitudes" del panel siempre ves cuánto dinero tienes comprometido.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

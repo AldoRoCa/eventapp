@@ -4,7 +4,7 @@ import jsQR from "jsqr"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { eventoFinalizado, registroFinalizado, horasRegistro } from "../eventoUtils"
-import { precioConComision, porcentajeComision, desglosePrecio } from "../comisionUtils"
+import { precioConComision, porcentajeComision, desglosePrecio, montoPagadoBoleto } from "../comisionUtils"
 
 // Número de WhatsApp del admin (lada de país incluida, sin "+"), al que el
 // anfitrión con ventas pausadas manda la captura de su plazo de liberación
@@ -48,6 +48,9 @@ export default function PanelAnfitrion() {
   const [editando, setEditando] = useState(null)
   const [formEditar, setFormEditar] = useState({})
   const [guardando, setGuardando] = useState(false)
+  // Error del modal de edición. Va aparte de `mensaje` porque ese se dibuja en
+  // la página, detrás del modal — ver el comentario en guardarEdicion.
+  const [errorEditar, setErrorEditar] = useState("")
   const [mensaje, setMensaje] = useState("")
   const [modalAvatar, setModalAvatar] = useState(false)
   const [fotoZoom, setFotoZoom] = useState(null)
@@ -101,7 +104,7 @@ export default function PanelAnfitrion() {
     setTab("solicitudes")
     const eventosIds = eventos.map(e => e.id)
     if (eventosIds.length === 0) { setSolicitudes([]); setLoadingSolicitudes(false); return }
-    const { data } = await supabase.from("boletos").select("*, eventos(titulo, fecha), profiles(nombre, email, avatar_url)").in("evento_id", eventosIds).eq("estado", "pendiente")
+    const { data } = await supabase.from("boletos").select("*, eventos(titulo, fecha, precio), profiles(nombre, email, avatar_url)").in("evento_id", eventosIds).eq("estado", "pendiente")
     setSolicitudes(data || [])
     setLoadingSolicitudes(false)
   }
@@ -115,7 +118,7 @@ export default function PanelAnfitrion() {
     const eventosIds = eventos.map(e => e.id)
     if (eventosIds.length === 0) return
     const intervalo = setInterval(async () => {
-      const { data } = await supabase.from("boletos").select("*, eventos(titulo, fecha), profiles(nombre, email, avatar_url)").in("evento_id", eventosIds).eq("estado", "pendiente")
+      const { data } = await supabase.from("boletos").select("*, eventos(titulo, fecha, precio), profiles(nombre, email, avatar_url)").in("evento_id", eventosIds).eq("estado", "pendiente")
       setSolicitudes(data || [])
     }, 20000)
     return () => clearInterval(intervalo)
@@ -398,6 +401,7 @@ export default function PanelAnfitrion() {
 
   const abrirEditar = (evento) => {
     setEditando(evento.id)
+    setErrorEditar("")
     const fechaLocal = evento.fecha ? new Date(evento.fecha) : null
     setFormEditar({
       titulo: evento.titulo,
@@ -421,11 +425,21 @@ export default function PanelAnfitrion() {
   }
 
   const guardarEdicion = async () => {
+    // Los errores de validación se muestran DENTRO del modal. `mensaje` se
+    // dibuja en la página, o sea DEBAJO del modal (zIndex 200, con el fondo
+    // desenfocado) y además con un "✓" verde de éxito: el anfitrión veía que
+    // el evento no se guardaba y la página no le decía por qué. Mismo tropiezo
+    // que ya había pasado en Perfil.jsx al dar de baja la cuenta — cuando algo
+    // "no hace nada", el primer sospechoso es dónde se está dibujando el error.
+    const fallo = (texto) => { setErrorEditar(texto) }
+    setErrorEditar("")
+
     const titulo = formEditar.titulo.trim()
     const ubicacion = formEditar.ubicacion.trim()
 
     const eventoOriginal = eventos.find(e => e.id === editando)
     if (eventoOriginal && eventoFinalizado(eventoOriginal)) {
+      // Este sí cierra el modal, así que el mensaje de página sí se ve.
       setMensaje("Este evento ya finalizó (pasó su duración) y no se puede editar.")
       setTimeout(() => setMensaje(""), 4000)
       setEditando(null)
@@ -433,102 +447,68 @@ export default function PanelAnfitrion() {
     }
 
     if (!titulo || !ubicacion || !formEditar.fecha || !formEditar.hora || !formEditar.capacidad) {
-      setMensaje("Por favor llena todos los campos obligatorios")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("Llena todos los campos obligatorios: nombre, ubicación, fecha, hora y capacidad.")
     }
     if (titulo.length > 150) {
-      setMensaje("El título no puede tener más de 150 caracteres")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("El título no puede tener más de 150 caracteres.")
     }
     if (ubicacion.length > 200) {
-      setMensaje("La ubicación no puede tener más de 200 caracteres")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("La ubicación no puede tener más de 200 caracteres.")
     }
     if ((formEditar.descripcion || "").length > 2000) {
-      setMensaje("La descripción no puede tener más de 2000 caracteres")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("La descripción no puede tener más de 2000 caracteres.")
     }
     const capacidad = parseInt(formEditar.capacidad)
     if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 50000) {
-      setMensaje("La capacidad debe ser un número entre 1 y 50,000")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("La capacidad debe ser un número entre 1 y 50,000.")
     }
     const precio = formEditar.precio === "" ? 0 : parseInt(formEditar.precio)
     if (!Number.isInteger(precio) || precio < 0 || precio > 50000) {
-      setMensaje("El precio debe ser un número entre 0 y 50,000")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("El precio debe ser un número entre 0 y 50,000.")
     }
     if (precio > 0 && precio < 5) {
-      setMensaje("El precio mínimo para eventos de pago es $5 MXN (Mercado Pago no acepta pagos con tarjeta menores a $5).")
-      setTimeout(() => setMensaje(""), 4000)
-      return
+      return fallo("El precio mínimo para eventos de pago es $5 MXN (Mercado Pago no acepta pagos con tarjeta menores a $5). Usa $0 para un evento gratis.")
     }
     if (precio > 0 && !cobrosListos) {
-      setMensaje("Completa la conexión con Mercado Pago (los dos pasos) antes de poner un precio mayor a $0.")
-      setTimeout(() => setMensaje(""), 4000)
-      return
+      return fallo("Completa la conexión con Mercado Pago (los dos pasos) antes de poner un precio mayor a $0.")
     }
     const maxBoletos = formEditar.max_boletos_por_persona === "" ? 5 : parseInt(formEditar.max_boletos_por_persona)
     if (!Number.isInteger(maxBoletos) || maxBoletos < 1 || maxBoletos > 20) {
-      setMensaje("El máximo de boletos por persona debe ser un número entre 1 y 20")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("El máximo de boletos por persona debe ser un número entre 1 y 20.")
     }
     // Descuento por paquete — mismas reglas que en Crear evento. La de fondo
     // es innegociable: el monto final por boleto no puede caer entre $0.01 y
     // $4.99, porque Mercado Pago rechaza cobros con tarjeta ahí.
-    const descuentoPct = formEditar.descuento_porcentaje === "" || formEditar.descuento_porcentaje === null ? null : parseInt(formEditar.descuento_porcentaje)
-    const descuentoMin = formEditar.descuento_min_boletos === "" || formEditar.descuento_min_boletos === null ? null : parseInt(formEditar.descuento_min_boletos)
+    const descuentoPct = formEditar.descuento_porcentaje === "" || formEditar.descuento_porcentaje === null || formEditar.descuento_porcentaje === undefined ? null : parseInt(formEditar.descuento_porcentaje)
+    const descuentoMin = formEditar.descuento_min_boletos === "" || formEditar.descuento_min_boletos === null || formEditar.descuento_min_boletos === undefined ? null : parseInt(formEditar.descuento_min_boletos)
     if ((descuentoPct === null) !== (descuentoMin === null)) {
-      setMensaje("Para el descuento por paquete tienes que llenar los dos campos, o dejar los dos vacíos.")
-      setTimeout(() => setMensaje(""), 4000)
-      return
+      return fallo("Para el descuento por paquete tienes que llenar los dos campos (el porcentaje y a partir de cuántos boletos aplica), o dejar los dos vacíos.")
     }
     if (descuentoPct !== null) {
       if (precio === 0) {
-        setMensaje("El descuento por paquete solo aplica a eventos de pago.")
-        setTimeout(() => setMensaje(""), 4000)
-        return
+        return fallo("El descuento por paquete solo aplica a eventos de pago. Este evento es gratis.")
       }
       if (!Number.isInteger(descuentoPct) || descuentoPct < 1 || descuentoPct > 100) {
-        setMensaje("El descuento debe ser un número entre 1 y 100 por ciento")
-        setTimeout(() => setMensaje(""), 3000)
-        return
+        return fallo(`El descuento debe ser un número entre 1 y 100 por ciento. Escribiste ${formEditar.descuento_porcentaje}.`)
       }
       if (!Number.isInteger(descuentoMin) || descuentoMin < 2 || descuentoMin > 20) {
-        setMensaje("El descuento por paquete aplica a partir de 2 boletos como mínimo (y máximo 20)")
-        setTimeout(() => setMensaje(""), 3000)
-        return
+        return fallo(`El descuento por paquete aplica a partir de 2 boletos como mínimo y 20 como máximo. Escribiste ${formEditar.descuento_min_boletos}.`)
       }
       if (descuentoMin > maxBoletos) {
-        setMensaje(`El descuento aplica a partir de ${descuentoMin} boletos, pero cada persona solo puede llevarse ${maxBoletos}. Nadie podría alcanzarlo.`)
-        setTimeout(() => setMensaje(""), 4000)
-        return
+        return fallo(`El descuento aplica a partir de ${descuentoMin} boletos, pero cada persona solo puede llevarse ${maxBoletos}. Nadie podría alcanzarlo: baja el umbral o sube el límite por persona.`)
       }
       const d = desglosePrecio({ precio, descuento_porcentaje: descuentoPct, descuento_min_boletos: descuentoMin }, descuentoMin)
       if (!d.cobrable) {
-        setMensaje(`Con ${descuentoPct}% de descuento el boleto quedaría en $${d.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.`)
-        setTimeout(() => setMensaje(""), 6000)
-        return
+        return fallo(`Con ${descuentoPct}% de descuento el boleto quedaría en $${d.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.`)
       }
     }
     const duracionHoras = parseFloat(formEditar.duracion_horas)
     if (!Number.isFinite(duracionHoras) || duracionHoras <= 0 || duracionHoras > 24) {
-      setMensaje("La duración del evento debe ser un número entre 0 y 24 horas")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("La duración del evento debe ser un número entre 0 y 24 horas.")
     }
     const tiempoRegistroHoras = formEditar.tiempo_registro_horas === "" ? null : parseFloat(formEditar.tiempo_registro_horas)
     if (tiempoRegistroHoras !== null && (!Number.isFinite(tiempoRegistroHoras) || tiempoRegistroHoras <= 0 || tiempoRegistroHoras > 24)) {
-      setMensaje("El tiempo de registro debe ser un número entre 0 y 24 horas")
-      setTimeout(() => setMensaje(""), 3000)
-      return
+      return fallo("El tiempo de registro debe ser un número entre 0 y 24 horas.")
     }
 
     setGuardando(true)
@@ -555,8 +535,9 @@ export default function PanelAnfitrion() {
       setTimeout(() => setMensaje(""), 4000)
       setEditando(null)
     } else {
-      setMensaje("Error al actualizar el evento. Intenta de nuevo.")
-      setTimeout(() => setMensaje(""), 3000)
+      // El modal sigue abierto, así que el error va adentro (si no, quedaría
+      // tapado por el propio modal).
+      setErrorEditar(`No se pudo guardar el evento: ${error?.message || "error desconocido"}. Intenta de nuevo.`)
     }
     setGuardando(false)
   }
@@ -594,9 +575,23 @@ export default function PanelAnfitrion() {
   const precioEditar = parseInt(formEditar.precio) || 0
   const descPctEditar = parseInt(formEditar.descuento_porcentaje) || 0
   const descMinEditar = parseInt(formEditar.descuento_min_boletos) || 0
-  const previewPaqueteEditar = precioEditar >= 5 && descPctEditar > 0 && descMinEditar >= 2
+  // Ojo: la vista previa solo se calcula con valores DENTRO de rango. Si no,
+  // un 101% se mostraría como 100% (desglosePrecio topa el porcentaje) y la
+  // pantalla prometería "boletos gratis" justo antes de que el guardado
+  // fallara por fuera de rango.
+  const descPctEditarValido = descPctEditar >= 1 && descPctEditar <= 100
+  const descMinEditarValido = descMinEditar >= 2 && descMinEditar <= 20
+  const descuentoEditarFueraDeRango = precioEditar >= 5 && ((descPctEditar > 0 && !descPctEditarValido) || (descMinEditar > 0 && !descMinEditarValido))
+  const previewPaqueteEditar = precioEditar >= 5 && descPctEditarValido && descMinEditarValido
     ? desglosePrecio({ precio: precioEditar, descuento_porcentaje: descPctEditar, descuento_min_boletos: descMinEditar }, descMinEditar)
     : null
+
+  // Solicitudes que ya vienen pagadas. Rechazar una dispara un reembolso, y ese
+  // dinero sale del saldo del anfitrión en Mercado Pago: si no alcanza, MP
+  // rechaza la devolución, el boleto NO se marca rechazado y la solicitud se
+  // queda atorada. Saber cuánto tiene comprometido le evita retirar de más.
+  const solicitudesPagadas = solicitudes.filter(s => s.mp_payment_id)
+  const montoComprometido = solicitudesPagadas.reduce((total, s) => total + montoPagadoBoleto(s, s.eventos), 0)
 
   const inputStyle = {
     width: "100%", background: "rgba(255,255,255,0.05)",
@@ -862,6 +857,19 @@ export default function PanelAnfitrion() {
         {/* TAB: SOLICITUDES */}
         {tab === "solicitudes" && (
           <div>
+            {/* El orden importa: rechazar una solicitud pagada reembolsa desde
+                el saldo del anfitrión en Mercado Pago. Si ya retiró ese dinero,
+                MP rechaza la devolución y la solicitud se queda atorada. */}
+            {solicitudesPagadas.length > 0 && (
+              <div style={{ marginBottom: "14px", padding: isMobile ? "13px 15px" : "15px 18px", background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.28)", borderRadius: "14px" }}>
+                <div style={{ fontSize: "13.5px", fontWeight: 700, color: "#fbbf24", marginBottom: "5px" }}>
+                  ⚠️ Antes de retirar dinero de Mercado Pago
+                </div>
+                <div style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.75)", lineHeight: 1.6 }}>
+                  Tienes {solicitudesPagadas.length} {solicitudesPagadas.length === 1 ? "solicitud pagada" : "solicitudes pagadas"} sin resolver, por <strong style={{ color: "white" }}>${montoComprometido.toLocaleString("es-MX", { maximumFractionDigits: 2 })} MXN</strong> en total. Si rechazas una y tu saldo no alcanza, Mercado Pago no puede procesar la devolución: el boleto <strong style={{ color: "white" }}>no se rechaza</strong> y la solicitud se queda atorada hasta que vuelvas a tener saldo. Resuelve primero tus solicitudes, o deja ese dinero en tu cuenta antes de retirar.
+                </div>
+              </div>
+            )}
             {loadingSolicitudes ? (
               <div style={{ textAlign: "center", padding: "60px", color: "rgba(255,255,255,0.6)" }}>Cargando solicitudes...</div>
             ) : solicitudes.length === 0 ? (
@@ -1058,6 +1066,14 @@ export default function PanelAnfitrion() {
                       </div>
                     </div>
 
+                    {descuentoEditarFueraDeRango && (
+                      <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "12.5px", color: "#f87171", lineHeight: 1.5 }}>
+                        {descPctEditar > 0 && !descPctEditarValido
+                          ? `El descuento tiene que estar entre 1% y 100%. Escribiste ${descPctEditar}%.`
+                          : `El descuento por paquete aplica a partir de 2 boletos como mínimo y 20 como máximo. Escribiste ${descMinEditar}.`}
+                      </div>
+                    )}
+
                     {previewPaqueteEditar && !previewPaqueteEditar.cobrable && (
                       <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "12.5px", color: "#f87171", lineHeight: 1.5 }}>
                         Con {descPctEditar}% el boleto quedaría en ${previewPaqueteEditar.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.
@@ -1093,7 +1109,17 @@ export default function PanelAnfitrion() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
+              {/* El error tiene que vivir DENTRO del modal: la barra de
+                  mensajes de la página queda tapada por este mismo modal. */}
+              <AnimatePresence>
+                {errorEditar && (
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    style={{ marginTop: "18px", padding: "12px 15px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.32)", borderRadius: "11px", color: "#f87171", fontSize: "13px", lineHeight: 1.55 }}
+                  >{errorEditar}</motion.div>
+                )}
+              </AnimatePresence>
+
+              <div style={{ display: "flex", gap: "10px", marginTop: errorEditar ? "14px" : "24px" }}>
                 <motion.button onClick={guardarEdicion} whileTap={{ scale: 0.97 }} disabled={guardando}
                   style={{ flex: 1, background: "linear-gradient(135deg, #7c3aed, #4f46e5)", border: "none", borderRadius: "11px", color: "white", padding: "12px", fontWeight: 700, fontSize: "14px", cursor: guardando ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: guardando ? 0.7 : 1, boxShadow: "0 0 16px rgba(124,58,237,0.35)" }}
                 >{guardando ? "Guardando..." : "Guardar cambios"}</motion.button>
