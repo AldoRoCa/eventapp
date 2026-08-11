@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 import DesgloseGanancias from "../components/DesgloseGanancias"
 import { comprimirImagen } from "../imagenUtils"
+import { precioConComision, porcentajeComision, desglosePrecio } from "../comisionUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -39,6 +40,7 @@ export default function CrearEvento() {
     ubicacion: "", estado_evento: "", capacidad: "", precio: "",
     max_boletos_por_persona: "5", tipo_boleto: "instantaneo", imagen_url: "",
     duracion_horas: "5", tiempo_registro_horas: "",
+    descuento_porcentaje: "", descuento_min_boletos: "",
   })
 
   useEffect(() => {
@@ -61,6 +63,16 @@ export default function CrearEvento() {
   // plazos de liberación configurados) SOLO en modo estricto; en los otros
   // modos basta la cuenta conectada.
   const cobrosListos = !!perfil?.mp_user_id && (modoLiberacion !== "estricto" || !!perfil?.mp_config_confirmada_en)
+
+  // Vista previa del descuento por paquete mientras se escribe. Es solo para
+  // mostrar: quien decide lo que se cobra de verdad es crear-pago-mp, leyendo
+  // estas mismas columnas de la base.
+  const precioNum = parseInt(form.precio) || 0
+  const descPct = parseInt(form.descuento_porcentaje) || 0
+  const descMin = parseInt(form.descuento_min_boletos) || 0
+  const previewPaquete = precioNum >= 5 && descPct > 0 && descMin >= 2
+    ? desglosePrecio({ precio: precioNum, descuento_porcentaje: descPct, descuento_min_boletos: descMin }, descMin)
+    : null
 
   const handleImagen = async (e) => {
     const file = e.target.files[0]
@@ -118,6 +130,40 @@ export default function CrearEvento() {
       setError("El máximo de boletos por persona debe ser un número entre 1 y 20")
       return
     }
+    // Descuento por paquete. Va todo junto o nada: un porcentaje sin umbral
+    // (o al revés) es una configuración a medias.
+    const descuentoPct = form.descuento_porcentaje === "" ? null : parseInt(form.descuento_porcentaje)
+    const descuentoMin = form.descuento_min_boletos === "" ? null : parseInt(form.descuento_min_boletos)
+    if ((descuentoPct === null) !== (descuentoMin === null)) {
+      setError("Para el descuento por paquete tienes que llenar los dos campos: el porcentaje y a partir de cuántos boletos aplica. Deja los dos vacíos si no quieres descuento.")
+      return
+    }
+    if (descuentoPct !== null) {
+      if (precio === 0) {
+        setError("El descuento por paquete solo tiene sentido en eventos de pago. Este evento es gratis.")
+        return
+      }
+      if (!Number.isInteger(descuentoPct) || descuentoPct < 1 || descuentoPct > 100) {
+        setError("El descuento debe ser un número entre 1 y 100 por ciento")
+        return
+      }
+      if (!Number.isInteger(descuentoMin) || descuentoMin < 2 || descuentoMin > 20) {
+        setError("El descuento por paquete aplica a partir de 2 boletos como mínimo (y máximo 20)")
+        return
+      }
+      if (descuentoMin > maxBoletos) {
+        setError(`El descuento aplica a partir de ${descuentoMin} boletos, pero cada persona solo puede llevarse ${maxBoletos}. Nadie podría alcanzarlo.`)
+        return
+      }
+      // La regla innegociable: el monto final por boleto no puede caer entre
+      // $0.01 y $4.99 (Mercado Pago rechaza cobros de tarjeta ahí). O es $5+
+      // o es $0 (boleto de regalo, con 100% de descuento).
+      const d = desglosePrecio({ precio, descuento_porcentaje: descuentoPct, descuento_min_boletos: descuentoMin }, descuentoMin)
+      if (!d.cobrable) {
+        setError(`Con ${descuentoPct}% de descuento el boleto quedaría en $${d.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.`)
+        return
+      }
+    }
     const duracionHoras = parseFloat(form.duracion_horas)
     if (!Number.isFinite(duracionHoras) || duracionHoras <= 0 || duracionHoras > 24) {
       setError("La duración del evento debe ser un número entre 0 y 24 horas")
@@ -150,6 +196,7 @@ export default function CrearEvento() {
       fecha: fechaCompleta, ubicacion, estado_evento: form.estado_evento || null,
       capacidad, precio,
       max_boletos_por_persona: maxBoletos,
+      descuento_porcentaje: descuentoPct, descuento_min_boletos: descuentoMin,
       duracion_horas: duracionHoras, tiempo_registro_horas: tiempoRegistroHoras,
       tipo_boleto: form.tipo_boleto, imagen_url: imagenUrl, anfitrion_id: user.id,
     })
@@ -335,8 +382,12 @@ export default function CrearEvento() {
                 {form.precio >= 5 && (
                   <div style={{ marginTop: "8px", padding: "10px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "13px" }}>
                     <span style={{ color: "rgba(255,255,255,0.6)" }}>Precio final al asistente: </span>
-                    <span style={{ color: "#a78bfa", fontWeight: 700 }}>${Math.round(parseInt(form.precio) * 1.10)} MXN</span>
-                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px", marginLeft: "5px" }}>(+10% VELA)</span>
+                    <span style={{ color: "#a78bfa", fontWeight: 700 }}>${precioConComision(precioNum)} MXN</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "11px", marginLeft: "5px" }}>
+                      {porcentajeComision(precioNum) === 0
+                        ? "(sin comisión de VELA en este rango)"
+                        : `(+${Math.round(porcentajeComision(precioNum) * 100)}% VELA)`}
+                    </span>
                   </div>
                 )}
               </div>
@@ -349,6 +400,47 @@ export default function CrearEvento() {
               <input type="number" value={form.max_boletos_por_persona} onChange={e => handleChange("max_boletos_por_persona", e.target.value)} placeholder="5" min="1" max="20" style={inputStyle} />
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginTop: "5px" }}>¿Cuántos boletos puede comprar una misma persona? Por defecto son 5.</p>
             </div>
+
+            {/* Descuento por paquete: solo tiene sentido en eventos de pago */}
+            {form.precio >= 5 && (
+              <div style={{ marginBottom: "16px", padding: isMobile ? "14px" : "16px", background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: "14px" }}>
+                <label style={labelStyle}>Descuento por paquete <span style={{ color: "rgba(255,255,255,0.6)", fontWeight: 400 }}>(opcional)</span></label>
+                <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.6)", marginBottom: "12px", lineHeight: 1.55 }}>
+                  Premia a quien se lleve varios boletos en una sola compra. Te cuesta menos de lo que parece: Mercado Pago cobra sus $4 fijos + IVA por COMPRA, no por boleto, así que cada boleto extra en el mismo pago te ahorra $4.64.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={labelStyle}>% de descuento</label>
+                    <input type="number" value={form.descuento_porcentaje} onChange={e => handleChange("descuento_porcentaje", e.target.value)} placeholder="Ej. 10" min="1" max="100" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>A partir de cuántos boletos</label>
+                    <input type="number" value={form.descuento_min_boletos} onChange={e => handleChange("descuento_min_boletos", e.target.value)} placeholder="Ej. 5" min="2" max="20" style={inputStyle} />
+                  </div>
+                </div>
+
+                {previewPaquete && !previewPaquete.cobrable && (
+                  <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1.5px solid rgba(239,68,68,0.3)", borderRadius: "10px", fontSize: "12.5px", color: "#f87171", lineHeight: 1.5 }}>
+                    Con {descPct}% el boleto quedaría en ${previewPaquete.unitario} MXN, y Mercado Pago no acepta cobros de entre $0.01 y $4.99. Baja el descuento, o ponlo en 100% para regalar los boletos del paquete.
+                  </div>
+                )}
+
+                {previewPaquete && previewPaquete.cobrable && (
+                  <div style={{ marginTop: "12px", padding: "11px 14px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.22)", borderRadius: "10px", fontSize: "12.5px", lineHeight: 1.6 }}>
+                    <div style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600, marginBottom: "3px" }}>Llevando {descMin} boletos en una compra:</div>
+                    {previewPaquete.unitario === 0 ? (
+                      <div style={{ color: "rgba(255,255,255,0.6)" }}>
+                        los boletos salen <strong style={{ color: "#a78bfa" }}>gratis</strong> y tú no recibes nada por ellos. Úsalo solo si es una promoción a propósito.
+                      </div>
+                    ) : (
+                      <div style={{ color: "rgba(255,255,255,0.6)" }}>
+                        el asistente paga <strong style={{ color: "#a78bfa" }}>${previewPaquete.unitario}</strong> por boleto en vez de ${previewPaquete.unitarioSinDescuento} · tú recibes <strong style={{ color: "#34d399" }}>${previewPaquete.precioAnfitrion}</strong> por boleto en vez de ${precioNum}.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
               <div>

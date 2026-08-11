@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { comprimirAvatar } from "../imagenUtils"
+import { montoPagadoBoleto } from "../comisionUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -255,6 +256,9 @@ export default function Perfil() {
             {boletos.map((boleto, i) => {
               const ev = boleto.eventos
               const fecha = ev?.fecha ? new Date(ev.fecha) : null
+              // Lo pagado por ESTE boleto (con descuento por paquete puede no
+              // coincidir con el precio de lista del evento).
+              const pagado = montoPagadoBoleto(boleto, ev)
               return (
                 <motion.div key={boleto.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                   style={{ background: "#0f0f11", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "16px", overflow: "hidden" }}
@@ -273,7 +277,7 @@ export default function Perfil() {
                           {fecha ? `${fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" })} · ${fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}` : ""}
                         </div>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                          <div style={{ fontWeight: 700, fontSize: "16px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
+                          <div style={{ fontWeight: 700, fontSize: "16px" }}>{pagado === 0 ? "Gratis" : `$${pagado.toLocaleString("es-MX", { maximumFractionDigits: 2 })}`}</div>
                           <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "12.5px", color: "#a78bfa", textDecoration: "none", fontWeight: 600 }}>Ver →</Link>
                         </div>
                       </div>
@@ -293,7 +297,7 @@ export default function Perfil() {
                         </div>
                       </div>
                       <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div style={{ fontWeight: 700, fontSize: "18px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
+                        <div style={{ fontWeight: 700, fontSize: "18px" }}>{pagado === 0 ? "Gratis" : `$${pagado.toLocaleString("es-MX", { maximumFractionDigits: 2 })}`}</div>
                         <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>
                           Ver evento
                           <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

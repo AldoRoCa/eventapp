@@ -148,9 +148,22 @@ serve(async (req) => {
     // el pago se reembolsa automáticamente.
     const nuevoEstado = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
 
+    // Cuánto se pagó por CADA boleto: el monto real que cobró Mercado Pago
+    // repartido entre los boletos que cubre ese pago (una compra de N boletos
+    // es un solo pago). Se guarda porque es lo que hay que devolver si el
+    // anfitrión rechaza uno — y con comisión escalonada y descuentos por
+    // paquete ya no se puede reconstruir con una fórmula desde el precio.
+    const totalPagado = Number(pago.transaction_amount) || 0
+    const montoPorBoleto = Math.round((totalPagado / boletosPendientes.length) * 100) / 100
+
+    // El `in(id)` fija exactamente el lote que se acaba de contar, y el filtro
+    // por estado se conserva para que siga siendo idempotente: si mp-webhook
+    // ya activó estos boletos, aquí no coincide ninguna fila y no se les
+    // regenera el código de check-in.
     const { error: updateError } = await supabase
       .from("boletos")
-      .update({ estado: nuevoEstado, mp_payment_id: String(payment_id), codigo_grupo: codigo })
+      .update({ estado: nuevoEstado, mp_payment_id: String(payment_id), codigo_grupo: codigo, monto_pagado: montoPorBoleto })
+      .in("id", boletosPendientes.map((b) => b.id))
       .eq("usuario_id", user.id)
       .eq("evento_id", evento_id)
       .eq("estado", "pendiente_pago")

@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { supabase, getUserSafe } from "../supabase"
 import { Link, useNavigate } from "react-router-dom"
 import { eventoFinalizado } from "../eventoUtils"
+import { montoPagadoBoleto } from "../comisionUtils"
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
@@ -255,6 +256,10 @@ export default function MisBoletos() {
               const horaFormato = fecha ? fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" }) : ""
 
               const rechazado = boleto.estado === "rechazado"
+              // Lo que realmente se pagó por ESTE boleto, no el precio de
+              // lista: con descuentos por paquete pueden ser distintos (y un
+              // boleto con 100% de descuento sale en $0, o sea "Gratis").
+              const pagado = montoPagadoBoleto(boleto, ev)
 
               const estadoColor = rechazado ? "#f87171" : boleto.estado === "pendiente" ? "#f59e0b" : usado ? "rgba(255,255,255,0.3)" : "#34d399"
               const estadoBg = rechazado ? "rgba(239,68,68,0.1)" : boleto.estado === "pendiente" ? "rgba(245,158,11,0.1)" : usado ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.1)"
@@ -298,8 +303,8 @@ export default function MisBoletos() {
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                           <div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginBottom: "2px" }}>Pagado</div>
-                            <div style={{ fontWeight: 700, fontSize: "20px", letterSpacing: "-0.5px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
-                            {ev?.precio > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>MXN</div>}
+                            <div style={{ fontWeight: 700, fontSize: "20px", letterSpacing: "-0.5px" }}>{pagado === 0 ? "Gratis" : `$${pagado.toLocaleString("es-MX", { maximumFractionDigits: 2 })}`}</div>
+                            {pagado > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>MXN</div>}
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
                             <Link to={`/evento/${boleto.evento_id}`} style={{ fontSize: "13px", color: "#a78bfa", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: "3px" }}>
@@ -397,8 +402,8 @@ export default function MisBoletos() {
                       <div style={{ padding: "24px 24px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", borderLeft: "1px solid rgba(255,255,255,0.06)", minWidth: "160px" }}>
                         <div style={{ textAlign: "right" }}>
                           <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>Pagado</div>
-                          <div style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>{ev?.precio === 0 ? "Gratis" : `$${Math.round(ev?.precio * 1.10)}`}</div>
-                          {ev?.precio > 0 && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>MXN</div>}
+                          <div style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>{pagado === 0 ? "Gratis" : `$${pagado.toLocaleString("es-MX", { maximumFractionDigits: 2 })}`}</div>
+                          {pagado > 0 && <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.6)" }}>MXN</div>}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", background: estadoBg, border: `1.5px solid ${estadoBorder}`, borderRadius: "999px", padding: "5px 12px" }}>

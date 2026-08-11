@@ -201,29 +201,50 @@ serve(async (req) => {
       })
     }
 
-    const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
-
     // Mismo criterio que confirmar-pago-mp: en eventos de solicitud, pagar
     // no activa el boleto directo, queda pendiente de aprobación.
     const nuevoEstado = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
 
-    // Update idempotente: si el comprador ya alcanzó a confirmar el pago
-    // por su cuenta (PagoExitoso -> confirmar-pago-mp), los boletos ya no
-    // están en "pendiente_pago" y esta notificación no afecta ninguna fila.
-    const { error: updateError } = await supabase
+    // Los boletos que esta notificación tiene que activar. Se leen antes del
+    // update para saber entre cuántos se reparte el monto realmente pagado.
+    // Si el comprador ya alcanzó a confirmar el pago por su cuenta
+    // (PagoExitoso -> confirmar-pago-mp), esta lista viene vacía y no hay
+    // nada que hacer — la notificación sigue siendo un éxito.
+    const { data: boletosPendientes } = await supabase
       .from("boletos")
-      .update({ estado: nuevoEstado, mp_payment_id: String(paymentId), codigo_grupo: codigo })
+      .select("id")
       .eq("usuario_id", usuario_id)
       .eq("evento_id", evento_id)
       .eq("estado", "pendiente_pago")
 
-    if (updateError) {
-      // Error real de nuestro lado (no del pago) — devolver 500 para que
-      // MP reintente la notificación más tarde.
-      return new Response(JSON.stringify({ error: "No se pudieron activar los boletos" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      })
+    if (boletosPendientes && boletosPendientes.length > 0) {
+      const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
+
+      // Mismo cálculo que confirmar-pago-mp: el monto real del pago repartido
+      // entre los boletos que cubre. Es lo que se devuelve si el anfitrión
+      // rechaza uno, así que sale de Mercado Pago, no de una fórmula.
+      const totalPagado = Number(pago.transaction_amount) || 0
+      const montoPorBoleto = Math.round((totalPagado / boletosPendientes.length) * 100) / 100
+
+      // Sigue siendo idempotente: el filtro por estado hace que, si el
+      // navegador se adelantó entre el select y el update, aquí no coincida
+      // ninguna fila y no se regenere el código de check-in.
+      const { error: updateError } = await supabase
+        .from("boletos")
+        .update({ estado: nuevoEstado, mp_payment_id: String(paymentId), codigo_grupo: codigo, monto_pagado: montoPorBoleto })
+        .in("id", boletosPendientes.map((b: { id: string }) => b.id))
+        .eq("usuario_id", usuario_id)
+        .eq("evento_id", evento_id)
+        .eq("estado", "pendiente_pago")
+
+      if (updateError) {
+        // Error real de nuestro lado (no del pago) — devolver 500 para que
+        // MP reintente la notificación más tarde.
+        return new Response(JSON.stringify({ error: "No se pudieron activar los boletos" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        })
+      }
     }
 
     // Detección de liberación inmediata (Fase C): igual que en

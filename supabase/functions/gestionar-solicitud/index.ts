@@ -123,9 +123,9 @@ serve(async (req) => {
 
 // Reembolsa la parte de un boleto rechazado. Un solo pago de MP puede
 // cubrir varios boletos comprados juntos; si quedan otros boletos vivos
-// en el mismo pago, se reembolsa solo el monto de este boleto (precio
-// unitario que pagó el comprador, con el 10% incluido). Si es el último,
-// se reembolsa lo que quede del pago completo.
+// en el mismo pago, se reembolsa solo el monto de este boleto (lo que el
+// comprador pagó por él, comisión incluida). Si es el último, se reembolsa
+// lo que quede del pago completo.
 // deno-lint-ignore no-explicit-any
 async function reembolsarBoleto(supabase: any, boleto: any, token: string): Promise<boolean> {
   try {
@@ -141,7 +141,18 @@ async function reembolsarBoleto(supabase: any, boleto: any, token: string): Prom
       .eq("mp_payment_id", boleto.mp_payment_id)
       .neq("estado", "rechazado")
 
-    const montoUnitario = Math.round((boleto.eventos?.precio || 0) * 1.10)
+    // Lo que REALMENTE se pagó por este boleto, escrito por confirmar-pago-mp
+    // o mp-webhook con el transaction_amount del pago real de MP. Antes esto
+    // era `precio × 1.10` calculado a mano, que dejó de ser cierto en cuanto
+    // la comisión pasó a ser escalonada (0/5/8/10%) y aparecieron los
+    // descuentos por paquete: se habría devuelto de más, a costa del anfitrión.
+    //
+    // El respaldo se conserva SOLO para boletos anteriores a la columna
+    // monto_pagado (quedan en null): esos sí se compraron con el 10% fijo, así
+    // que para ellos la fórmula vieja es la correcta.
+    const montoUnitario = boleto.monto_pagado != null
+      ? Number(boleto.monto_pagado)
+      : Math.round((boleto.eventos?.precio || 0) * 1.10)
     const body = (count || 1) > 1 && montoUnitario > 0 ? { amount: montoUnitario } : {}
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}/refunds`, {

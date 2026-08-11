@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { precioConComision, comisionVela, cargoMercadoPago, gananciaNetaBoleto } from "../comisionUtils"
+import { precioConComision, comisionVela, cargoMercadoPago, gananciaNetaBoleto, porcentajeComision } from "../comisionUtils"
 
 const fmt = n => "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmtEntero = n => "$" + n.toLocaleString("es-MX", { maximumFractionDigits: 0 })
@@ -28,6 +28,10 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
 
   const precioAsistente = precioConComision(p)
   const comision = comisionVela(p)
+  // La comisión de VELA es escalonada (0% de $5 a $49, 5% hasta $99, 8% hasta
+  // $199, 10% de ahí en adelante): decirle al anfitrión cuál le tocó evita que
+  // tenga que adivinarlo de la resta.
+  const pctComision = Math.round(porcentajeComision(p) * 100)
   const cargoMP = cargoMercadoPago(p)
   const netaBoleto = gananciaNetaBoleto(p)
 
@@ -65,7 +69,7 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.09)", paddingTop: "10px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "4px" }}>Por cada boleto</div>
                 <Fila etiqueta="El asistente paga" valor={fmtEntero(precioAsistente) + " MXN"} color="rgba(255,255,255,0.9)" isMobile={isMobile} />
-                <Fila etiqueta="Comisión VELA (la paga el asistente)" valor={"− " + fmtEntero(comision)} color="#a78bfa" isMobile={isMobile} />
+                <Fila etiqueta={pctComision === 0 ? "Comisión VELA (0% en este rango)" : `Comisión VELA (${pctComision}%, la paga el asistente)`} valor={"− " + fmtEntero(comision)} color="#a78bfa" isMobile={isMobile} />
                 <Fila etiqueta="Recibes en Mercado Pago (tu precio)" valor={fmtEntero(p)} isMobile={isMobile} />
                 <Fila etiqueta="Tarifa de Mercado Pago*" valor={"− " + fmt(cargoMP)} color="#fbbf24" isMobile={isMobile} />
                 <div style={divisoria} />
@@ -84,7 +88,7 @@ export default function DesgloseGanancias({ precio, capacidad, isMobile, style }
                     />
                   )}
                   <Fila etiqueta="Los asistentes pagan en total" valor={fmtEntero(nVendidos * precioAsistente)} color="rgba(255,255,255,0.9)" isMobile={isMobile} />
-                  <Fila etiqueta="Comisión VELA total" valor={"− " + fmtEntero(nVendidos * comision)} color="#a78bfa" isMobile={isMobile} />
+                  <Fila etiqueta={`Comisión VELA total (${pctComision}%)`} valor={"− " + fmtEntero(nVendidos * comision)} color="#a78bfa" isMobile={isMobile} />
                   <Fila etiqueta="Tarifa Mercado Pago total*" valor={"− " + fmt(nVendidos * cargoMP)} color="#fbbf24" isMobile={isMobile} />
                   <div style={divisoria} />
                   <Fila etiqueta="Tu ganancia neta total" valor={"≈ " + fmt(nVendidos * netaBoleto)} color="#34d399" destacada isMobile={isMobile} />

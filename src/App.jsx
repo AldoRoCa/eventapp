@@ -5,6 +5,7 @@ import { Routes, Route, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Analytics } from "@vercel/analytics/react"
 import { supabase } from "./supabase"
+import { precioConComision } from "./comisionUtils"
 import HeroHolograma from "./components/HeroHolograma"
 
 // Carga diferida (code-splitting): cada página se descarga en su propio archivo
@@ -516,7 +517,7 @@ function HomePage({ user, perfil, onLogout, setFotoZoom }) {
             location: ev.ubicacion,
             attendees: ev.boletos?.[0]?.count || 0,
             capacity: ev.capacidad,
-            price: ev.precio === 0 ? 0 : Math.round(ev.precio * 1.10),
+            price: precioConComision(ev.precio),
             type: ev.tipo_boleto === "instantaneo" ? "Instantáneo" : "Solicitud",
             img: ev.imagen_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80"
           })) : []).map((ev, i) => (

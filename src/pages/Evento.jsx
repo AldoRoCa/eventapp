@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { supabase, getUserSafe } from "../supabase"
 import { useNavigate, useParams, Link } from "react-router-dom"
 import { eventoFinalizado, horasRegistro } from "../eventoUtils"
+import { desglosePrecio } from "../comisionUtils"
 import MiniMapaUbicacion from "../components/MiniMapaUbicacion"
 
 function useIsMobile() {
@@ -45,7 +46,7 @@ export default function Evento() {
       }
       const { data: ev } = await supabase
         .from("eventos")
-        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, ventas_pausadas, created_at, profiles(nombre, avatar_url)")
+        .select("id, titulo, descripcion, categoria, fecha, ubicacion, estado_evento, capacidad, precio, tipo_boleto, imagen_url, anfitrion_id, max_boletos_por_persona, duracion_horas, tiempo_registro_horas, ventas_pausadas, descuento_porcentaje, descuento_min_boletos, created_at, profiles(nombre, avatar_url)")
         .eq("id", id).single()
       setEvento(ev)
 
@@ -119,6 +120,23 @@ export default function Evento() {
     return "No se pudo completar tu registro. Intenta de nuevo."
   }
 
+  // Respuesta de crear-pago-mp: o manda al checkout de Mercado Pago, o el
+  // paquete salió gratis (descuento del 100%) y la propia función ya entregó
+  // los boletos — no hay nada que cobrar, así que no hay checkout.
+  const manejarRespuestaPago = (data) => {
+    if (data.url) { window.location.href = data.url; return }
+    if (data.gratis) {
+      setTieneBoleto(true)
+      setExito(true)
+      setEstadoBoleto(data.estado === "pendiente" ? "pendiente" : "activo")
+      if (data.estado !== "pendiente") setAsistentes(a => a + (data.cantidad || cantidad))
+      setComprando(false)
+      return
+    }
+    alert(data.error || "Error al procesar el pago. Intenta de nuevo.")
+    setComprando(false)
+  }
+
   const handleComprar = async () => {
     if (!user) { navigate("/login"); return }
     if (finalizado) { alert("Este evento ya finalizó y no se pueden comprar más boletos."); return }
@@ -148,10 +166,13 @@ export default function Evento() {
         const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
         if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
         const { data: { session } } = await supabase.auth.getSession()
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: evento.precio, usuario_id: user.id, cantidad }) })
+        // Solo se manda QUÉ evento se compra: el precio, el descuento por
+        // paquete y la cantidad los determina crear-pago-mp del lado del
+        // servidor (cuenta los boletos que se acaban de insertar). El
+        // navegador nunca decide cuánto se cobra.
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id }) })
         const data = await response.json()
-        if (data.url) window.location.href = data.url
-        else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
+        manejarRespuestaPago(data)
         return
       }
     }
@@ -172,10 +193,10 @@ export default function Evento() {
     const { data: anfitrion } = await supabase.from("profiles").select("mp_user_id").eq("id", evento.anfitrion_id).single()
     if (!anfitrion?.mp_user_id) { alert("El anfitrión aún no ha conectado su cuenta de Mercado Pago."); setComprando(false); return }
     const { data: { session } } = await supabase.auth.getSession()
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id, titulo: evento.titulo, precio: evento.precio, usuario_id: user.id, cantidad }) })
+    // Igual que arriba: el body solo dice qué evento, nada de precios.
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crear-pago-mp`, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session.access_token}` }, body: JSON.stringify({ evento_id: id }) })
     const data = await response.json()
-    if (data.url) window.location.href = data.url
-    else { alert(data.error || "Error al procesar el pago. Intenta de nuevo."); setComprando(false) }
+    manejarRespuestaPago(data)
   }
 
   if (loading) return <div style={{ minHeight: "100vh", backgroundColor: "#080808", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cargando evento...</div>
@@ -195,7 +216,18 @@ export default function Evento() {
   const fecha = new Date(evento.fecha)
   const fechaFormato = fecha.toLocaleDateString("es-MX", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   const horaFormato = fecha.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
-  const precioTotal = Math.round(evento.precio * 1.10) * cantidad
+  // Todo el dinero de la compra sale de un solo lugar: descuento por paquete
+  // (si la cantidad alcanza el umbral que puso el anfitrión) y comisión de VELA
+  // según el escalón del precio ya con descuento. Es la MISMA matemática que
+  // usa crear-pago-mp para cobrar (su gemelo _shared/comision.ts), así que lo
+  // que se muestra aquí es exactamente lo que se va a cobrar.
+  const desglose = desglosePrecio(evento, cantidad)
+  const precioTotal = desglose.total
+  // Cómo quedaría el paquete completo, para poder ofrecerlo ANTES de que el
+  // comprador suba la cantidad (si no, el descuento sería un secreto).
+  const minPaquete = Number(evento.descuento_min_boletos) || 0
+  const hayDescuento = evento.precio > 0 && Number(evento.descuento_porcentaje) > 0 && minPaquete >= 2
+  const desglosePaquete = hayDescuento ? desglosePrecio(evento, minPaquete) : null
 
   // Hasta qué hora se espera hacer check-in. Es SOLO informativo para el
   // asistente: `tiempo_registro_horas` nunca ha bloqueado la entrada ni la
@@ -237,14 +269,32 @@ export default function Evento() {
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
           <span style={{ fontSize: "2.2rem", fontWeight: 700, letterSpacing: "-1px" }}>
-            {evento.precio === 0 ? "Gratis" : `$${precioTotal}`}
+            {precioTotal === 0 ? "Gratis" : `$${precioTotal}`}
           </span>
-          {evento.precio > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>MXN</span>}
+          {precioTotal > 0 && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>MXN</span>}
         </div>
-        {evento.precio > 0 && cantidad > 1 && (
+        {evento.precio > 0 && cantidad > 1 && precioTotal > 0 && (
           <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", marginTop: "2px" }}>
-            ${evento.precio} × {cantidad} boletos
+            ${desglose.unitario} × {cantidad} boletos
           </div>
+        )}
+
+        {/* Descuento por paquete del anfitrión. Se anuncia aunque todavía no
+            aplique: si solo se viera al alcanzar la cantidad, nadie se
+            enteraría de que existe. */}
+        {hayDescuento && !tieneBoleto && (
+          desglose.aplicaDescuento ? (
+            <div style={{ marginTop: "10px", padding: "9px 12px", background: "rgba(16,185,129,0.1)", border: "1.5px solid rgba(16,185,129,0.28)", borderRadius: "10px", fontSize: "12.5px", color: "#34d399", fontWeight: 600 }}>
+              🎁 Descuento por paquete aplicado · ahorras ${desglose.ahorro} MXN
+            </div>
+          ) : (
+            <div style={{ marginTop: "10px", padding: "9px 12px", background: "rgba(124,58,237,0.1)", border: "1.5px solid rgba(124,58,237,0.28)", borderRadius: "10px", fontSize: "12.5px", color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>
+              🎁 Llévate {minPaquete} o más y {desglosePaquete.unitario === 0
+                ? <strong style={{ color: "#a78bfa" }}>tus boletos salen gratis</strong>
+                : <>cada boleto te sale en <strong style={{ color: "#a78bfa" }}>${desglosePaquete.unitario}</strong></>}
+              {desglosePaquete.ahorro > 0 && ` · ahorras $${desglosePaquete.ahorro} MXN`}
+            </div>
+          )
         )}
       </div>
 
@@ -343,7 +393,7 @@ export default function Evento() {
             className={(asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "" : "btn-3d"}
             style={{ width: "100%", background: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "rgba(255,255,255,0.06)" : undefined, border: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "1px solid rgba(255,255,255,0.1)" : "none", borderRadius: "14px", color: (asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "rgba(255,255,255,0.35)" : "white", padding: "16px", fontWeight: 700, fontSize: "15px", cursor: (comprando || asistentes >= evento.capacidad || finalizado || ventasPausadas) ? "not-allowed" : "pointer", fontFamily: "inherit" }}
           >
-            {comprando ? "Procesando..." : finalizado ? "Este evento ya finalizó" : ventasPausadas ? "Ventas pausadas" : asistentes >= evento.capacidad ? "Evento lleno" : evento.precio === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${Math.round(evento.precio * 1.10) * cantidad} MXN`}
+            {comprando ? "Procesando..." : finalizado ? "Este evento ya finalizó" : ventasPausadas ? "Ventas pausadas" : asistentes >= evento.capacidad ? "Evento lleno" : precioTotal === 0 ? `Obtener ${cantidad > 1 ? `${cantidad} boletos gratis` : "boleto gratis"}` : `Comprar · $${precioTotal} MXN`}
           </motion.button>
         </>
       )}

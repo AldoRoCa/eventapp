@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
 import { modoLiberacion } from "../_shared/liberacion.ts"
+import { desglosePrecio } from "../_shared/comision.ts"
 
 const RATE_LIMIT = 10 // máximo 10 pagos por hora por usuario
 
@@ -12,30 +13,20 @@ serve(async (req) => {
   }
 
   try {
-    // "precio" es el precio original del anfitrión (sin comisión), la
-    // misma cifra que se ve en el panel de anfitrión — no el precio ya
-    // inflado que paga el comprador. El +10% se calcula aquí, en un solo
-    // lugar, para que el precio que ve el comprador y la comisión que se
-    // le cobra a Mercado Pago salgan siempre de la misma cuenta.
-    const { evento_id, titulo, precio, usuario_id, cantidad } = await req.json()
+    // Del navegador solo se acepta QUÉ evento se quiere comprar. Todo lo que
+    // determina cuánto se cobra —precio, descuento por paquete, cantidad de
+    // boletos y quién compra— se lee o se cuenta aquí, del lado del servidor.
+    //
+    // Antes esta función se creía el `precio` y la `cantidad` que le mandaba
+    // el navegador. Eso permitía pagar $5 por un boleto de $500 desde la
+    // consola: confirmar-pago-mp verifica que el pago esté aprobado y sea de
+    // ese usuario y evento, pero nunca verificó el MONTO. Con descuentos por
+    // paquete el agujero habría sido peor (bastaba mentir en la cantidad para
+    // disparar el precio de paquete llevando un solo boleto).
+    const { evento_id } = await req.json()
 
-    if (typeof precio !== "number" || !Number.isFinite(precio) || precio <= 0) {
-      return new Response(JSON.stringify({ error: "Precio inválido" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      })
-    }
-
-    const precioConComision = Math.round(precio * 1.10)
-
-    // Mercado Pago México rechaza pagos con tarjeta menores a $5 MXN
-    // (min_allowed_amount de todos los medios de tarjeta). Un boleto más
-    // barato hace que el checkout rechace la tarjeta en tiempo real con
-    // "La operación no acepta este medio de pago". El mínimo aplica sobre
-    // lo que realmente se le cobra a la tarjeta (con comisión incluida),
-    // no sobre el precio original del anfitrión.
-    if (precioConComision < 5) {
-      return new Response(JSON.stringify({ error: "El monto mínimo por boleto es $5 MXN (límite de Mercado Pago para pagos con tarjeta)." }), {
+    if (!evento_id) {
+      return new Response(JSON.stringify({ error: "Falta el evento" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
       })
@@ -46,12 +37,25 @@ serve(async (req) => {
       Deno.env.get("SERVICE_ROLE_KEY")!
     )
 
-    // Buscar el token de Mercado Pago del anfitrión del evento. Esto se
-    // hace aquí, con service_role, para que el token NUNCA viaje al
+    // Identificar al comprador por su token — nunca por un usuario_id que
+    // venga del body (mismo criterio que confirmar-pago-mp).
+    const authHeader = req.headers.get("Authorization") ?? ""
+    const jwt = authHeader.replace("Bearer ", "")
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt)
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      })
+    }
+
+    // Datos del evento, incluido su descuento por paquete. Esto se hace aquí,
+    // con service_role, para que el token de MP del anfitrión NUNCA viaje al
     // navegador del comprador.
     const { data: evento, error: eventoError } = await supabase
       .from("eventos")
-      .select("anfitrion_id, ventas_pausadas")
+      .select("titulo, precio, anfitrion_id, ventas_pausadas, tipo_boleto, descuento_porcentaje, descuento_min_boletos")
       .eq("id", evento_id)
       .single()
 
@@ -59,6 +63,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Evento no encontrado" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
+      })
+    }
+
+    if (!(Number(evento.precio) > 0)) {
+      return new Response(JSON.stringify({ error: "Este evento es gratis y no requiere pago" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
       })
     }
 
@@ -128,7 +139,7 @@ serve(async (req) => {
     const { count } = await supabase
       .from("rate_limits")
       .select("*", { count: "exact", head: true })
-      .eq("identifier", usuario_id)
+      .eq("identifier", user.id)
       .eq("endpoint", "crear-pago")
       .gte("window_start", windowStart)
 
@@ -140,10 +151,81 @@ serve(async (req) => {
     }
 
     await supabase.from("rate_limits").insert({
-      identifier: usuario_id,
+      identifier: user.id,
       endpoint: "crear-pago",
       window_start: new Date().toISOString(),
     })
+
+    // CUÁNTOS boletos se están comprando: se cuentan las reservas que el
+    // comprador acaba de crear (estado "pendiente_pago"), no se le pregunta al
+    // navegador. Es la misma lista que después activará confirmar-pago-mp, y
+    // ya viene limitada por el aforo y el máximo por persona (trigger
+    // verificar_aforo_boleto), así que nadie puede inflarla para alcanzar el
+    // umbral de un descuento por paquete.
+    const { data: boletosPendientes } = await supabase
+      .from("boletos")
+      .select("id")
+      .eq("usuario_id", user.id)
+      .eq("evento_id", evento_id)
+      .eq("estado", "pendiente_pago")
+
+    const cantidad = boletosPendientes?.length || 0
+    if (cantidad === 0) {
+      return new Response(JSON.stringify({ error: "No hay boletos por pagar. Vuelve a intentar la compra." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      })
+    }
+
+    // Aquí se decide TODO el dinero de esta compra: descuento por paquete (si
+    // la cantidad alcanza el umbral que puso el anfitrión) y comisión de VELA
+    // según el escalón del precio ya con descuento. Misma matemática que ve el
+    // comprador en la página, porque las dos copias están sincronizadas
+    // (ver _shared/comision.ts).
+    const desglose = desglosePrecio(evento, cantidad)
+
+    // Mercado Pago México rechaza pagos con tarjeta menores a $5 MXN
+    // (min_allowed_amount de todos los medios de tarjeta). Un boleto más
+    // barato hace que el checkout rechace la tarjeta en tiempo real con
+    // "La operación no acepta este medio de pago". El mínimo aplica sobre lo
+    // que realmente se le cobra a la tarjeta: el precio ya con descuento y con
+    // comisión. Un boleto de $0 sí es válido — se entrega gratis, más abajo.
+    if (!desglose.cobrable) {
+      return new Response(JSON.stringify({ error: `Con este descuento el boleto queda en $${desglose.unitario} MXN, y Mercado Pago no acepta cobros menores a $5. Avísale al organizador.` }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      })
+    }
+
+    // Boletos gratis por un descuento del 100%: no hay nada que cobrar, así
+    // que no se crea preferencia (Mercado Pago no acepta un pago de $0). Se
+    // activan aquí mismo, con service_role, igual que hace confirmar-pago-mp.
+    // Se quedan SIN mp_payment_id, que es justo lo que hace que las funciones
+    // de reembolso los salten (todas filtran por ese campo antes de devolver).
+    if (desglose.gratis) {
+      const { data: codigo } = await supabase.rpc("generar_codigo_checkin")
+      const nuevoEstado = evento.tipo_boleto === "solicitud" ? "pendiente" : "activo"
+
+      const { error: activarError } = await supabase
+        .from("boletos")
+        .update({ estado: nuevoEstado, codigo_grupo: codigo, monto_pagado: 0 })
+        .in("id", boletosPendientes!.map((b: { id: string }) => b.id))
+        .eq("usuario_id", user.id)
+        .eq("evento_id", evento_id)
+        .eq("estado", "pendiente_pago")
+
+      if (activarError) {
+        return new Response(JSON.stringify({ error: "No se pudieron entregar los boletos. Intenta de nuevo." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        })
+      }
+
+      return new Response(JSON.stringify({ gratis: true, estado: nuevoEstado, cantidad }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      })
+    }
 
     const siteUrl = Deno.env.get("SITE_URL")!
     // OJO: SITE_URL es el sitio web (donde vuelve el COMPRADOR tras pagar).
@@ -153,13 +235,45 @@ serve(async (req) => {
     // Pago daba la notificación por entregada y ni siquiera reintentaba —
     // mp-webhook nunca llegaba a ejecutarse.
     const funcionesUrl = Deno.env.get("SUPABASE_URL")!
-    // marketplace_fee es un monto absoluto sobre toda la preferencia. Debe
-    // ser exactamente el extra que el comprador paga sobre el precio del
-    // anfitrión (precioConComision - precio, por cantidad de boletos) —
-    // así el anfitrión recibe su precio completo (menos el cargo propio,
-    // inevitable, de Mercado Pago) y la plataforma se queda con el 10%
-    // real, no con un 10% calculado sobre un precio que ya tenía 10% de más.
-    const comision = Math.round((precioConComision - precio) * (cantidad || 1))
+
+    // marketplace_fee es un monto absoluto sobre toda la preferencia: el extra
+    // exacto que el comprador paga por encima del precio del anfitrión, por
+    // cantidad de boletos. Así el anfitrión recibe su precio completo (menos
+    // el cargo propio, inevitable, de Mercado Pago) y la plataforma se queda
+    // con su comisión real, no con un porcentaje calculado sobre un precio que
+    // ya traía comisión encima.
+    //
+    // En el escalón de $5 a $49 la comisión es 0% y el campo se OMITE en vez
+    // de mandarse en cero: es lo mismo semánticamente y no depende de cómo
+    // trate MP un fee de $0.
+    const comision = Math.round((desglose.unitario - desglose.precioAnfitrion) * cantidad)
+
+    const preferencia: Record<string, unknown> = {
+      items: [{
+        title: evento.titulo,
+        quantity: cantidad,
+        unit_price: desglose.unitario,
+        currency_id: "MXN",
+      }],
+      marketplace: Deno.env.get("MP_CLIENT_ID")!,
+      back_urls: {
+        success: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${user.id}&collection_status=approved`,
+        failure: `${siteUrl}/pago-fallido?evento_id=${evento_id}&usuario_id=${user.id}`,
+        pending: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${user.id}&collection_status=pending`,
+      },
+      auto_return: "approved",
+      // Si el pago queda "in_process" (común con débito — el banco pide
+      // reintento diferido) y se resuelve minutos/horas después, el
+      // comprador ya no está en pago-exitoso para que confirmar-pago-mp
+      // lo active. MP llama esta URL cada vez que el pago cambia de
+      // estado, y mp-webhook hace la misma verificación/activación.
+      notification_url: `${funcionesUrl}/functions/v1/mp-webhook?evento_id=${evento_id}`,
+      metadata: {
+        evento_id,
+        usuario_id: user.id,
+      },
+    }
+    if (comision > 0) preferencia.marketplace_fee = comision
 
     const preference = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -168,32 +282,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${anfitrionMpToken}`,
         "X-Integrator-Id": Deno.env.get("MP_CLIENT_ID")!,
       },
-      body: JSON.stringify({
-        items: [{
-          title: titulo,
-          quantity: cantidad || 1,
-          unit_price: precioConComision,
-          currency_id: "MXN",
-        }],
-        marketplace: Deno.env.get("MP_CLIENT_ID")!,
-        marketplace_fee: comision,
-        back_urls: {
-          success: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&collection_status=approved`,
-          failure: `${siteUrl}/pago-fallido?evento_id=${evento_id}&usuario_id=${usuario_id}`,
-          pending: `${siteUrl}/pago-exitoso?evento_id=${evento_id}&usuario_id=${usuario_id}&collection_status=pending`,
-        },
-        auto_return: "approved",
-        // Si el pago queda "in_process" (común con débito — el banco pide
-        // reintento diferido) y se resuelve minutos/horas después, el
-        // comprador ya no está en pago-exitoso para que confirmar-pago-mp
-        // lo active. MP llama esta URL cada vez que el pago cambia de
-        // estado, y mp-webhook hace la misma verificación/activación.
-        notification_url: `${funcionesUrl}/functions/v1/mp-webhook?evento_id=${evento_id}`,
-        metadata: {
-          evento_id,
-          usuario_id,
-        }
-      })
+      body: JSON.stringify(preferencia),
     })
 
     const data = await preference.json()
