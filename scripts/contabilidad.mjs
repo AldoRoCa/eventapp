@@ -38,6 +38,18 @@ const SERVICE_ROLE_KEY = process.env.SERVICE_ROLE_KEY
 const CONSULTAR_MP = !process.argv.includes("--sin-mp")
 const CARPETA = "contabilidad"
 
+// Cuándo entró en producción la comisión escalonada (0/5/8/10%). Antes de esa
+// fecha, TODO se cobraba con 10% fijo, así que una compra vieja "no cuadra"
+// contra la fórmula de hoy sin que nadie haya hecho nada malo: un boleto de $10
+// se cobró en $11 y así debía ser.
+//
+// Sin esto, cada compra anterior saldría marcada en rojo para siempre y la
+// alerta se volvería ruido que se ignora — que es peor que no tener alerta.
+// Ojo: si una operación POSTERIOR a esta fecha cuadra con la fórmula vieja,
+// eso sí es sospechoso y se marca como descuadre.
+const INICIO_COMISION_ESCALONADA = "2026-08-11T04:00:00Z"
+const comisionViejaFija = (precio, cantidad) => Math.round(Number(precio) * 1.10) * cantidad
+
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error(`
 Faltan credenciales. Agrega a tu archivo .env (que NO se sube a git):
@@ -190,14 +202,23 @@ for (const [paymentId, delPago] of pagos) {
   const reembolsado = Number(mp.reembolsado) || 0
   const estadoPago = mp.error ? "" : mp.estado
 
+  // ¿La diferencia se explica porque la compra es anterior al cambio de
+  // comisión? Solo cuenta si además la fecha lo respalda.
+  const fechaOperacion = mp.fecha || delPago[0].created_at || ""
+  const esAnterior = fechaOperacion < INICIO_COMISION_ESCALONADA
+  const cuadraConEsquemaViejo = evento && cobradoReal !== null && cobradoReal !== undefined &&
+    Math.abs(cobradoReal - comisionViejaFija(evento.precio, cantidad)) < 0.01
+
   let alerta = "OK"
   if (!evento) alerta = "EVENTO BORRADO"
   else if (mp.error) alerta = `SIN VERIFICAR (${mp.error})`
-  else if (diferencia !== null && diferencia !== 0) alerta = "DESCUADRE"
+  else if (diferencia !== null && diferencia !== 0) {
+    alerta = esAnterior && cuadraConEsquemaViejo ? "esquema anterior (10% fijo)" : "DESCUADRE"
+  }
   else if (reembolsado > 0) alerta = estadoPago === "refunded" ? "reembolsado" : "reembolso parcial"
   if (alerta === "DESCUADRE") descuadres++
 
-  const fechaRef = (mp.fecha || delPago[0].created_at || "").slice(0, 10)
+  const fechaRef = fechaOperacion.slice(0, 10)
   const m = mes(mp.fecha || delPago[0].created_at)
 
   if (!filasPorMes.has(m)) filasPorMes.set(m, [])
