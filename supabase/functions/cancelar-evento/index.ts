@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { dedupPaymentIds, yaReembolsado, resultadoReembolsos } from "../_shared/reembolsos.ts"
 
 serve(async (req) => {
   const corsHeaders = corsFor(req)
@@ -74,9 +75,8 @@ serve(async (req) => {
     // Un solo pago puede cubrir varios boletos comprados juntos (todos
     // comparten el mismo mp_payment_id), así que se reembolsa por pago,
     // no por boleto — reembolsar dos veces el mismo pago falla en MP.
-    const paymentIds = [...new Set(
-      (boletos || []).filter(b => b.mp_payment_id).map(b => String(b.mp_payment_id))
-    )]
+    // La deduplicación vive en _shared/reembolsos.ts, bajo prueba.
+    const paymentIds = dedupPaymentIds(boletos)
 
     if (paymentIds.length > 0) {
       // Los pagos los cobró la cuenta de Mercado Pago del anfitrión, así
@@ -101,7 +101,9 @@ serve(async (req) => {
         if (!ok) fallidos.push(paymentId)
       }
 
-      if (fallidos.length > 0) {
+      // La regla de oro, también bajo prueba: si algún reembolso falla, no se
+      // borra ni se marca nada.
+      if (resultadoReembolsos(paymentIds, fallidos).registrarFallo) {
         // No borrar nada: los boletos y sus mp_payment_id se conservan
         // para poder reintentar la cancelación (los pagos ya reembolsados
         // se detectan y no se cobran doble).
@@ -150,7 +152,7 @@ async function reembolsarPago(paymentId: string, token: string): Promise<boolean
       headers: { "Authorization": `Bearer ${token}` },
     })
     const pago = await consulta.json()
-    if (consulta.ok && pago.status === "refunded") return true
+    if (yaReembolsado(consulta.ok, pago.status)) return true
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}/refunds`, {
       method: "POST",

@@ -10,11 +10,10 @@
 // Escribirlas una sola vez y dejarlas bajo prueba es más barato que volver a
 // descubrirlas en un recibo.
 //
-// OJO — quién usa esto hoy: gestionar-solicitud y reembolsar-solicitudes-vencidas.
-// cancelar-evento, resolver-reporte y eliminar-cuenta conservan sus copias
-// inline idénticas: son las funciones que más costó estabilizar y no se tocan
-// sin una razón mejor que la limpieza. Si algún día se migran, que sea a este
-// módulo y con estas pruebas corriendo.
+// Lo usan las CINCO funciones que reembolsan: cancelar-evento,
+// gestionar-solicitud, resolver-reporte, eliminar-cuenta y
+// reembolsar-solicitudes-vencidas. Ya no queda ninguna copia inline de estas
+// reglas — si cambias algo aquí, cambia para todas, que es justamente el punto.
 
 // deno-lint-ignore no-explicit-any
 type BoletoLike = { mp_payment_id?: any; monto_pagado?: any }

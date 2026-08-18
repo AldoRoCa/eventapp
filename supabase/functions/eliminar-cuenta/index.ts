@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { dedupPaymentIds, yaReembolsado, resultadoReembolsos } from "../_shared/reembolsos.ts"
 
 serve(async (req) => {
   const corsHeaders = corsFor(req)
@@ -82,9 +83,10 @@ serve(async (req) => {
       const tieneBoletos = (boletos || []).length > 0
       if (tieneBoletos) {
         eventosReembolsados++
-        for (const b of boletos || []) {
-          if (b.mp_payment_id) paymentIds.add(String(b.mp_payment_id))
-        }
+        // dedupPaymentIds deduplica dentro de este evento (y filtra los
+        // boletos sin pago); el Set de afuera deduplica entre eventos, por si
+        // una misma compra abarcara boletos de dos eventos distintos.
+        for (const id of dedupPaymentIds(boletos)) paymentIds.add(id)
       } else {
         eventosEliminadosSinBoletos++
       }
@@ -117,7 +119,9 @@ serve(async (req) => {
         if (!ok) fallidos.push(paymentId)
       }
 
-      if (fallidos.length > 0) {
+      // La regla de oro, también bajo prueba: si algún reembolso falla, no se
+      // borra ni se marca nada (aquí: la cuenta NO se da de baja).
+      if (resultadoReembolsos(pagosUnicos, fallidos).registrarFallo) {
         // No borrar ni anonimizar nada: los boletos y sus mp_payment_id se
         // conservan para reintentar la baja (los pagos ya reembolsados se
         // detectan con un GET previo y no se cobran doble).
@@ -225,7 +229,7 @@ async function reembolsarPago(paymentId: string, token: string): Promise<boolean
       headers: { "Authorization": `Bearer ${token}` },
     })
     const pago = await consulta.json()
-    if (consulta.ok && pago.status === "refunded") return true
+    if (yaReembolsado(consulta.ok, pago.status)) return true
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}/refunds`, {
       method: "POST",
