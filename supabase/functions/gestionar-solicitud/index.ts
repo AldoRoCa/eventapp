@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { corsFor } from "../_shared/cors.ts"
+import { montoUnitarioBoleto, decidirReembolso, cuerpoReembolso, yaReembolsado } from "../_shared/reembolsos.ts"
 
 serve(async (req) => {
   const corsHeaders = corsFor(req)
@@ -133,7 +134,7 @@ async function reembolsarBoleto(supabase: any, boleto: any, token: string): Prom
       headers: { "Authorization": `Bearer ${token}` },
     })
     const pago = await consulta.json()
-    if (consulta.ok && pago.status === "refunded") return true
+    if (yaReembolsado(consulta.ok, pago.status)) return true
 
     const { count } = await supabase
       .from("boletos")
@@ -141,19 +142,20 @@ async function reembolsarBoleto(supabase: any, boleto: any, token: string): Prom
       .eq("mp_payment_id", boleto.mp_payment_id)
       .neq("estado", "rechazado")
 
-    // Lo que REALMENTE se pagó por este boleto, escrito por confirmar-pago-mp
-    // o mp-webhook con el transaction_amount del pago real de MP. Antes esto
-    // era `precio × 1.10` calculado a mano, que dejó de ser cierto en cuanto
-    // la comisión pasó a ser escalonada (0/5/8/10%) y aparecieron los
-    // descuentos por paquete: se habría devuelto de más, a costa del anfitrión.
-    //
-    // El respaldo se conserva SOLO para boletos anteriores a la columna
-    // monto_pagado (quedan en null): esos sí se compraron con el 10% fijo, así
-    // que para ellos la fórmula vieja es la correcta.
-    const montoUnitario = boleto.monto_pagado != null
-      ? Number(boleto.monto_pagado)
-      : Math.round((boleto.eventos?.precio || 0) * 1.10)
-    const body = (count || 1) > 1 && montoUnitario > 0 ? { amount: montoUnitario } : {}
+    // Las decisiones de cuánto y cómo devolver viven en _shared/reembolsos.ts,
+    // que está bajo prueba (src/reembolsos.test.js). Aquí solo se ejecutan.
+    const montoUnitario = montoUnitarioBoleto(boleto, boleto.eventos?.precio)
+    const decision = decidirReembolso(montoUnitario, count || 1)
+
+    // "Inseguro" = el pago cubre otros boletos vivos pero no sabemos cuánto
+    // vale este. Un reembolso total aquí arrastraría boletos aprobados de otras
+    // personas, así que se prefiere fallar y que quede registrado.
+    if (decision.tipo === "inseguro") {
+      console.error(`[ALERTA-REEMBOLSO] Monto desconocido para el boleto ${boleto.id} en un pago compartido (${boleto.mp_payment_id}); no se reembolsa para no afectar boletos ajenos.`)
+      return false
+    }
+
+    const body = cuerpoReembolso(decision)
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}/refunds`, {
       method: "POST",

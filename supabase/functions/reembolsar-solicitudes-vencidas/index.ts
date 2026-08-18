@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { enviarAlerta, datosAnfitrion } from "../_shared/alertas.ts"
+import { montoUnitarioBoleto, decidirReembolso, cuerpoReembolso, yaReembolsado } from "../_shared/reembolsos.ts"
 
 // Solicitudes que el anfitrión nunca respondió y su evento ya terminó.
 // La dispara pg_cron cada hora (ver migración 20260810140000).
@@ -179,16 +180,9 @@ async function procesar(supabase: any, boleto: any, tokens: Map<string, string |
 // este boleto; si es el último, se devuelve lo que quede del pago completo.
 // deno-lint-ignore no-explicit-any
 async function reembolsar(supabase: any, boleto: any, token: string, evento: any): Promise<{ ok: boolean; monto: number; error?: string }> {
-  // Lo que se pagó por ESTE boleto. Los boletos anteriores a la columna
-  // monto_pagado la tienen en null: para ellos vale el mismo respaldo que usa
-  // gestionar-solicitud (se compraron cuando la comisión era 10% fijo).
-  //
-  // Ojo, esto NO es cosmético: sin el respaldo, un boleto viejo daría monto 0,
-  // el body saldría vacío y MP reembolsaría el pago COMPLETO — arrastrando a
-  // los demás boletos de esa misma compra, que quizá sí fueron aprobados.
-  const monto = boleto.monto_pagado != null
-    ? Number(boleto.monto_pagado) || 0
-    : Math.round((Number(evento?.precio) || 0) * 1.10)
+  // Cuánto se pagó por ESTE boleto y si el reembolso puede ser parcial o
+  // total. Las dos decisiones viven en _shared/reembolsos.ts, bajo prueba.
+  const monto = montoUnitarioBoleto(boleto, evento?.precio)
   try {
     const consulta = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}`, {
       headers: { "Authorization": `Bearer ${token}` },
@@ -196,7 +190,7 @@ async function reembolsar(supabase: any, boleto: any, token: string, evento: any
     const pago = await consulta.json()
     // Ya devuelto (por ejemplo, porque el reintento automático lo recuperó en
     // un ciclo anterior): se da por bueno y el boleto se cierra.
-    if (consulta.ok && pago.status === "refunded") return { ok: true, monto: 0 }
+    if (yaReembolsado(consulta.ok, pago.status)) return { ok: true, monto: 0 }
 
     const { count } = await supabase
       .from("boletos")
@@ -204,7 +198,13 @@ async function reembolsar(supabase: any, boleto: any, token: string, evento: any
       .eq("mp_payment_id", boleto.mp_payment_id)
       .neq("estado", "rechazado")
 
-    const body = (count || 1) > 1 && monto > 0 ? { amount: monto } : {}
+    const decision = decidirReembolso(monto, count || 1)
+    if (decision.tipo === "inseguro") {
+      // El pago cubre otros boletos vivos y no sabemos cuánto vale este: un
+      // reembolso total arrastraría boletos ajenos ya aprobados.
+      return { ok: false, monto: 0, error: "Monto desconocido en un pago compartido; no se reembolsa para no afectar boletos de otras personas." }
+    }
+    const body = cuerpoReembolso(decision)
 
     const res = await fetch(`https://api.mercadopago.com/v1/payments/${boleto.mp_payment_id}/refunds`, {
       method: "POST",

@@ -153,8 +153,10 @@ function EventCard({ ev }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <span style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>${ev.price}</span>
-            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>
+            {/* Un evento gratis decía "$0". Explorar y la página del evento
+                siempre dijeron "Gratis"; esta tarjeta era la única que no. */}
+            <span style={{ fontWeight: 700, fontSize: "22px", letterSpacing: "-0.5px" }}>{ev.price === 0 ? "Gratis" : `$${ev.price}`}</span>
+            {ev.price > 0 && <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", marginLeft: "4px", fontWeight: 400 }}>MXN</span>}
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
             onClick={e => { e.stopPropagation(); navigate(`/evento/${ev.id}`) }}
