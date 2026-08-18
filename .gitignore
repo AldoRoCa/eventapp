@@ -27,3 +27,7 @@ dist-ssr
 # Archivos de estado local del CLI de Supabase (no son secretos, pero son
 # ruido: cada deploy los toca y ensucian los commits)
 supabase/.temp/
+
+# Hojas de conciliación contable (npm run contabilidad). Son datos financieros
+# reales de anfitriones y compradores: viven solo en tu PC.
+contabilidad/
